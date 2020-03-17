@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+
+import json
+import multiprocessing
+import os
+import random
+import subprocess
+import time
+
+import click
+import packet
+
+
+def setup_provision_test(outdir, v, plan, os, info):
+    cmd = f'''\
+set -e
+json="{outdir}/{v}.tests/{plan}-{os}.json"
+script="{outdir}/{v}.tests/test-{plan}-{os}.sh"
+ipxe="{outdir}/{v}/{plan}-{os}.ipxe"
+cat >"$json"
+jinja2 --strict --format=json ci/drone/prov-test.sh.j2 "$json" >"$script"
+jinja2 --strict --format=json ci/drone/script.ipxe.j2 "$json" >"$ipxe"
+'''
+
+    subprocess.run(cmd, input=info, shell=True, check=True, encoding='utf-8')
+
+
+def get_capacity():
+    m = packet.Manager(os.getenv('PACKET_API_TOKEN'))
+    c = m.get_capacity(legacy='include')
+    cap = {}
+
+    for fac in c:
+        for plan, v in c[fac].items():
+            p = cap.get(plan, {})
+            level = v['level']
+            l = p.get(level, [])
+            l.append(fac)
+            p[level] = l
+            cap[plan] = p
+
+    return cap
+
+
+def get_facility(capacity, plan):
+
+    def preferred_or_random(facs):
+        for fac in ('ewr1', 'sjc1', 'iad1', 'atl1'):
+            if fac in facs:
+                return fac
+        return random.choice(facs)
+
+    cap = capacity[plan]
+    if 'normal' in cap:
+        return preferred_or_random(cap['normal']), 'normal'
+
+    if 'limited' in cap:
+        return preferred_or_random(cap['limited']), 'limited'
+
+    return None, None
+
+
+@click.command()
+@click.argument('testplan', type=click.File())
+@click.argument('outdir', type=click.Path(exists=True, file_okay=False, writable=True))
+@click.argument('v')
+@click.argument('pwhash')
+def setup_provision_tests(testplan, outdir, v, pwhash):
+
+    hwtests = json.load(testplan)['hwtests']
+    cmd = f'jinja2 --strict --format=json ci/drone/Makefile.j2 >{outdir}/{v}.tests/Makefile'
+    subprocess.run(cmd, input=json.dumps({'tests': hwtests}), shell=True, check=True, encoding='utf-8')
+
+    capacity = get_capacity()
+    with multiprocessing.Pool() as p:
+        for plan, info in hwtests.items():
+            facility, level = get_facility(capacity, plan)
+            if not facility:
+                print(plan, 'is unavailble everywhere, skipping')
+                continue
+
+            print(facility, 'was chosen for', plan, 'level is', level)
+
+            t = {k: info[k] for k in ('arch', 'blacklist', 'console', 'parch')}
+            t['facility'] = facility
+            t['plan'] = plan
+            t['pwhash'] = pwhash
+            t['v'] = v
+            for os in info['oses']:
+                t['os'] = os
+                p.apply_async(setup_provision_test, (outdir, v, plan, os, json.dumps(t)))
+
+        p.close()
+        p.join()
+
+
+if __name__ == '__main__':
+    setup_provision_tests()

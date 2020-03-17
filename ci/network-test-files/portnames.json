@@ -1,0 +1,397 @@
+{
+  "centos": {
+    "t1.small.x86": {
+      "mode": 5,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "c1.small.x86": {
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "x1.small.x86": {
+      "mode": 5,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "m1.xlarge.x86": {
+      "dell": [
+        "dummy0",
+        "dummy1"
+      ],
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "c1.xlarge.x86": {
+      "mode": 4,
+      "quanta": [
+        "dummy0",
+        "dummy1"
+      ],
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "s1.large.x86": {
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    }
+  },
+  "debian": {
+    "t1.small.x86": {
+      "mode": 5,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "c1.small.x86": {
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "m1.xlarge.x86": {
+      "dell": [
+        "dummy0",
+        "dummy1"
+      ],
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "c1.xlarge.x86": {
+      "mode": 4,
+      "quanta": [
+        "dummy0",
+        "dummy1"
+      ],
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    }
+  },
+  "sci": {
+    "t1.small.x86": {
+      "mode": 5,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "c1.small.x86": {
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "m1.xlarge.x86": {
+      "dell": [
+        "dummy0",
+        "dummy1"
+      ],
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "c1.xlarge.x86": {
+      "mode": 4,
+      "quanta": [
+        "dummy0",
+        "dummy1"
+      ],
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    }
+  },
+  "ub14": {
+    "t1.small.x86": {
+      "mode": 5,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "c1.small.x86": {
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "m1.xlarge.x86": {
+      "dell": [
+        "dummy0",
+        "dummy1"
+      ],
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "c1.xlarge.x86": {
+      "mode": 4,
+      "quanta": [
+        "dummy0",
+        "dummy1"
+      ],
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "s1.large.x86": {
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    }
+  },
+  "ub16": {
+    "t1.small.x86": {
+      "mode": 5,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "c1.small.x86": {
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "x1.small.x86": {
+      "mode": 5,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "m1.xlarge.x86": {
+      "dell": [
+        "dummy0",
+        "dummy1"
+      ],
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "c1.large.arm.xda": {
+      "huawei": [
+        "dummy0",
+        "dummy1"
+      ],
+      "mode": 4
+    },
+    "baremetal_2a4": {
+      "foxconn": [
+        "dummy0",
+        "dummy1"
+      ],
+      "mode": 4
+    },
+    "baremetal_2a5": {
+      "qualcomm": [
+        "dummy0",
+        "dummy1"
+      ],
+      "mode": 4
+    },
+    "c2.large.arm": {
+      "ampere": [
+        "dummy0",
+        "dummy1"
+      ],
+      "mode": 4
+    },
+    "c1.xlarge.x86": {
+      "mode": 4,
+      "quanta": [
+        "dummy0",
+        "dummy1"
+      ],
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "baremetal_hua": {
+      "huawei": [
+        "dummy0",
+        "dummy1"
+      ],
+      "mode": 4
+    },
+    "s1.large.x86": {
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    }
+  },
+  "ub17": {
+    "t1.small.x86": {
+      "mode": 5,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "c1.small.x86": {
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "x1.small.x86": {
+      "mode": 5,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "m1.xlarge.x86": {
+      "dell": [
+        "dummy0",
+        "dummy1"
+      ],
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "c1.xlarge.x86": {
+      "mode": 4,
+      "quanta": [
+        "dummy0",
+        "dummy1"
+      ],
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "s1.large.x86": {
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    }
+  },
+  "opensuse": {
+    "t1.small.x86": {
+      "mode": 5,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "c1.small.x86": {
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "m1.xlarge.x86": {
+      "dell": [
+        "dummy0",
+        "dummy1"
+      ],
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "c1.xlarge.x86": {
+      "mode": 4,
+      "quanta": [
+        "dummy0",
+        "dummy1"
+      ],
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    }
+  },
+  "vz": {
+    "t1.small.x86": {
+      "mode": 5,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "c1.small.x86": {
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "m1.xlarge.x86": {
+      "dell": [
+        "dummy0",
+        "dummy1"
+      ],
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "c1.xlarge.x86": {
+      "mode": 4,
+      "quanta": [
+        "dummy0",
+        "dummy1"
+      ],
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    },
+    "s1.large.x86": {
+      "mode": 4,
+      "supermicro": [
+        "dummy0",
+        "dummy1"
+      ]
+    }
+  }
+}

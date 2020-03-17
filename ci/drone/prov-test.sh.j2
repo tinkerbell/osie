@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+export PACKET_PROJECT_ID=746ea6dd-1e0a-4126-89d6-728784671fbf
+export DEVICE_HOSTNAME=osie-test-{{plan | replace("_", "-") | replace(".", "-")}}-{{os | replace("_", "-")}}
+export DEVICE_PLAN={{plan}}
+export DEVICE_FACILITY={{facility}}
+export DEVICE_IPXE_SCRIPT_URL=http://blob1-nrt1.packet.net/osie-testing/{{v}}/{{plan}}-{{os}}.ipxe
+
+sleep_secs=$(((RANDOM % 7)*5))
+echo "$DEVICE_HOSTNAME: sleeping for $sleep_secs"
+sleep $sleep_secs
+date | sed "s|^|$DEVICE_HOSTNAME: |"
+if python2 ../../ci/drone/tester.py; then
+	touch test-{{plan}}-{{os}}.success
+else
+	touch test-{{plan}}-{{os}}.failed
+fi

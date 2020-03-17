@@ -1,0 +1,6 @@
+DEVICE=dummy0
+ONBOOT=yes
+HWADDR=@MAC0@
+MASTER=bond0
+SLAVE=yes
+BOOTPROTO=none

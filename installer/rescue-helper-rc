@@ -1,0 +1,5 @@
+#!/sbin/openrc-run
+
+name="Packet rescue"
+command="/etc/init.d/sshd start; /sbin/rescue-helper"
+command_args="$RESCUE_OPTS"

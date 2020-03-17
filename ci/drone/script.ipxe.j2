@@ -1,0 +1,13 @@
+#!ipxe
+set iface eth0 || shell
+set tinkerbell http://tinkerbell.{{facility}}.packet.net
+set ipxe_cloud_config packet
+set action install
+set arch {{arch}}
+set parch {{parch}}
+set base-url http://install.{{facility}}.packet.net/misc/tinkerbell/osie
+set test-base-url http://blob1-nrt1.packet.net/osie-testing/{{v}}
+
+kernel ${test-base-url}/vmlinuz-${parch} ip=dhcp modules=sd-mod alpine_repo=${base-url}/repo-${arch}/main modloop=${test-base-url}/modloop-${parch} tinkerbell=${tinkerbell} parch=${parch} packet_action=${action} pwhash='{{pwhash}}' facility={{facility}} blacklist={{blacklist}} plan={{plan}} slug={{os}}:{{os}}-{{plan}} initrd=initramfs-${parch} console=tty0 console={{console}} packet_base_url=${test-base-url}
+initrd ${test-base-url}/initramfs-${parch}
+boot

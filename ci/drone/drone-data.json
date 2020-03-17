@@ -1,0 +1,83 @@
+{
+	"arches":["aarch64", "x86_64"],
+	"vmtests": [
+		{"arch":"aarch64", "oses": [
+			"ubuntu_16_04"
+		]},
+		{"arch":"x86_64", "oses": [
+			"ubuntu_16_04"
+		]}
+	],
+	"hwtests": {
+		"t1.small.x86": {
+			"arch":"x86_64",
+			"blacklist":"ixgbe,tg3",
+			"console":"ttyS1,115200",
+			"oses":["centos_7", "debian_8", "debian_9", "scientific_6", "ubuntu_14_04", "ubuntu_16_04", "ubuntu_17_10", "opensuse_42_3"],
+			"parch":"x86_64"
+		},
+		"c1.small.x86": {
+			"arch":"x86_64",
+			"blacklist":"ixgbe,tg3",
+			"console":"ttyS1,115200",
+			"oses":["centos_7", "debian_8", "debian_9", "scientific_6", "ubuntu_14_04", "ubuntu_16_04", "ubuntu_17_10", "opensuse_42_3"],
+			"parch":"x86_64"
+		},
+		"x1.small.x86": {
+			"arch":"x86_64",
+			"blacklist":"ixgbe,tg3",
+			"console":"ttyS1,115200",
+			"oses":["centos_7", "debian_8", "debian_9", "scientific_6", "ubuntu_14_04", "ubuntu_16_04", "ubuntu_17_10"],
+			"parch":"x86_64"
+		},
+		"m1.xlarge.x86": {
+			"arch":"x86_64",
+			"blacklist":"ixgbe,tg3",
+			"console":"ttyS1,115200",
+			"oses":["centos_7", "debian_8", "debian_9", "scientific_6", "ubuntu_14_04", "ubuntu_16_04", "ubuntu_17_10", "opensuse_42_3"],
+			"parch":"x86_64"
+		},
+		"m2.xlarge.x86": {
+			"arch":"x86_64",
+			"blacklist":"ixgbe,tg3",
+			"console":"ttyS1,115200",
+			"oses":["centos_7", "debian_8", "debian_9", "scientific_6", "ubuntu_14_04", "ubuntu_16_04", "ubuntu_17_10"],
+			"parch":"x86_64"
+		},
+		"c1.large.arm": {
+			"arch":"aarch64",
+			"blacklist":"ixgbe,tg3",
+			"console":"ttyAMA0,115200",
+			"oses":["centos_7", "debian_8", "debian_9", "ubuntu_16_04", "ubuntu_17_10"],
+			"parch":"aarch64"
+		},
+		"c1.large.arm.xda": {
+			"arch":"aarch64",
+			"blacklist":"ixgbe,tg3",
+			"console":"ttyAMA0,115200",
+			"oses":["ubuntu_14_04", "ubuntu_16_04", "ubuntu_17_10"],
+			"parch":"2a2"
+		},
+		"c1.xlarge.x86": {
+			"arch":"x86_64",
+			"blacklist":"ixgbe,tg3",
+			"console":"ttyS1,115200",
+			"oses":["centos_7", "debian_8", "debian_9", "scientific_6", "ubuntu_14_04", "ubuntu_16_04", "ubuntu_17_10", "opensuse_42_3"],
+			"parch":"x86_64"
+		},
+		"c2.medium.x86": {
+			"arch":"x86_64",
+			"blacklist":"ixgbe,tg3",
+			"console":"ttyS1,115200",
+			"oses":["centos_7", "debian_8", "debian_9", "scientific_6", "ubuntu_14_04", "ubuntu_16_04", "ubuntu_17_10"],
+			"parch":"x86_64"
+		},
+		"s1.large.x86": {
+			"arch":"x86_64",
+			"blacklist":"ixgbe,tg3",
+			"console":"ttyS1,115200",
+			"oses":["centos_7", "debian_9", "scientific_6", "ubuntu_14_04", "ubuntu_16_04", "ubuntu_17_10"],
+			"parch":"x86_64"
+		}
+	}
+}

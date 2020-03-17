@@ -1,0 +1,71 @@
+# Set menu colors
+set menu_color_normal=white/green
+set menu_color_highlight=light-red/white
+
+# Set menu display time
+set timeout=3
+
+# Set the default boot entry (first is 0)
+set default=0
+
+# Set the root variable - grub2 uses this to find files if the
+# root device is not specified in the entry itself.
+# It can be set explicitly like so:
+
+#set root='(hd0,1)'
+
+# Define console settings
+#serial console=tty0 console=ttyS1,115200n8
+serial --unit=0 --speed=115200 --word=8 --parity=no --stop=1
+terminal --timeout=10 serial console
+
+# Or it can be set using grub2's builtin search feature like so:
+
+#search --no-floppy --fs-uuid --set root xxxxxxxx-yyyy-zzzz-aaaa-bbbbbbbbbbbb
+search --no-floppy --fs-uuid --set=root PACKET_ROOT_UUID
+
+# The string xxxxxxxx-yyyy-zzzz-aaaa-bbbbbbbbbbbb should be replaced with
+# the proper UUID for the root device. It can be found using 'blkid' from
+# util-linux.
+
+# Boot entries:
+
+# Linux
+menuentry 'OpenSUSE' --class rhel fedora --class gnu-linux --class gnu --class os {
+		insmod gzio
+		insmod part_msdos
+		insmod part_msdos
+		insmod diskfilter
+		insmod mdraid1x
+		insmod ext2
+		insmod gptsync
+		insmod part_gpt
+		set root='(mduuid/PACKET_ROOT_UUID)'
+		if [ x$feature_platform_search_hint = xy ]; then
+		  search --no-floppy --fs-uuid --set=root --hint='mduuid/PACKET_ROOT_UUID'  PACKET_ROOT_UUID
+		else
+		  search --no-floppy --fs-uuid --set=root PACKET_ROOT_UUID
+		fi
+		linux  /boot/vmlinuz root=UUID=PACKET_ROOT_UUID ro serial console=tty0 console=ttyS1,115200n8 biosdevname=0 net.ifnames=1 rd.auto rd.auto=1 $vt_handoff
+		initrd /boot/initrd
+}
+
+# Linux single
+menuentry 'OpenSUSE - single user mode' --class rhel fedora --class gnu-linux --class gnu --class os {
+		insmod gzio
+		insmod part_msdos
+		insmod part_msdos
+		insmod diskfilter
+		insmod mdraid1x
+		insmod ext2
+		insmod gptsync
+		insmod part_gpt
+		set root='(mduuid/PACKET_ROOT_UUID)'
+		if [ x$feature_platform_search_hint = xy ]; then
+		  search --no-floppy --fs-uuid --set=root --hint='mduuid/PACKET_ROOT_UUID'  PACKET_ROOT_UUID
+		else
+		  search --no-floppy --fs-uuid --set=root PACKET_ROOT_UUID
+		fi
+		linux  /boot/vmlinuz root=UUID=PACKET_ROOT_UUID ro serial console=tty0 console=ttyS1,115200n8 biosdevname=0 net.ifnames=1 rd.auto rd.auto=1 single
+		initrd /boot/initrd
+}

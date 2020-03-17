@@ -1,0 +1,5 @@
+#!/sbin/openrc-run
+
+name="Packet OSIE"
+command="/sbin/osie-installer"
+command_args="$OSIE_OPTS"

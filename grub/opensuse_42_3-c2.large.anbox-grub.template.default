@@ -1,0 +1,2 @@
+GRUB_CMDLINE_LINUX='console=ttyAMA0,115200 iommu.passthrough=1 biosdevname=0 net.ifnames=1 crashkernel=auto LANG=en_US.UTF-8'
+GRUB_SERIAL_COMMAND='serial'

@@ -1,0 +1,2 @@
+docker/lfs/* filter=lfs diff=lfs merge=lfs -text
+installer/alpine/assets-*/* filter=lfs diff=lfs merge=lfs -text

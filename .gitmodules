@@ -1,0 +1,9 @@
+[submodule "osie-runner/protos"]
+	path = osie-runner/protos
+	url = https://github.com/packethost/grpc-protos
+[submodule "docker/tests/shunit"]
+	path = docker/tests/shunit
+	url = https://github.com/kward/shunit2
+[submodule "docker/scripts/packet-networking"]
+	path = docker/scripts/packet-networking
+	url = https://github.com/packethost/packet-networking

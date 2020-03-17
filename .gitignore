@@ -1,0 +1,11 @@
+.pytest_cache/
+.coverage
+build/
+coverage.xml
+osie-v*/
+osie-v*.tar
+osie-v*.tar.*
+osie-initrd-*
+osie-vmlinuz-*
+osie-*.tar.gz
+osie-*.tar

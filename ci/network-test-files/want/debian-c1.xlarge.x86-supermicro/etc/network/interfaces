@@ -1,0 +1,26 @@
+auto lo
+iface lo inet loopback
+
+auto bond0
+iface bond0 inet static
+    address @PUBIP4@
+    netmask 255.255.255.254
+    gateway @PUBGW4@
+    bond-downdelay 200
+    bond-miimon 100
+    bond-mode 4
+    bond-updelay 200
+    bond-xmit_hash_policy layer3+4
+    bond-slaves dummy0 dummy1
+    dns-nameservers @DNSES@
+iface bond0 inet6 static
+    address @PUBIP6@
+    netmask 127
+    gateway @PUBGW6@
+
+auto bond0:0
+iface bond0:0 inet static
+    address @PRIVIP@
+    netmask 255.255.255.254
+    post-up route add -net 10.0.0.0/8 gw @PRIVGW@
+    post-down route del -net 10.0.0.0/8 gw @PRIVGW@

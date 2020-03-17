@@ -1,0 +1,5 @@
+comment: off
+codecov:
+  ci:
+    - !fossa.io
+    - !reviewable.io

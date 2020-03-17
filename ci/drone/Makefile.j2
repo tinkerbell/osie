@@ -1,0 +1,17 @@
+SHELL := bash
+
+test: {% for plan, config in tests | dictsort %}{% for os in config.oses %} test-{{plan}}-{{os}}.run{% endfor %}{% endfor %}
+%.run:
+	@if ! [[ -r ./$(basename $@).sh ]]; then \
+		echo '$(basename $@).sh is unavailable, skipping'; \
+	else \
+		sh $(basename $@).sh; \
+	fi
+
+check: {% for plan, config in tests | dictsort %}{% for os in config.oses %} test-{{plan}}-{{os}}.check{% endfor %}{% endfor %}
+%.check:
+	@if ! [[ -r ./$(basename $@).sh ]]; then \
+		echo '$(basename $@).sh is unavailable, skipping'; \
+	else \
+		[[ -f $(basename $@).success ]] || echo "$(basename $@) failed"; \
+	fi

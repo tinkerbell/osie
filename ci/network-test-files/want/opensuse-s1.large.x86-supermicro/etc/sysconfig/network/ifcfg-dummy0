@@ -1,0 +1,2 @@
+STARTMODE='hotplug'
+BOOTPROTO='none'

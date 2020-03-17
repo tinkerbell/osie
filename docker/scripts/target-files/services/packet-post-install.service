@@ -1,0 +1,8 @@
+[Unit]
+Description=Packet post install setup
+After=multi-user.target
+[Service]
+Type=oneshot
+ExecStart=/bin/packet-post-install.sh
+[Install]
+WantedBy=multi-user.target

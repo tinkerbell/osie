@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -o errexit -o nounset -o pipefail -o xtrace
+
+iface=${1#*-}
+case "$iface" in
+bond0 | dummy0) ip link set "$iface" address @MAC0@ ;;
+*) echo "ignoring unknown interface $iface" && exit 0 ;;
+esac

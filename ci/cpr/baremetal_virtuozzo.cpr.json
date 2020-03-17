@@ -1,0 +1,71 @@
+{
+  "disks": [
+    {
+      "device": "/dev/sda",
+      "partitions": [
+        {
+          "label": "BIOS",
+          "number": 1,
+          "size": 4096
+        },
+        {
+          "label": "BOOT",
+          "number": 2,
+          "size": "524288"
+        },
+        {
+          "label": "SWAP",
+          "number": 3,
+          "size": "16777216"
+        },
+        {
+          "label": "ROOT",
+          "number": 4,
+          "size": 0
+        }
+      ],
+      "wipeTable": true
+    }
+  ],
+  "filesystems": [
+    {
+      "mount": {
+        "create": {
+          "options": [
+            "-L",
+            "ROOT"
+          ]
+        },
+        "device": "/dev/sda4",
+        "format": "ext4",
+        "point": "/"
+      }
+    },
+    {
+      "mount": {
+        "create": {
+          "options": [
+            "-L",
+            "SWAP"
+          ]
+        },
+        "device": "/dev/sda3",
+        "format": "swap",
+        "point": "none"
+      }
+    },
+    {
+      "mount": {
+        "create": {
+          "options": [
+            "-L",
+            "BOOT"
+          ]
+        },
+        "device": "/dev/sda2",
+        "format": "ext4",
+        "point": "/boot"
+      }
+    }
+  ]
+}

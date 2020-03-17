@@ -1,0 +1,24 @@
+- name: create {{plan}}_{{os}} device
+  hosts: localhost
+  tasks:
+
+  - packet_device:
+      project_id: 746ea6dd-1e0a-4126-89d6-728784671fbf
+      hostnames: osie-test-{{plan | replace("_", "-") | replace(".", "-")}}-{{os | replace("_", "-")}}
+      operating_system: custom_ipxe
+      ipxe_script_url: http://blob1-nrt1.packet.net/osie-testing/{{v}}/{{plan}}_{{os}}.ipxe
+      plan: {{plan}}
+      facility: nrt1
+      state: {{ '"{{ state | default(\'active\') }}"' }}
+    register: newhosts
+
+  - name: wait for ssh
+    wait_for:
+      delay: 1
+      host: "{{ '{{ item.public_ipv4 }}' }}"
+      port: 22
+      state: started
+      timeout: 600
+    with_items: "{{ '{{ newhosts.devices }}' }}"
+    tags:
+      - ssh

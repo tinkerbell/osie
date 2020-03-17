@@ -1,0 +1,4 @@
+#!/sbin/openrc-run
+
+name="Packet Task Runner"
+command="/sbin/runner"

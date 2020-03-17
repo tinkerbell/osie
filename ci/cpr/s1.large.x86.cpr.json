@@ -1,0 +1,53 @@
+{
+  "disks": [
+    {
+      "device": "/dev/sdc",
+      "partitions": [
+        {
+          "label": "BIOS",
+          "number": 1,
+          "size": 4096
+        },
+        {
+          "label": "SWAP",
+          "number": 2,
+          "size": "3993600"
+        },
+        {
+          "label": "ROOT",
+          "number": 3,
+          "size": 0
+        }
+      ],
+      "wipeTable": true
+    }
+  ],
+  "filesystems": [
+    {
+      "mount": {
+        "create": {
+          "options": [
+            "-L",
+            "ROOT"
+          ]
+        },
+        "device": "/dev/sdc3",
+        "format": "ext4",
+        "point": "/"
+      }
+    },
+    {
+      "mount": {
+        "create": {
+          "options": [
+            "-L",
+            "SWAP"
+          ]
+        },
+        "device": "/dev/sdc2",
+        "format": "swap",
+        "point": "none"
+      }
+    }
+  ]
+}

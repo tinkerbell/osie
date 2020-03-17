@@ -1,0 +1,2 @@
+GRUB_CMDLINE_LINUX='console=tty0 console=ttyS1,115200n8 biosdevname=0 net.ifnames=1 rd.auto rd.auto=1'
+GRUB_SERIAL_COMMAND='serial --unit=0 --speed=115200 --word=8 --parity=no --stop=1'

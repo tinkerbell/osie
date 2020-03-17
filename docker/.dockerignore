@@ -1,0 +1,4 @@
+Dockerfile*
+osie-manifest.yml
+scripts/requirements.in
+scripts/pylama.ini
