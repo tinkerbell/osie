@@ -72,7 +72,7 @@ endef
 $(foreach parch,$(parches),$(eval $(call packager_parch,$(parch))))
 
 
-packaged-apps := $(addprefix build/$v/, osie-installer.sh osie-installer-rc rescue-helper.sh rescue-helper-rc runner.sh runner-rc)
+packaged-apps := $(addprefix build/$v/, osie-installer.sh osie-installer-rc rescue-helper.sh rescue-helper-rc runner.sh runner-rc workflow-helper.sh workflow-helper-rc)
 packaged-grubs := $(addprefix build/$v/,$(subst -,/,${grubs}))
 packaged-osies := build/$v/osie-aarch64.tar.gz build/$v/osie-x86_64.tar.gz
 packaged-repos := build/$v/repo-aarch64 build/$v/repo-x86_64
@@ -124,6 +124,8 @@ build/$v/osie-installer-rc: installer/osie-installer-rc
 build/$v/osie-installer.sh: installer/osie-installer.sh
 build/$v/rescue-helper-rc: installer/rescue-helper-rc
 build/$v/rescue-helper.sh: installer/rescue-helper.sh
+build/$v/workflow-helper-rc: installer/workflow-helper-rc
+build/$v/workflow-helper.sh: installer/workflow-helper.sh
 build/$v/runner-rc: installer/runner-rc
 build/$v/runner.sh: installer/runner.sh
 ${packaged-apps}:

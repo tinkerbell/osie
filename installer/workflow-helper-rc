@@ -1,0 +1,4 @@
+#!/sbin/openrc-run
+
+name="Packet Workflow"
+command="/sbin/workflow-helper"
