@@ -335,6 +335,7 @@ ebegin "Verifying required kernel cmdline arguments"
 case $KOPT_packet_action in
 install) packet_action=osie-installer ;;
 rescue) packet_action=rescue-helper ;;
+workflow) packet_action=workflow-helper ;;
 *) eend 1 "unknown packet_action: $KOPT_packet_action" ;;
 esac
 
