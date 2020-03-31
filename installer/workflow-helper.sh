@@ -47,13 +47,13 @@ cp ca.pem /etc/docker/certs.d/$docker_registry/ca.crt
 service docker start
 
 until docker info; do
-    echo 'Waiting for docker to respond...'
-    sleep 3
+	echo 'Waiting for docker to respond...'
+	sleep 3
 done
 
 until docker login $docker_registry -u $registry_username -p $registry_password; do
-    echo 'Waiting for docker to respond...'
-    sleep 3
+	echo 'Waiting for docker to respond...'
+	sleep 3
 done
 
 # stop mdev from messing with us once and for all
@@ -70,15 +70,15 @@ mkdir /worker
 reason='docker exited with an error'
 
 docker run --privileged -ti \
-    -e "container_uuid=$id" \
-    -e "WORKER_ID=$worker_id" \
-    -e "DOCKER_REGISTRY=$docker_registry" \
-    -e "ROVER_GRPC_AUTHORITY=$grpc_authority" \
-    -e "ROVER_CERT_URL=$grpc_cert_url" \
-    -e "REGISTRY_USERNAME=$registry_username" \
-    -e "REGISTRY_PASSWORD=$registry_password" \
-    -v /worker:/worker \
-    -v /var/run/docker.sock:/var/run/docker.sock \
+	-e "container_uuid=$id" \
+	-e "WORKER_ID=$worker_id" \
+	-e "DOCKER_REGISTRY=$docker_registry" \
+	-e "ROVER_GRPC_AUTHORITY=$grpc_authority" \
+	-e "ROVER_CERT_URL=$grpc_cert_url" \
+	-e "REGISTRY_USERNAME=$registry_username" \
+	-e "REGISTRY_PASSWORD=$registry_password" \
+	-v /worker:/worker \
+	-v /var/run/docker.sock:/var/run/docker.sock \
 	--log-driver=fluentd -t \
-    --net host \
-    $docker_registry/worker
+	--net host \
+	$docker_registry/worker
