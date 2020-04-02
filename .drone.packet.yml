@@ -132,7 +132,15 @@ pipeline:
 
   slack:
     image: plugins/slack
-    username: drone-ci
-    channel: $SLACK_WEBHOOK_CHANNEL
-    webhook: $SLACK_WEBHOOK_URL
+    username: ${SLACK_WEBHOOK_USER}
+    channel: ${SLACK_WEBHOOK_CHANNEL}
+    webhook: ${SLACK_WEBHOOK_URL}
     icon_url: https://raw.githubusercontent.com/drone/brand/master/logos/png/drone-logo-dark_128.png
+    when:
+      event:
+        - push
+        - tag
+    secrets:
+      - slack_webhook_user
+      - slack_webhook_channel
+      - slack_webhook_url
