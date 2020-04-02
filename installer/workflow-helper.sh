@@ -70,8 +70,8 @@ docker run --privileged -ti \
 	-e "container_uuid=$id" \
 	-e "WORKER_ID=$worker_id" \
 	-e "DOCKER_REGISTRY=$docker_registry" \
-	-e "ROVER_GRPC_AUTHORITY=$grpc_authority" \
-	-e "ROVER_CERT_URL=$grpc_cert_url" \
+	-e "TINKERBELL_GRPC_AUTHORITY=$grpc_authority" \
+	-e "TINKERBELL_CERT_URL=$grpc_cert_url" \
 	-e "REGISTRY_USERNAME=$registry_username" \
 	-e "REGISTRY_PASSWORD=$registry_password" \
 	-v /worker:/worker \
