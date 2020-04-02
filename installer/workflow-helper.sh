@@ -78,4 +78,4 @@ docker run --privileged -ti \
 	-v /var/run/docker.sock:/var/run/docker.sock \
 	--log-driver=fluentd -t \
 	--net host \
-	"$docker_registry/worker"
+	"$docker_registry/tink-worker:latest"
