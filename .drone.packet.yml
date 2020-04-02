@@ -82,9 +82,10 @@ pipeline:
       - coverage report
       - coverage xml
 
-  codecov:
-    image: plugins/codecov
-    secrets: [codecov_token]
+#  codecov:
+#    image: plugins/codecov
+#    secrets:
+#      - codecov_token
 
   package_common:
     image: osie-test-env
