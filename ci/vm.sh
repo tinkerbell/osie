@@ -55,7 +55,7 @@ teardown_forwarding() {
 
 make_disk() {
 	truncate -s0 "$disk"
-	truncate -s32G "$disk"
+	truncate -s50G "$disk"
 }
 
 gen_metadata() {
@@ -301,7 +301,7 @@ run_vm() {
 		-drive if=virtio,file="$disk",format=raw \
 		-object rng-random,filename=/dev/urandom,id=rng0 \
 		-device virtio-rng-pci,rng=rng0 \
-		-m 6144 \
+		-m 8192 \
 		${bios[@]} \
 		-netdev tap,id=net0,script="$script0",downscript=/bin/true -device "$nic,netdev=net0,mac=$mac0" \
 		-netdev tap,id=net1,script="$script1",downscript=/bin/true -device "$nic,netdev=net1,mac=$mac1" \
