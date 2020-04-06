@@ -131,17 +131,17 @@ pipeline:
     commands:
       - OSES=ubuntu_16_04 make V=1 T=1 test-x86_64
 
-  slack:
-    image: plugins/slack
-    username: ${SLACK_WEBHOOK_USER}
-    channel: ${SLACK_WEBHOOK_CHANNEL}
-    webhook: ${SLACK_WEBHOOK_URL}
-    icon_url: https://raw.githubusercontent.com/drone/brand/master/logos/png/drone-logo-dark_128.png
-    when:
-      event:
-        - push
-        - tag
-    secrets:
-      - slack_webhook_user
-      - slack_webhook_channel
-      - slack_webhook_url
+#  slack:
+#    image: plugins/slack
+#    username: ${SLACK_WEBHOOK_USER}
+#    channel: ${SLACK_WEBHOOK_CHANNEL}
+#    webhook: ${SLACK_WEBHOOK_URL}
+#    icon_url: https://raw.githubusercontent.com/drone/brand/master/logos/png/drone-logo-dark_128.png
+#    when:
+#      event:
+#        - push
+#        - tag
+#    secrets:
+#      - slack_webhook_user
+#      - slack_webhook_channel
+#      - slack_webhook_url
