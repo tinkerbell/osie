@@ -1,16 +1,16 @@
 # osie
 
-[![Build Status](https://drone.packet.net/api/badges/packethost/osie/status.svg)](https://drone.packet.net/packethost/osie)
+[![Build Status](https://drone.packet.net/api/badges/tinkerbell/osie/status.svg)](https://drone.packet.net/tinkerbell/osie)
 
 # Deploying
 OSIE is built and uploaded to a self-hosted minio instance in ewr for master and tag builds.
 Production deployments should only be done from tags.
-Use the [git-tag-and-release](https://github.com/packethost/eng-tools/blob/master/git-tag-and-release) script found in the [eng-tools repo](https://github.com/packethost/eng-tools)
+Use the [git-tag-and-release](https://github.com/tinkerbell/eng-tools/blob/master/git-tag-and-release) script found in the [eng-tools repo](https://github.com/tinkerbell/eng-tools)
 At the end of the `upload` step, drone will output the command that can be run locally to deploy to some/all of production.
 
 # CI / Drone / Testing
 
-Commits to osie will be built and tested by [Drone CI](https://drone.packet.net/packethost/osie/)
+Commits to osie will be built and tested by [Drone CI](https://drone.packet.net/tinkerbell/osie/)
 Configuration for the build can be found in the root of the repo in .drone.yml
 
 # Alpine Kernel Compilation
