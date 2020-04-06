@@ -87,8 +87,8 @@ package-osies: ${packaged-osies}
 package-repos: ${packaged-repos}
 
 deploy: package
-	$(E) "UPLOAD   blob/osie/$v.tar.gz"
-	$(Q)mc cp build/$v.tar.gz blob/osie/$v.tar.gz
+	$(E) "UPLOAD   s3/tinkerbell-oss/osie-uploads/$v.tar.gz"
+	$(Q)mc cp build/$v.tar.gz s3/tinkerbell-oss/osie-uploads/$v.tar.gz
 	$(Q)echo "deploy this build with the following command:"
 	$(Q)echo -n "./scripts/deploy osie update $v -m \"$$"
 	$(Q)echo -n "(sed -n '/^## \[/,$$ {/\S/!q; p}' CHANGELOG.md)\" "
@@ -96,8 +96,8 @@ deploy: package
 	$(Q)echo
 
 upload-test: ${packages}
-	$(E) "UPLOAD   blob/osie-testing/$v/"
-	$(Q)mc cp --recursive build/$v/ blob/osie-testing/$v/ || ( \
+	$(E) "UPLOAD   s3/tinkerbell-oss/osie-uploads/osie-testing/$v/"
+	$(Q)mc cp --recursive build/$v/ s3/tinkerbell-oss/osie-uploads/osie-testing/$v/ || ( \
 		session=$$(mc session list --json | jq -r .sessionId); \
 		for i in {1..5}; do \
 			mc session resume $$session && exit 0; \

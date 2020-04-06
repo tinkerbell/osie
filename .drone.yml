@@ -106,7 +106,7 @@ pipeline:
     image: osie-test-env
     commands:
       - set -v +x
-      - mc config host add blob 'https://blob1-nrt1.packet.net' "$MINIO_USERNAME" "$MINIO_PASSWORD"
+      - mc config host add s3 'https://s3.amazonaws.com' "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" --api s3v4
       - set +v -x
       - make deploy
     when:
@@ -114,8 +114,8 @@ pipeline:
         - push
         - tag
     secrets:
-      - minio_username
-      - minio_password
+      - aws_access_key_id
+      - aws_secret_access_key
 
   test_aarch64_vm:
     group: test
