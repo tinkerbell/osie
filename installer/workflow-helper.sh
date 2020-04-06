@@ -9,12 +9,10 @@ registry_password=$(sed -nr 's|.*\bregistry_password=(\S+).*|\1|p' /proc/cmdline
 elastic_search_url=$(sed -nr 's|.*\belastic_search_url=(\S+).*|\1|p' /proc/cmdline)
 tinkerbell=$(sed -nr 's|.*\belastic_search_url=(\S+).*|\1|p' /proc/cmdline)
 worker_id=$(sed -nr 's|.*\bworker_id=(\S+).*|\1|p' /proc/cmdline)
-id=$(curl --connect-timeout 60 $tinkerbell:50061/metadata | jq -r .id)
+id=$(curl --connect-timeout 60 "$tinkerbell:50061/metadata" | jq -r .id)
 
 # Create workflow motd
 cat <<'EOF'
-
-
 ______          _        _                _
 | ___ \        | |      | |              | |
 | |_/ /_ _  ___| | _____| |_   _ __   ___| |_
@@ -38,47 +36,46 @@ See docs at http://wiki.alpinelinux.org
 EOF
 
 # get docker registry certificate
-wget $packet_base_url/ca.pem
+wget "$packet_base_url/ca.pem"
 
 # add registy certificate to docker daemon
-mkdir -p /etc/docker/ /etc/docker/certs.d/ /etc/docker/certs.d/$docker_registry
-cp ca.pem /etc/docker/certs.d/$docker_registry/ca.crt
+mkdir -p /etc/docker/ /etc/docker/certs.d/ "/etc/docker/certs.d/$docker_registry"
+cp ca.pem "/etc/docker/certs.d/$docker_registry/ca.crt"
 
 service docker start
 
 until docker info; do
-    echo 'Waiting for docker to respond...'
-    sleep 3
+	echo 'Waiting for docker to respond...'
+	sleep 3
 done
 
-until docker login $docker_registry -u $registry_username -p $registry_password; do
-    echo 'Waiting for docker to respond...'
-    sleep 3
+until docker login "$docker_registry" -u "$registry_username" -p "$registry_password"; do
+	echo 'Waiting for docker to respond...'
+	sleep 3
 done
 
 # stop mdev from messing with us once and for all
 rm -f /sbin/mdev
 
 docker run -dit --net host \
-	$docker_registry/fluent-bit:1.3 \
-	/fluent-bit/bin/fluent-bit -i forward -o es://$elastic_search_url/worker/worker
+	"$docker_registry/fluent-bit:1.3" \
+	/fluent-bit/bin/fluent-bit -i forward -o "es://$elastic_search_url/worker/worker"
 
 # waiting for fluentbit
 sleep 3
 
 mkdir /worker
-reason='docker exited with an error'
 
 docker run --privileged -ti \
-    -e "container_uuid=$id" \
-    -e "WORKER_ID=$worker_id" \
-    -e "DOCKER_REGISTRY=$docker_registry" \
-    -e "ROVER_GRPC_AUTHORITY=$grpc_authority" \
-    -e "ROVER_CERT_URL=$grpc_cert_url" \
-    -e "REGISTRY_USERNAME=$registry_username" \
-    -e "REGISTRY_PASSWORD=$registry_password" \
-    -v /worker:/worker \
-    -v /var/run/docker.sock:/var/run/docker.sock \
+	-e "container_uuid=$id" \
+	-e "WORKER_ID=$worker_id" \
+	-e "DOCKER_REGISTRY=$docker_registry" \
+	-e "TINKERBELL_GRPC_AUTHORITY=$grpc_authority" \
+	-e "TINKERBELL_CERT_URL=$grpc_cert_url" \
+	-e "REGISTRY_USERNAME=$registry_username" \
+	-e "REGISTRY_PASSWORD=$registry_password" \
+	-v /worker:/worker \
+	-v /var/run/docker.sock:/var/run/docker.sock \
 	--log-driver=fluentd -t \
-    --net host \
-    $docker_registry/worker
+	--net host \
+	"$docker_registry/tink-worker:latest"

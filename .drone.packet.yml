@@ -1,0 +1,147 @@
+---
+clone:
+  git:
+    image: quay.io/packet/drone-git
+    tags: true
+
+pipeline:
+  build_osie_test_env_image:
+    image: docker
+    commands:
+      - docker build -t osie-test-env ci
+      - mkdir build
+      - touch build/osie-test-env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  shfmt:
+    group: ci1
+    image: nixos/nix
+    commands:
+      - export LANG=en_US.UTF-8
+      - nix-shell --run 'shfmt -d $(git ls-files "*.sh")'
+
+  shellcheck:
+    group: ci1
+    image: koalaman/shellcheck-alpine
+    commands:
+      - shellcheck installer/*.sh ci/*.sh
+      - cd docker/scripts
+      - shellcheck -x *.sh
+
+  py_fmt_and_lint:
+    group: ci1
+    image: nixos/nix
+    commands:
+      - export LANG=en_US.UTF-8
+      - nix-shell --run 'black -t py35 --check --diff --exclude "scripts/eng-tools" .'
+      - nix-shell --run 'pylama docker $(ls osie-runner | grep -v hegel)'
+
+  osie_runner_pytest:
+    group: ci1
+    image: python:3.6-alpine
+    commands:
+      - pip install dpath==1.5.0 faker pytest pytest-cov
+      - cd osie-runner
+      - pytest -vv --cov=./
+
+  build_aarch64:
+    group: ci1
+    image: osie-test-env
+    commands:
+      - make V=1 T=1 build/osie-aarch64.tar.gz
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  build_x86_64:
+    group: ci1
+    image: osie-test-env
+    commands:
+      - make V=1 T=1 build/osie-x86_64.tar.gz
+      - make V=1 T=1 build/osie-runner-x86_64.tar.gz
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  network_test:
+    group: ci1
+    image: osie-test-env
+    privileged: true
+    commands:
+      - make T=1 test-packet-networking
+
+  osie_scripts_test:
+    group: ci1
+    image: osie-test-env
+    commands:
+      - find docker/tests -executable -name 'test_*.sh' -execdir {} ';'
+
+  generate_coverage_xml:
+    image: osie-test-env
+    commands:
+      - coverage combine build/network-coverage/.coverage osie-runner/.coverage
+      - coverage report
+      - coverage xml
+
+#  codecov:
+#    image: plugins/codecov
+#    secrets:
+#      - codecov_token
+
+  package_common:
+    image: osie-test-env
+    commands:
+      - make -j$(nproc) fetch
+      - make -j$(nproc) package-common
+
+  package:
+    image: osie-test-env
+    commands:
+      - make -j$(nproc) package
+    when:
+      event:
+        - push
+        - tag
+
+  upload:
+    image: osie-test-env
+    commands:
+      - set -v +x
+      - mc config host add blob 'https://blob1-nrt1.packet.net' "$MINIO_USERNAME" "$MINIO_PASSWORD"
+      - set +v -x
+      - make deploy
+    when:
+      event:
+        - push
+        - tag
+    secrets:
+      - minio_username
+      - minio_password
+
+  test_aarch64_vm:
+    group: test
+    image: osie-test-env
+    privileged: true
+    commands:
+      - OSES=ubuntu_16_04 make V=1 T=1 UEFI=true test-aarch64
+
+  test_x86_64_vm:
+    group: test
+    image: osie-test-env
+    privileged: true
+    commands:
+      - OSES=ubuntu_16_04 make V=1 T=1 test-x86_64
+
+#  slack:
+#    image: plugins/slack
+#    username: ${SLACK_WEBHOOK_USER}
+#    channel: ${SLACK_WEBHOOK_CHANNEL}
+#    webhook: ${SLACK_WEBHOOK_URL}
+#    icon_url: https://raw.githubusercontent.com/drone/brand/master/logos/png/drone-logo-dark_128.png
+#    when:
+#      event:
+#        - push
+#        - tag
+#    secrets:
+#      - slack_webhook_user
+#      - slack_webhook_channel
+#      - slack_webhook_url
