@@ -89,6 +89,7 @@ package-repos: ${packaged-repos}
 deploy: package
 	$(E) "UPLOAD   s3/tinkerbell-oss/osie-uploads/$v.tar.gz"
 	$(Q)mc cp build/$v.tar.gz s3/tinkerbell-oss/osie-uploads/$v.tar.gz
+	$(Q)if [[ $${DRONE_BRANCH:-} == "master" ]]; then mc cp s3/tinkerbell-oss/osie-uploads/$v.tar.gz s3/tinkerbell-oss/osie-uploads/latest.tar.gz; fi
 	$(Q)echo "deploy this build with the following command:"
 	$(Q)echo -n "./scripts/deploy osie update $v -m \"$$"
 	$(Q)echo -n "(sed -n '/^## \[/,$$ {/\S/!q; p}' CHANGELOG.md)\" "
