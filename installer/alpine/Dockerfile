@@ -1,4 +1,4 @@
-FROM alpine:3.7
+FROM alpine:3.11
 
 ENTRYPOINT /build.sh
 VOLUME /assets
@@ -27,12 +27,6 @@ RUN apk add --no-scripts --no-cache --update --upgrade \
     busybox-initscripts \
     coreutils \
     linux-headers \
-    ;
-
-# remove edge when linux-vanilla is > 4.14.8 and has the nfp driver enabled,
-# likely alpine v3.8
-RUN apk add --no-scripts --no-cache --update --upgrade --repository http://dl-cdn.alpinelinux.org/alpine/edge/main \
-    linux-firmware \
     ;
 
 RUN adduser -G abuild -g "Alpine Package Builder" -s /bin/ash -D builder && \

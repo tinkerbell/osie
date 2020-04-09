@@ -1,4 +1,4 @@
-FROM alpine:3.7
+FROM alpine:3.11
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["python3", "run.py"]
