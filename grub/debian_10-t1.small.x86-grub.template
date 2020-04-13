@@ -43,7 +43,7 @@ menuentry 'Debian' --class debian --class gnu-linux --class gnu {
 		else
 		  search --no-floppy --fs-uuid --set=root PACKET_ROOT_UUID
 		fi
-		linux  /boot/vmlinuz root=UUID=PACKET_ROOT_UUID ro serial console=tty0 console=ttyS1,115200n8 biosdevname=0 net.ifnames=1 $vt_handoff
+		linux  /boot/vmlinuz root=UUID=PACKET_ROOT_UUID ro serial console=tty0 console=ttyS1,115200n8 $vt_handoff
 		initrd /boot/initrd
 }
 
@@ -60,6 +60,6 @@ menuentry 'Debian - single user mode' --class debian --class gnu-linux --class g
 		else
 		  search --no-floppy --fs-uuid --set=root PACKET_ROOT_UUID
 		fi
-		linux  /boot/vmlinuz root=UUID=PACKET_ROOT_UUID ro serial console=tty0 console=ttyS1,115200n8 biosdevname=0 net.ifnames=1 single
+		linux  /boot/vmlinuz root=UUID=PACKET_ROOT_UUID ro serial console=tty0 console=ttyS1,115200n8 single
 		initrd /boot/initrd
 }
