@@ -91,7 +91,7 @@ menuentry 'Debian' --class debian --class gnu-linux --class gnu --class os --unr
 		else
 		  search --no-floppy --fs-uuid --set=root PACKET_ROOT_UUID
 		fi
-		linux  /boot/vmlinuz root=UUID=PACKET_ROOT_UUID ro console=ttyAMA0,115200 iommu.passthrough=1 biosdevname=0 net.ifnames=1 crashkernel=auto LANG=en_US.UTF-8
+		linux  /boot/vmlinuz root=UUID=PACKET_ROOT_UUID ro console=ttyAMA0,115200 iommu.passthrough=1 crashkernel=auto LANG=en_US.UTF-8
 		initrd /boot/initrd
 }
 
