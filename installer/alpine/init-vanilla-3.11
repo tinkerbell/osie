@@ -122,29 +122,14 @@ setup_inittab_console() {
 }
 
 # determine the default interface to use if ip=dhcp is set
-# uses "packet_bootdev_mac" kopt value if it exists
-# if none, will use the first "eth" interface that has a carrier link
-# falls back to the first "eth" interface alphabetically
-# keep sync'ed with docker/scripts/functions.sh
+# uses the first "eth" interface with operstate 'up'.
 ip_choose_if() {
-	local mac
-	mac=$(echo "$KOPT_packet_bootdev_mac" | tr 'A-Z' 'a-z')
-	if [ -n "$mac" ]; then
-		for x in /sys/class/net/eth*; do
-			[ -e "$x" ] && grep -q "$mac" "$x/address" && echo ${x##*/} && return
-		done
+	if [ -n "$KOPT_BOOTIF" ]; then
+		mac=$(printf "%s\n" "$KOPT_BOOTIF" | sed 's/^01-//;s/-/:/g')
+		dev=$(grep -l $mac /sys/class/net/*/address | head -n 1)
+		dev=${dev%/*}
+		[ -n "$dev" ] && echo "${dev##*/}" && return
 	fi
-
-	for x in /sys/class/net/eth*; do
-		[ -e "$x" ] && ip link set ${x##*/} up
-	done
-
-	sleep 1
-
-	for x in /sys/class/net/eth*; do
-		[ -e "$x" ] && grep -q 1 "$x/carrier" && echo ${x##*/} && return
-	done
-
 	for x in /sys/class/net/eth*; do
 		if grep -iq up $x/operstate; then
 			[ -e "$x" ] && echo ${x##*/} && return
@@ -206,17 +191,8 @@ configure_ip() {
 			return 1
 		fi
 		ebegin "Obtaining IP via DHCP ($device)..."
-		for i in $(seq 5); do
-			ip link set dev $device down
-			sleep 5
-			ip link set dev $device up
-			sleep 5
-			udhcpc -i $device -f -q -n &&
-				echo "Sleeping for network up..." &&
-				sleep 5 &&
-				break
-			/bin/false
-		done
+		ifconfig "$device" 0.0.0.0
+		udhcpc -i "$device" -f -q
 		eend $?
 	else
 		# manual configuration
@@ -244,7 +220,10 @@ relocate_mount() {
 		return
 	fi
 	while read dir; do
-		# OSIE: removal of skip http for netboot
+		# skip http(s)/ftp repos for netboot
+		if ! [ -d "$dir" ]; then
+			continue
+		fi
 		local dev=$(df -P "$dir" | tail -1 | awk '{print $1}')
 		local mnt=$(find_mnt $dev $fstab)
 		if [ -n "$mnt" ]; then
@@ -260,8 +239,7 @@ relocate_mount() {
 # find the dirs under ALPINE_MNT that are boot repositories
 find_boot_repositories() {
 	if [ -n "$ALPINE_REPO" ]; then
-		# OSIE: support local apk cache
-		echo "$ALPINE_REPO" | tr ',' '\n' | sort -u
+		echo "$ALPINE_REPO"
 	else
 		find /media/* -name .boot_repository -type f -maxdepth 3 |
 			sed 's:/.boot_repository$::'
@@ -283,7 +261,6 @@ setup_nbd() {
 	[ "$n" != 0 ] || return 1
 }
 
-set -x
 rtc_exists() {
 	local rtc=
 	for rtc in /dev/rtc /dev/rtc[0-9]*; do
@@ -323,7 +300,7 @@ prepare_zfs_root() {
 	fi
 }
 
-/bin/busybox mkdir -p /usr/bin /sbin /usr/sbin /proc /sys /dev $sysroot \
+/bin/busybox mkdir -p /usr/bin /usr/sbin /proc /sys /dev $sysroot \
 	/media/cdrom /media/usb /tmp /run/cryptsetup
 
 # Spread out busybox symlinks and make them available without full path
@@ -340,12 +317,6 @@ mount -t proc -o noexec,nosuid,nodev proc /proc
 mount -t sysfs -o noexec,nosuid,nodev sysfs /sys
 mount -t devtmpfs -o exec,nosuid,mode=0755,size=2M devtmpfs /dev 2>/dev/null ||
 	mount -t tmpfs -o exec,nosuid,mode=0755,size=2M tmpfs /dev
-
-# OSIE: setup cgroupsv1 for docker support
-# this can be removed when containerd gets cgroupsv2 support
-# issue still open as of 4/29/20:
-#  https://github.com/containerd/containerd/issues/3726
-mount -t cgroup -o all cgroup /sys/fs/cgroup
 
 # pty device nodes (later system will need it)
 [ -c /dev/ptmx ] || mknod -m 666 /dev/ptmx c 5 2
@@ -365,9 +336,6 @@ myopts="alpine_dev autodetect autoraid chart cryptroot cryptdm cryptheader crypt
 	pkgs quiet root_size root usbdelay ip alpine_repo apkovl alpine_start splash
 	blacklist overlaytmpfs rootfstype rootflags nbd resume s390x_net dasd ssh_key
 	BOOTIF"
-# OSIE: add packet_action options
-# TODO: rename to tinkerbell
-myopts="$myopts facility packet_action packet_base_url packet_bootdev_mac packet_state"
 
 for opt; do
 	case "$opt" in
@@ -386,36 +354,13 @@ for opt; do
 	done
 done
 
-# Add eclypsium driver(s)
-KOPT_modules="$KOPT_modules,eclypsiumdriver,ipmi_devintf"
-
 [ "$KOPT_quiet" = yes ] || echo "Alpine Init $VERSION"
 
 # enable debugging if requested
 [ -n "$KOPT_debug_init" ] && set -x
 
-# OSIE: check required vars
-ebegin "Verifying required kernel cmdline arguments"
-[ -z $KOPT_facility ] && eend 1 "missing required argument: facility"
-[ -z $KOPT_packet_action ] && eend 1 "missing required argument: packet_action"
-case $KOPT_packet_action in
-install) packet_action=osie-installer ;;
-rescue) packet_action=rescue-helper ;;
-workflow) packet_action=workflow-helper ;;
-*) eend 1 "unknown packet_action: $KOPT_packet_action" ;;
-esac
-
-case "$KOPT_packet_state" in
-'') ;;
-preinstalling) packet_action=runner ;;
-*) echo "ignoring packet_state: $KOPT_packet_state" ;;
-esac
-eend
 # set default values
 : ${KOPT_init:=/sbin/init}
-
-# enable debugging if requested
-[ -n "$KOPT_debug_init" ] && set -x
 
 # pick first keymap if found
 for map in /etc/keymap/*; do
@@ -437,7 +382,7 @@ fi
 # The following values are supported:
 #   alpine_repo=auto         -- default, search for .boot_repository
 #   alpine_repo=http://...   -- network repository
-ALPINE_REPO="http://dl-cdn.alpinelinux.org/alpine/v3.11/main,http://dl-cdn.alpinelinux.org/alpine/v3.11/community,http://dl-cdn.alpinelinux.org/alpine/edge/testing"
+ALPINE_REPO=${KOPT_alpine_repo}
 [ "$ALPINE_REPO" = "auto" ] && ALPINE_REPO=
 
 # hide kernel messages
@@ -632,9 +577,6 @@ else
 	ovl="$KOPT_apkovl"
 fi
 
-# OSIE: add necessary packages
-KOPT_pkgs="curl,docker,jq,mdadm,openssh,kexec-tools,tcpdump"
-
 # parse pkgs=pkg1,pkg2
 if [ -n "$KOPT_pkgs" ]; then
 	pkgs=$(echo "$KOPT_pkgs" | tr ',' ' ')
@@ -671,8 +613,7 @@ if [ -f "$sysroot/etc/.default_boot_services" -o ! -f "$ovl" ]; then
 	rc_add killprocs shutdown
 	rc_add savecache shutdown
 
-	# OSIE: set default action
-	rc_add $packet_action default
+	rc_add firstboot default
 
 	rm -f "$sysroot/etc/.default_boot_services"
 fi
@@ -752,10 +693,6 @@ ebegin "Installing packages to root filesystem"
 if [ "$KOPT_chart" = yes ]; then
 	pkgs="$pkgs acct"
 fi
-
-# OSIE: support local apk cache
-apkflags="--initramfs-diskless-boot --no-progress"
-apkflags="$apkflags --no-network --allow-untrusted --force-non-repository --no-cache"
 
 # add openssh
 if [ -n "$KOPT_ssh_key" ]; then
@@ -838,14 +775,6 @@ setup_inittab_console
 
 ! [ -f "$sysroot"/etc/resolv.conf ] && [ -f /etc/resolv.conf ] &&
 	cp /etc/resolv.conf "$sysroot"/etc
-
-# OSIE: Setup helper
-ebegin "Fetching Packet $packet_action files"
-base="${KOPT_packet_base_url:-http://install.$KOPT_facility.packet.net/misc/osie/current}" &&
-	wget "$base/$packet_action-rc" -O "$sysroot/etc/init.d/${packet_action}" &&
-	wget "$base/$packet_action.sh" -O "$sysroot/sbin/${packet_action}" &&
-	chmod +x "$sysroot/etc/init.d/${packet_action}" "$sysroot/sbin/${packet_action}"
-eend $?
 
 # setup bootchart for switch_root
 chart_init=""

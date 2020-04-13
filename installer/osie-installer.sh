@@ -128,9 +128,17 @@ cat <<-EOF | grep -v '^\s*$'
 	${packet_base_url:+packet_base_url: $packet_base_url}
 EOF
 
-until docker info; do
-	sleep 3
+for i in $(seq 5); do
+	echo "Waiting for docker to respond (${i})..." &&
+		docker info &&
+		break
+	sleep 5
 done
+if ! docker info; then
+	cat /var/log/docker.log
+	echo "Docker not responding, dropping to a shell..."
+	/bin/ash -i
+fi
 
 reason='unable to fetch/load osie image'
 if ! docker images "osie:$arch" | grep osie >/dev/null; then

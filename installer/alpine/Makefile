@@ -28,11 +28,19 @@ osie-alpine-initramfs-builder-aarch64: Dockerfile build.sh qemu-aarch64-static /
 osie-alpine-initramfs-builder-x86_64: Dockerfile build.sh qemu-aarch64-static
 	$(E) "IMAGE $@"
 	$(Q) docker build -f Dockerfile -t $@ . 1>$o 2>$e
-	$(Q) touch $@
+	$(E) "IMAGE $@ successfully built"
+ifeq ($(CI),drone)
+	$(E) "mkdir -p /tmp/$${DRONE_BUILD_NUMBER}"
+	$(Q) mkdir -p /tmp/$${DRONE_BUILD_NUMBER}
+	$(E) "docker run -v /tmp/$${DRONE_BUILD_NUMBER}:/assets --name assets_$${DRONE_BUILD_NUMBER} $@"
+	$(Q) docker run -v /tmp/$${DRONE_BUILD_NUMBER}:/assets --name assets_$${DRONE_BUILD_NUMBER} $@
+	$(E) "docker rm -f assets_$${DRONE_BUILD_NUMBER}"
+	$(Q) docker rm -f assets_$${DRONE_BUILD_NUMBER}
+endif
 
 qemu-aarch64-static:
 	$(E) "GET   $@"
-	$(Q) wget -qN https://github.com/multiarch/qemu-user-static/releases/download/v2.9.1-1/$@
+	$(Q) wget -q https://github.com/multiarch/qemu-user-static/releases/download/v2.9.1-1/$@
 
 /proc/sys/fs/binfmt_misc/qemu-aarch64:
 	$(E) 'You need to configure qemu-aarch64-static for aarch64 programs, for example:'

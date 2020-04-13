@@ -44,15 +44,19 @@ cp ca.pem "/etc/docker/certs.d/$docker_registry/ca.crt"
 
 service docker start
 
-until docker info; do
-	echo 'Waiting for docker to respond...'
-	sleep 3
+for i in $(seq 5); do
+	echo "Waiting for docker to respond (${i})..." &&
+		docker info &&
+		break
+	sleep 5
 done
+if ! docker info; then
+	cat /var/log/docker.log
+	echo "Docker not responding, dropping to a shell..."
+	/bin/ash -i
+fi
 
-until docker login "$docker_registry" -u "$registry_username" -p "$registry_password"; do
-	echo 'Waiting for docker to respond...'
-	sleep 3
-done
+docker login "$docker_registry" -u "$registry_username" -p "$registry_password"
 
 # stop mdev from messing with us once and for all
 rm -f /sbin/mdev

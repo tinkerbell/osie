@@ -1,5 +1,5 @@
 alpine_version_aarch64 := 3.4
-alpine_version_x86_64 := 3.7
+alpine_version_x86_64 := 3.11
 
 arches := aarch64 x86_64
 x86s := x86_64
@@ -258,6 +258,19 @@ build/$v/repo-x86_64:
 build/repo-x86_64:
 	$(Q)echo v${alpine_version_x86_64} > $@
 
+installer/alpine/assets:
+	$(Q)if [[ $${DRONE_BRANCH:-tag} != "master" ]]; then git fetch && \
+		assets_changed=$$(git diff --name-only origin/$${DRONE_BRANCH} origin/master | grep ^installer/alpine | wc -l); \
+		if [[ $${assets_changed} != "0" ]]; then ls -la ${PWD}/installer/alpine/assets-x86_64 && \
+			echo "Installer assets are changed ($${assets_changed} files) rebuilding" && \
+			make -j$(nproc) -C installer/alpine all && \
+			ls -la /tmp/$${DRONE_BUILD_NUMBER} && \
+			mv /tmp/$${DRONE_BUILD_NUMBER}/initramfs-x86_64 ${PWD}/installer/alpine/assets-x86_64/initramfs && \
+			mv /tmp/$${DRONE_BUILD_NUMBER}/modloop-x86_64 ${PWD}/installer/alpine/assets-x86_64/modloop && \
+			mv /tmp/$${DRONE_BUILD_NUMBER}/vmlinuz-x86_64 ${PWD}/installer/alpine/assets-x86_64/vmlinuz && \
+			ls -la ${PWD}/installer/alpine/assets-x86_64; \
+		fi; \
+	fi;
 
 define fetcher_arch_parch
 build/initramfs-$2: installer/alpine/assets-$2/initramfs

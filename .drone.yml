@@ -45,6 +45,15 @@ pipeline:
       - cd osie-runner
       - pytest -vv --cov=./
 
+  build_alpine_assets:
+    group: ci1
+    image: osie-test-env
+    commands:
+      - make installer/alpine/assets
+    volumes:
+      - /tmp:/tmp
+      - /var/run/docker.sock:/var/run/docker.sock
+
   build_aarch64:
     group: ci1
     image: osie-test-env
