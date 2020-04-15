@@ -109,6 +109,7 @@ do_ubuntu() {
 	'17.10') "do_ubuntu_17_10_$arch" ;;
 	'18.04') "do_ubuntu_18_04_$arch" ;;
 	'19.04') "do_ubuntu_19_04_$arch" ;;
+	'20.04') "do_ubuntu_20_04_$arch" ;;
 	*) do_unknown ;;
 	esac
 }
@@ -232,6 +233,33 @@ do_ubuntu_19_04_aarch64() {
 		deb http://ports.ubuntu.com/ubuntu-ports disco-backports main multiverse universe
 		deb http://ports.ubuntu.com/ubuntu-ports disco-security main multiverse universe
 		deb http://ports.ubuntu.com/ubuntu-ports disco-updates main multiverse universe
+	EOF_ub_repo
+}
+
+do_ubuntu_20_04_x86_64() {
+	echo "Configuring repos for Ubuntu $DVER"
+	cat <<-EOF_ub_repo >"$TARGET/etc/apt/sources.list"
+		deb http://archive.ubuntu.com/ubuntu focal main restricted
+		deb http://archive.ubuntu.com/ubuntu focal-updates main restricted
+		deb http://archive.ubuntu.com/ubuntu focal universe
+		deb http://archive.ubuntu.com/ubuntu focal-updates universe
+		deb http://archive.ubuntu.com/ubuntu focal multiverse
+		deb http://archive.ubuntu.com/ubuntu focal-updates multiverse
+		deb http://archive.ubuntu.com/ubuntu focal-backports main restricted universe multiverse
+		deb http://security.ubuntu.com/ubuntu focal-security main restricted
+		deb http://security.ubuntu.com/ubuntu focal-security universe
+		deb http://security.ubuntu.com/ubuntu focal-security multiverse
+	EOF_ub_repo
+}
+
+do_ubuntu_20_04_aarch64() {
+	echo "Configuring repos for Ubuntu $DVER for $arch"
+	echo 'Acquire::ForceIPv4 "true";' >"$TARGET/etc/apt/apt.conf.d/99force-ipv4"
+	cat <<-EOF_ub_repo >"$TARGET/etc/apt/sources.list"
+		deb http://ports.ubuntu.com/ubuntu-ports focal main multiverse universe
+		deb http://ports.ubuntu.com/ubuntu-ports focal-backports main multiverse universe
+		deb http://ports.ubuntu.com/ubuntu-ports focal-security main multiverse universe
+		deb http://ports.ubuntu.com/ubuntu-ports focal-updates main multiverse universe
 	EOF_ub_repo
 }
 
