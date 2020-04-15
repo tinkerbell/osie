@@ -6,5 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) t
 ## Unreleased
 
 ### Added
+- Remove c3.medium from kexec bypass
 - Strip biosdevname and net.ifname GRUB flags for Debian 10
 - workflow mode to allow users to execute workflows
