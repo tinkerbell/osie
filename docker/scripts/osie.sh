@@ -540,8 +540,6 @@ elif [[ ${OS} =~ ubuntu_16_04 && ${class} == t3.small.x86 ]]; then
 	echo -en '#!/bin/sh\nreboot\n' >/statedir/cleanup.sh
 elif [[ ${class} == c2.medium.x86 ]]; then
 	echo -en '#!/bin/sh\nreboot\n' >/statedir/cleanup.sh
-elif [[ ${class} == c3.medium.x86 ]]; then
-	echo -en '#!/bin/sh\nreboot\n' >/statedir/cleanup.sh
 fi
 
 chmod +x /statedir/cleanup.sh
