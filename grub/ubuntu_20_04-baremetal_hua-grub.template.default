@@ -1,0 +1,2 @@
+GRUB_CMDLINE_LINUX='console=ttyS0,115200n8 biosdevname=0 net.ifnames=0 crashkernel=auto LANG=en_US.UTF-8'
+GRUB_SERIAL_COMMAND='serial'
