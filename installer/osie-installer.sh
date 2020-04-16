@@ -95,7 +95,7 @@ if [ "$slug" = 'custom_ipxe' ]; then
 	mv "$metadata.tmp" "$metadata"
 fi
 
-jq -S '. + {"password_hash":"'"$pwhash"'", "state": (.state?//"'"$state"'")}' <"$metadata" >"$metadata.tmp"
+jq -S '. + {"password_hash":"'"$pwhash"'", "state": (.state? // "'"$state"'")}' <"$metadata" >"$metadata.tmp"
 mv "$metadata.tmp" "$metadata"
 echo "tweaked metadata:"
 jq -S . "$metadata"
