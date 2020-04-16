@@ -76,7 +76,7 @@ do_centos_7() {
 		enabled=1
 		gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 		priority=10
-		
+
 		#released updates
 		[packet-updates]
 		name=CentOS-\$releasever - Updates
@@ -85,7 +85,7 @@ do_centos_7() {
 		enabled=1
 		gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 		priority=10
-		
+
 		[packet-extras]
 		name=CentOS-\$releasever - Extras
 		baseurl=${mirror}/centos/\$releasever/extras/\$basearch/
