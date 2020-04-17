@@ -276,6 +276,8 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	cat <<EOF >/statedir/cleanup.sh
 #!/bin/sh
 
+set -euxo pipefail
+echo "kexecing into installed os"
 kexec -l ./kernel --initrd=./initrd --command-line="BOOT_IMAGE=/boot/vmlinuz root=UUID=$rootuuid ro $cmdline" || reboot
 kexec -e || reboot
 EOF
@@ -534,12 +536,20 @@ etimer=$(date +%s)
 echo -e "${BYELLOW}Install time: $((etimer - stimer))${NC}"
 
 # Bypass kexec for certain OS plan combos
-if [[ ${OS} =~ ubuntu_18_04 && ${class} == t1.small.x86 ]]; then
-	echo -en '#!/bin/sh\nreboot\n' >/statedir/cleanup.sh
-elif [[ ${OS} =~ ubuntu_16_04 && ${class} == t3.small.x86 ]]; then
-	echo -en '#!/bin/sh\nreboot\n' >/statedir/cleanup.sh
-elif [[ ${class} == c2.medium.x86 ]]; then
-	echo -en '#!/bin/sh\nreboot\n' >/statedir/cleanup.sh
+case ${OS}:${class} in
+ubuntu_18_04:t1.small.x86) reboot=true ;;
+ubuntu_16_04:t3.small.x86) reboot=true ;;
+*:c2.medium.x86) reboot=true ;;
+esac
+
+if ${reboot:-false}; then
+	cat <<EOF >/statedir/cleanup.sh
+#!/bin/sh
+
+set -euxo pipefail
+echo "rebooting into installed os"
+reboot
+EOF
 fi
 
 chmod +x /statedir/cleanup.sh
