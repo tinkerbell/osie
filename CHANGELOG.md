@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) t
 ## Unreleased
 
 ### Added
+- Enable kexec bypass for Ubuntu 16 on c3.medium.x86
 - Add Ubuntu 20.04 repos
 - Enable kexec bypass for centos 8 on t1.small.x86
 - Add Ubuntu 20.04 GRUB templates
