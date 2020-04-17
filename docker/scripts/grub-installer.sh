@@ -153,8 +153,3 @@ for disk in $bootdevs; do
 		install_grub_osie
 	fi
 done
-
-# Workaround for Supermicro UEFI shell issue (ENG-4045)
-if [[ $plan == "c3.small.x86" ]] || [[ $plan == "s3.xlarge.x86" ]]; then
-	$uefi && echo "exit" >"$target/boot/efi/startup.nsh"
-fi
