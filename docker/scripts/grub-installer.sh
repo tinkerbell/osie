@@ -70,7 +70,7 @@ echo "OS: $DOS  ARCH: $arch VER: $DVER"
 
 chroot_install=false
 
-if [[ $DOS == "RedHatEnterpriseServer" ]] && [[ $arch == "aarch64" ]] || [[ $plan == "c3.medium.x86" ]]; then
+if [[ $DOS == "RedHatEnterpriseServer" ]] && [[ $arch == "aarch64" ]]; then
 	chroot_install=true
 fi
 
