@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) t
 ## Unreleased
 
 ### Added
+- Add Ubuntu 20.04 repos
 - Add Ubuntu 20.04 GRUB templates
 - Remove c3.medium from kexec bypass
 - Strip biosdevname and net.ifname GRUB flags for Debian 10
