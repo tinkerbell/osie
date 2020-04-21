@@ -57,7 +57,7 @@ done
 # stop mdev from messing with us once and for all
 rm -f /sbin/mdev
 
-docker run -dit --net host \
+docker run -dt --net host \
 	"$docker_registry/fluent-bit:1.3" \
 	/fluent-bit/bin/fluent-bit -i forward -o "es://$elastic_search_url/worker/worker"
 
@@ -66,7 +66,7 @@ sleep 3
 
 mkdir /worker
 
-docker run --privileged -ti \
+docker run --privileged -t \
 	-e "container_uuid=$id" \
 	-e "WORKER_ID=$worker_id" \
 	-e "DOCKER_REGISTRY=$docker_registry" \
