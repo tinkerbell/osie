@@ -2,3 +2,5 @@
 
 name="Packet Workflow"
 command="/sbin/workflow-helper"
+command_background=true
+pidfile=/run/workflow-helper.pid
