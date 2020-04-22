@@ -539,6 +539,7 @@ echo -e "${BYELLOW}Install time: $((etimer - stimer))${NC}"
 case ${OS}:${class} in
 centos_8:t1.small.x86) reboot=true ;;
 ubuntu_18_04:t1.small.x86) reboot=true ;;
+ubuntu_20_04:t1.small.x86) reboot=true ;;
 ubuntu_16_04:c3.medium.x86) reboot=true ;;
 ubuntu_16_04:t3.small.x86) reboot=true ;;
 *:c2.medium.x86) reboot=true ;;
