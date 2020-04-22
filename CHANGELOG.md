@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) t
 ## Unreleased
 
 ### Added
+- Bypass kexec for t1.small and Ubuntu 20
 - Bypass kexec for c3.medium and Ubuntu 16
 - Remove Supermicro UEFI workarounds
 - Add Ubuntu 20.04 repos
