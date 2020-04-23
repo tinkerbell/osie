@@ -536,7 +536,7 @@ etimer=$(date +%s)
 echo -e "${BYELLOW}Install time: $((etimer - stimer))${NC}"
 
 # Bypass kexec for certain OS plan combos
-case ${OS}:${class} in
+case ${os}:${class} in
 centos_8:t1.small.x86) reboot=true ;;
 ubuntu_18_04:t1.small.x86) reboot=true ;;
 ubuntu_20_04:t1.small.x86) reboot=true ;;
