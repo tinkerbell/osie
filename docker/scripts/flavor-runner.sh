@@ -23,7 +23,7 @@ get_script() {
 }
 
 if [[ $0 == "${BASH_SOURCE[0]}" ]]; then
-	set -o errexit -o nounset -o pipefail -o xtrace
+	set -o errexit -o nounset -o pipefail
 	state=$(jq -r .state /statedir/metadata)
 	slug=$(jq -r .operating_system.slug /statedir/metadata)
 	script=$(get_script "$state" "$slug")

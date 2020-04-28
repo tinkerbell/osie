@@ -1,7 +1,7 @@
 #!/bin/bash
 
 source functions.sh && init
-set +o errexit +o pipefail +o xtrace
+set +o errexit +o pipefail
 
 # defaults
 # shellcheck disable=SC2207
