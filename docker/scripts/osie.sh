@@ -130,11 +130,18 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	mkdir $assetdir
 	echo -e "${GREEN}#### Fetching image (and more) via git ${NC}"
 
-	# config hosts entry so git-lfs assets are pulled through our image cache
-	githost="images.packet.net"
-	images_ip=$(getent hosts $githost | awk '{print $1}')
+	# config hosts entry so git-lfs assets from github and our github-mirror are
+	# pulled through our image cache
+	githost="github-mirror.packet.net"
+	if ! (ensure_reachable github-mirror.packet.net && github_mirror_check); then
+		echo -e "${YELLOW}###### github-mirror health check failed, falling back to using github.com${NC}"
+		githost="github.com"
+	fi
+	images_ip=$(getent hosts images.packet.net | awk '{print $1}')
 	cp -a /etc/hosts /etc/hosts.new
-	echo "$images_ip        github-cloud.s3.amazonaws.com" >>/etc/hosts.new && cp -f /etc/hosts.new /etc/hosts
+	echo "$images_ip        github-cloud.s3.amazonaws.com" >>/etc/hosts.new
+	echo "$images_ip        $githost" >>/etc/hosts.new
+	cp -f /etc/hosts.new /etc/hosts
 	echo -n "LFS pulls via github-cloud will now resolve to image cache:"
 	getent hosts github-cloud.s3.amazonaws.com | awk '{print $1}'
 
