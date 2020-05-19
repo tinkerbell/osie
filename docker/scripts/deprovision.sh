@@ -207,19 +207,15 @@ baremetal_2a2 | baremetal_2a4 | baremetal_2a5 | baremetal_hua)
 esac
 
 # Run eclypsium
-if [[ $arch == x86_64 ]]; then
-	case "$facility" in
-	ssg-* | att-*)
-		echo "skipping eclypsium in unsupported facility"
-		;;
-	*)
+if [[ -n "${ECLYPSIUM_TOKEN:-}" ]]; then
+	if [[ $arch == x86_64 ]]; then
 		case "$class" in
 		disabled.plan.here)
 			echo "skipping eclypsium on unsuppported plan"
 			;;
 		*)
 			https_proxy="http://eclypsium-proxy-${facility}.packet.net:8888/" /usr/bin/EclypsiumApp \
-				-s1 prod-0918.eclypsium.net placeholder \
+				-s1 prod-0918.eclypsium.net "${ECLYPSIUM_TOKEN}" \
 				-disable-progress-bar \
 				-medium \
 				-log stderr \
@@ -227,8 +223,7 @@ if [[ $arch == x86_64 ]]; then
 				-custom-id "${id}" || echo 'EclypsiumApp Failed!'
 			;;
 		esac
-		;;
-	esac
+	fi
 fi
 
 phone_home "${tinkerbell}" '{"type":"deprovisioning.306.02","body":"Deprovision finished, rebooting server","private":true}'
