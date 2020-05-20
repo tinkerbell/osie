@@ -70,23 +70,24 @@ RUN apk add --no-scripts --update --upgrade /home/builder/packages/main/x86_64/l
 #   make && \
 #   make install
 
-ARG ECLYPSIUM_DRIVER_VERSION=1.5.0
-ARG ECLYPSIUM_DRIVER_SHA512=2fa6dc1ce1c7e492d481863f7581f2499e6ee66dfe9a97932935b5b17ea17ccaf075fcef8bb745a900215e3d8175fff75001c83d3af38743e2df96055527a044
-ARG ECLYPSIUM_DRIVER_FILENAME=eclypsiumdriver-${ECLYPSIUM_DRIVER_VERSION}-alpine.tgz
+ARG ECLYPSIUM_DRIVER_VERSION=2.0.0
+ARG ECLYPSIUM_DRIVER_SHA512=b9cfebc3b0abd834d73f025f925d896bea8d9dac2a3c3605980a94a35cd188db159ca165e5884863f5bd4a94d39861ecdf998cf8e99ea89d6f093a7bc64b5347
+ARG ECLYPSIUM_DRIVER_FILENAME=eclypsiumdriver-alpine-${ECLYPSIUM_DRIVER_VERSION}.tgz
 
 COPY ${ECLYPSIUM_DRIVER_FILENAME} /home/builder/
 USER builder
 WORKDIR /home/builder
 
+ENV FLAVOR vanilla
 # Download the eclypsium driver abuild and build it
 # we force it to build for a vanilla kernel of a specific version with the sed(s) below
 # sed -i 's/4\.9\.65/4.14.34/g' APKBUILD && \
-# sed -i 's/_kpkgrel=1/_kpkgrel=0/' APKBUILD && \
 # sed -i 's/\tmake/make kernel-src-dir="\/lib\/modules\/4.14.34-0-vanilla\/build" machine="x86_64"/' APKBUILD && \
 RUN echo "${ECLYPSIUM_DRIVER_SHA512}  ${ECLYPSIUM_DRIVER_FILENAME}" | sha512sum -c && \
     tar -zxvf ${ECLYPSIUM_DRIVER_FILENAME} && \
     cd aports/non-free/eclypsiumdriver && \
-    sed -i 's/4\.19\.45/4.14.55/g' APKBUILD && \
+    sed -i 's/_kpkgrel=1/_kpkgrel=0/' APKBUILD && \
+    sed -i 's/5\.4\.12/4.14.55/g' APKBUILD && \
     abuild checksum && \
     abuild -r
 
