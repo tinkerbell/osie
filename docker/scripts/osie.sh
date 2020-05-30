@@ -144,6 +144,8 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 		gitpath="packethost/packet-images.git"
 		gituri="https://${githost}/${gitpath}"
 
+		# Address intermittent LFS smudge failures by increasing maxretries
+		git config --global lfs.transfer.maxtretries 10
 		# TODO - figure how we can do SSL passthru for github-cloud to images cache
 		git config --global http.sslverify false
 	elif [[ $custom_image == true ]]; then
@@ -158,7 +160,8 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	git -C $assetdir init
 	git -C $assetdir remote add origin "${gituri}"
 	git -C $assetdir fetch origin
-	git -C $assetdir checkout "${image_tag}"
+	echo -e "${GREEN}#### Checking out: ${image_tag}${NC}"
+	GIT_TRACE=1 git -C $assetdir checkout "${image_tag}"
 
 	OS=${OS%%:*}
 
