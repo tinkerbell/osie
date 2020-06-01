@@ -63,6 +63,7 @@ arch=$(uname -m)
 packet_base_url=$(sed -nr 's|.*\bpacket_base_url=(\S+).*|\1|p' /proc/cmdline)
 pwhash=$(sed -nr 's|.*\bpwhash=(\S+).*|\1|p' /proc/cmdline)
 kslug=$(sed -nr 's|.*\bslug=(\S+).*|\1|p' /proc/cmdline)
+eclypsium_token=$(sed -nr 's|.*\beclypsium_token=(\S+).*|\1|p' /proc/cmdline)
 
 case $kslug in
 *deprovision*) state=deprovision ;;
@@ -173,6 +174,7 @@ docker run --privileged -ti \
 	-h "${hardware_id}" \
 	-e "container_uuid=$id" \
 	-e "RLOGHOST=$tinkerbell" \
+	-e "ECLYPSIUM_TOKEN=${eclypsium_token:-}" \
 	-v /dev:/dev \
 	-v /dev/console:/dev/console \
 	-v /lib/firmware:/lib/firmware:ro \
