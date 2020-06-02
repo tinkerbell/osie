@@ -144,6 +144,8 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 		gitpath="packethost/packet-images.git"
 		gituri="https://${githost}/${gitpath}"
 
+		# Increase LFS max retries to prevent intermittent LFS smudge failures
+		git config --global lfs.transfer.maxtretries 10
 		# TODO - figure how we can do SSL passthru for github-cloud to images cache
 		git config --global http.sslverify false
 	elif [[ $custom_image == true ]]; then
