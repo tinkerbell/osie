@@ -130,16 +130,30 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	mkdir $assetdir
 	echo -e "${GREEN}#### Fetching image (and more) via git ${NC}"
 
-	# config hosts entry so git-lfs assets are pulled through our image cache
-	githost="images.packet.net"
-	images_ip=$(getent hosts $githost | awk '{print $1}')
+	# config hosts entry so git-lfs assets from github and our github-mirror are
+	# pulled through our image cache
+	images_ip=$(getent hosts images.packet.net | awk '{print $1}')
 	cp -a /etc/hosts /etc/hosts.new
-	echo "$images_ip        github-cloud.s3.amazonaws.com" >>/etc/hosts.new && cp -f /etc/hosts.new /etc/hosts
+	{
+		echo "$images_ip        github-cloud.s3.amazonaws.com"
+		echo "$images_ip        github.com"
+		echo "$images_ip        github-mirror.packet.net"
+	} >>/etc/hosts.new
+	# Note: using mv here fails (415 Unsupported Media Type) because docker sets
+	# this up as a bind mount and we can't replace it.
+	cp -f /etc/hosts.new /etc/hosts
 	echo -n "LFS pulls via github-cloud will now resolve to image cache:"
 	getent hosts github-cloud.s3.amazonaws.com | awk '{print $1}'
 
 	if [[ ${OS} =~ : && $custom_image == false ]]; then
 		image_tag=$(echo "$OS" | awk -F':' '{print $2}')
+
+		githost="github-mirror.packet.net"
+		# Prefer our local github-mirror, falling back to github.com
+		if ! (ensure_reachable github-mirror.packet.net && github_mirror_check); then
+			echo -e "${YELLOW}###### github-mirror health check failed, falling back to using github.com${NC}"
+			githost="github.com"
+		fi
 
 		gitpath="packethost/packet-images.git"
 		gituri="https://${githost}/${gitpath}"
@@ -158,9 +172,11 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 
 	ensure_reachable "$gituri"
 	git -C $assetdir init
+	echo -e "${GREEN}#### Adding git remote uri: ${gituri}${NC}"
 	git -C $assetdir remote add origin "${gituri}"
 	echo -e "${GREEN}#### Performing a shallow git fetch for: ${image_tag}${NC}"
 	git -C $assetdir fetch --depth 1 origin "${image_tag}"
+	echo -e "${GREEN}###### Performing a checkout of FETCH_HEAD${NC}"
 	git -C $assetdir checkout FETCH_HEAD
 
 	OS=${OS%%:*}
