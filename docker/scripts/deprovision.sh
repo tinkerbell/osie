@@ -79,7 +79,7 @@ elif [[ $efi_status == false && $boot_mode == BIOS ]]; then
 	echo "EFI status is reported as FALSE and matches boot mode BIOS: OK"
 else
 	echo "ERROR: EFI status [$efi_status] does not match active boot mode [$boot_mode]"
-	echo "Check BIOS configuration for boot mode and/or the UEFI attributes set on the hardware device."
+	echo "OSIE-1001 - Check BIOS configuration for boot mode and/or the UEFI attributes set on the hardware device."
 	: problem "$tinkerbell" '{"problem":"uefi_mismatch"}'
 	exit 1
 fi
