@@ -40,6 +40,7 @@ declare tinkerbell && set_from_metadata tinkerbell 'phone_home_url' <"$metadata"
 declare id && set_from_metadata id 'id' <"$metadata"
 declare preserve_data && set_from_metadata preserve_data 'preserve_data' false <"$metadata"
 declare deprovision_fast && set_from_metadata deprovision_fast 'deprovision_fast' false <"$metadata"
+declare efi_status && set_from_metadata efi_status 'specs.features.uefi' <"$metadata"
 
 # shellcheck disable=SC2001
 tinkerbell=$(echo "$tinkerbell" | sed 's|\(http://[^/]\+\).*|\1|')
@@ -66,6 +67,22 @@ fi
 
 assert_block_or_loop_devs "${disks[@]}"
 assert_same_type_devs "${disks[@]}"
+
+# UEFI mismatch check - ensure desired boot mode
+[ -d /sys/firmware/efi ] && boot_mode=UEFI || boot_mode=BIOS
+
+if [[ $efi_status == null ]]; then
+	echo "WARNING: Skipping EFI check since no status was provided in spec features!"
+elif [[ $efi_status == true && $boot_mode == UEFI ]]; then
+	echo "EFI status is reported as TRUE and matches boot mode UEFI: OK"
+elif [[ $efi_status == false && $boot_mode == BIOS ]]; then
+	echo "EFI status is reported as FALSE and matches boot mode BIOS: OK"
+else
+	echo "ERROR: EFI status [$efi_status] does not match active boot mode [$boot_mode]"
+	echo "OSIE-1001 - Check BIOS configuration for boot mode and/or the UEFI attributes set on the hardware device."
+	: problem "$tinkerbell" '{"problem":"uefi_mismatch"}'
+	exit 1
+fi
 
 stimer=$(date +%s)
 

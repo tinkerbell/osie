@@ -16,7 +16,7 @@ pipeline:
 
   shfmt:
     group: ci1
-    image: nixos/nix
+    image: nixos/nix:2.3.4
     commands:
       - export LANG=en_US.UTF-8
       - nix-shell --run 'shfmt -d $(git ls-files "*.sh")'
@@ -31,7 +31,7 @@ pipeline:
 
   py_fmt_and_lint:
     group: ci1
-    image: nixos/nix
+    image: nixos/nix:2.3.4
     commands:
       - export LANG=en_US.UTF-8
       - nix-shell --run 'black -t py35 --check --diff --exclude "scripts/eng-tools" .'
