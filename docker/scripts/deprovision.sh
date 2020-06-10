@@ -40,7 +40,7 @@ declare tinkerbell && set_from_metadata tinkerbell 'phone_home_url' <"$metadata"
 declare id && set_from_metadata id 'id' <"$metadata"
 declare preserve_data && set_from_metadata preserve_data 'preserve_data' false <"$metadata"
 declare deprovision_fast && set_from_metadata deprovision_fast 'deprovision_fast' false <"$metadata"
-declare efi_status && set_from_metadata efi_status 'specs.features.uefi' <"$metadata"
+declare efi_status && set_from_metadata efi_status 'specs.features.uefi' null <"$metadata"
 
 # shellcheck disable=SC2001
 tinkerbell=$(echo "$tinkerbell" | sed 's|\(http://[^/]\+\).*|\1|')
