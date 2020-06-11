@@ -4,3 +4,8 @@ name="Packet Workflow"
 command="/sbin/workflow-helper"
 command_background=true
 pidfile=/run/workflow-helper.pid
+start_stop_daemon_args="--stdout /var/log/${RC_SVCNAME}.log --stderr /var/log/${RC_SVCNAME}.log"
+
+depend() {
+    need docker
+}

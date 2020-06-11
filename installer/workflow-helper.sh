@@ -42,13 +42,6 @@ wget "$packet_base_url/ca.pem"
 mkdir -p /etc/docker/ /etc/docker/certs.d/ "/etc/docker/certs.d/$docker_registry"
 cp ca.pem "/etc/docker/certs.d/$docker_registry/ca.crt"
 
-service docker start
-
-until docker info; do
-	echo 'Waiting for docker to respond...'
-	sleep 3
-done
-
 until docker login "$docker_registry" -u "$registry_username" -p "$registry_password"; do
 	echo 'Waiting for docker to respond...'
 	sleep 3
