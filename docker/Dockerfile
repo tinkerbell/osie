@@ -28,7 +28,7 @@ RUN apt-get update -y && \
 COPY build-git-openssl.sh /tmp/osie/
 RUN apt-get update -y && \
     /tmp/osie/build-git-openssl.sh && \
-    dpkg --unpack /tmp/osie/git_*.deb /tmp/osie/git-core_*.deb /tmp/osie/git-man_*.deb && \
+    dpkg --unpack /tmp/osie/git_*.deb && \
     apt-get install -f -y --no-install-recommends && \
     apt-get -y autoremove && \
     apt-get -y clean && \

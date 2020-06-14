@@ -4,7 +4,13 @@ set -euxo nounset
 
 d=$(mktemp -d)
 cd "$d"
+apt-get install -y software-properties-common
+# The version of git that comes with Xenial (2.7.4) doesn't support shallow
+# clones from our github-mirror server, so use the latest officially supported
+# Xenial release from the Ubuntu git maintainers PPA
+add-apt-repository -y ppa:git-core/ppa
 sed -i 's|^# deb-src|deb-src|' /etc/apt/sources.list
+sed -i 's|^# deb-src|deb-src|' /etc/apt/sources.list.d/git-core-ubuntu-ppa-xenial.list
 apt-get update
 
 # this is to get mk-build-deps which creates a virtual package that deps on the
@@ -47,7 +53,7 @@ apt-get source git
 	dpkg-buildpackage -rfakeroot -b -j"$(nproc)"
 )
 mv ./*.deb /tmp/osie
-apt-get purge -y devscripts equivs libcurl4-openssl-dev
+apt-get purge -y devscripts equivs libcurl4-openssl-dev software-properties-common
 apt-get autoremove -y
 cd
 rm -rf "$d"
