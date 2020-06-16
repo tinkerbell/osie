@@ -664,6 +664,34 @@ function ensure_reachable() {
 	echo -e "${YELLOW}###### OK${NC}"
 }
 
+# Check that our git-lfs mirror server is working
+function github_mirror_check() {
+	echo -e "${YELLOW}###### Checking the health of github-mirror.packet.net...${NC}"
+
+	# Clone the repo, and checkout an LFS branch.
+	local timeout=20 # seconds
+	local lfs_testing_uri="https://github-mirror.packet.net/packethost/lfs-testing.git"
+	local lfs_testing_branch="remotes/origin/images-tiny"
+	if ! timeout --preserve-status $timeout git clone -q $lfs_testing_uri; then
+		echo -e "${YELLOW}###### Timeout when cloning the lfs-testing repo${NC}"
+		return 1
+	fi
+	cd lfs-testing
+	if ! timeout --preserve-status $timeout git checkout -q $lfs_testing_branch; then
+		cd .. && rm -rf lfs-testing
+		echo -e "${YELLOW}###### Timeout when checking out git-lfs data from lfs-testing${NC}"
+		return 1
+	fi
+	checksum=$(sha256sum tiny/tiny.img | awk '{ print $1 }')
+	cd .. && rm -rf lfs-testing
+
+	local valid_checksum="7b331c02e313c7599d5a90212e17e6d3cb729bd2e1c9b873c302a63c95a2f9bf"
+	if [[ "$checksum" != "$valid_checksum" ]]; then
+		echo -e "${YELLOW}###### Test git-lfs checkout from github-mirror had a bad checksum${NC}"
+		return 1
+	fi
+}
+
 # determine the default interface to use if ip=dhcp is set
 # uses "PACKET_BOOTDEV_MAC" kopt value if it exists
 # if none, will use the first "eth" interface that has a carrier link
