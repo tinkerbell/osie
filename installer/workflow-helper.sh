@@ -7,7 +7,7 @@ packet_base_url=$(sed -nr 's|.*\bpacket_base_url=(\S+).*|\1|p' /proc/cmdline)
 registry_username=$(sed -nr 's|.*\bregistry_username=(\S+).*|\1|p' /proc/cmdline)
 registry_password=$(sed -nr 's|.*\bregistry_password=(\S+).*|\1|p' /proc/cmdline)
 elastic_search_url=$(sed -nr 's|.*\belastic_search_url=(\S+).*|\1|p' /proc/cmdline)
-tinkerbell=$(sed -nr 's|.*\belastic_search_url=(\S+).*|\1|p' /proc/cmdline)
+tinkerbell=$(sed -nr 's|.*\btinkerbell=(\S+).*|\1|p' /proc/cmdline)
 worker_id=$(sed -nr 's|.*\bworker_id=(\S+).*|\1|p' /proc/cmdline)
 id=$(curl --connect-timeout 60 "$tinkerbell:50061/metadata" | jq -r .id)
 
