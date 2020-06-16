@@ -169,6 +169,8 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 
 		gituri="${image_repo}"
 	fi
+	# Silence verbose notice about deatched HEAD state
+	git config --global advice.detachedHead false
 
 	ensure_reachable "$gituri"
 	git -C $assetdir init
