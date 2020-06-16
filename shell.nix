@@ -48,6 +48,7 @@ in mkShell {
     python3Packages.flake8
     python3Packages.grpcio
     python3Packages.grpcio-tools
+    python3Packages.j2cli
     python3Packages.pip
     python3Packages.pip-tools
     python3Packages.pylama
