@@ -1,0 +1,11 @@
+{
+  "platforms": {
+    "2a2": "aarch64",
+    "aarch64": "aarch64",
+    "amp": "aarch64",
+    "hua": "aarch64",
+    "qcom": "aarch64",
+    "tx2": "aarch64",
+    "x86_64": "x86_64"
+  }
+}
