@@ -25,7 +25,7 @@ pipeline:
     group: ci1
     image: koalaman/shellcheck-alpine
     commands:
-      - shellcheck installer/*.sh ci/*.sh
+      - shellcheck apps/*.sh ci/*.sh
       - cd docker/scripts
       - shellcheck -x *.sh
 

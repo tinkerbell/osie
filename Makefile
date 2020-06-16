@@ -39,6 +39,7 @@ v := osie-$v
 # ensure build/$v always exists without having to add as an explicit dependency
 $(shell mkdir -p build/$v)
 
+apps := $(shell git ls-files apps/)
 cprs := $(shell git ls-files ci/cpr/)
 grubs := $(shell git ls-files grub/)
 osiesrcs := $(shell git ls-files docker/)
@@ -64,7 +65,7 @@ test: test-aarch64 test-x86_64 test-packet-networking
 v:
 	@echo $v
 
-packaged-apps := $(addprefix build/$v/, osie-installer.sh osie-installer-rc rescue-helper.sh rescue-helper-rc runner.sh runner-rc workflow-helper.sh workflow-helper-rc)
+packaged-apps := $(subst apps/,build/$v/,${apps})
 packaged-grubs := $(addprefix build/$v/,$(subst -,/,${grubs}))
 packaged-osies := build/$v/osie-aarch64.tar.gz build/$v/osie-x86_64.tar.gz
 packaged-repos := build/$v/repo-aarch64 build/$v/repo-x86_64
@@ -120,15 +121,11 @@ ${packaged-grubs}: ${grubs}
 	$(E) "INSTALL  $@"
 	$(Q)install -Dm644 $(addprefix grub/,$(subst /,-,$(patsubst build/$v/grub/%,%,$@))) $@
 
-build/$v/osie-installer-rc: installer/osie-installer-rc
-build/$v/osie-installer.sh: installer/osie-installer.sh
-build/$v/rescue-helper-rc: installer/rescue-helper-rc
-build/$v/rescue-helper.sh: installer/rescue-helper.sh
-build/$v/workflow-helper-rc: installer/workflow-helper-rc
-build/$v/workflow-helper.sh: installer/workflow-helper.sh
-build/$v/runner-rc: installer/runner-rc
-build/$v/runner.sh: installer/runner.sh
-${packaged-apps}:
+build/$v/%-rc: apps/%-rc
+	$(E) "INSTALL  $@"
+	$(Q)install -D -m644 $< $@
+
+build/$v/%.sh: apps/%.sh
 	$(E) "INSTALL  $@"
 	$(Q)install -D -m644 $< $@
 
