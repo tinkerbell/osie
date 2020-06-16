@@ -67,9 +67,10 @@ v:
 
 packaged-apps := $(subst apps/,build/$v/,${apps})
 packaged-grubs := $(addprefix build/$v/,$(subst -,/,${grubs}))
+packaged-osie-runners := build/$v/osie-runner-x86_64.tar.gz
 packaged-osies := build/$v/osie-aarch64.tar.gz build/$v/osie-x86_64.tar.gz
 packaged-repos := build/$v/repo-aarch64 build/$v/repo-x86_64
-packages := ${packaged-apps} ${packaged-grubs} ${packaged-osies} ${packaged-repos} build/$v/osie-runner-x86_64.tar.gz
+packages := ${packaged-apps} ${packaged-grubs} ${packaged-osie-runners} ${packaged-osies} ${packaged-repos}
 
 define packager_parch
 .PHONY: package-$1
