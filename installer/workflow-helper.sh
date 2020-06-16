@@ -6,7 +6,6 @@ grpc_cert_url=$(sed -nr 's|.*\bgrpc_cert_url=(\S+).*|\1|p' /proc/cmdline)
 packet_base_url=$(sed -nr 's|.*\bpacket_base_url=(\S+).*|\1|p' /proc/cmdline)
 registry_username=$(sed -nr 's|.*\bregistry_username=(\S+).*|\1|p' /proc/cmdline)
 registry_password=$(sed -nr 's|.*\bregistry_password=(\S+).*|\1|p' /proc/cmdline)
-elastic_search_url=$(sed -nr 's|.*\belastic_search_url=(\S+).*|\1|p' /proc/cmdline)
 tinkerbell=$(sed -nr 's|.*\btinkerbell=(\S+).*|\1|p' /proc/cmdline)
 worker_id=$(sed -nr 's|.*\bworker_id=(\S+).*|\1|p' /proc/cmdline)
 id=$(curl --connect-timeout 60 "$tinkerbell:50061/metadata" | jq -r .id)
@@ -57,13 +56,6 @@ done
 # stop mdev from messing with us once and for all
 rm -f /sbin/mdev
 
-docker run -dt --net host \
-	"$docker_registry/fluent-bit:1.3" \
-	/fluent-bit/bin/fluent-bit -i forward -o "es://$elastic_search_url/worker/worker"
-
-# waiting for fluentbit
-sleep 3
-
 mkdir /worker
 
 docker run --privileged -t \
@@ -76,6 +68,6 @@ docker run --privileged -t \
 	-e "REGISTRY_PASSWORD=$registry_password" \
 	-v /worker:/worker \
 	-v /var/run/docker.sock:/var/run/docker.sock \
-	--log-driver=fluentd -t \
+	-t \
 	--net host \
 	"$docker_registry/tink-worker:latest"
