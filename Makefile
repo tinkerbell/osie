@@ -168,6 +168,10 @@ build/$v/test-initramfs-%/test-initramfs: build/$v/initramfs-% installer/alpine/
 		pigz -9 initramfs.cpio && \
 		mv initramfs.cpio.gz $(@F)
 
+build/osie-test-env: ci/Dockerfile
+	docker build -t osie-test-env ci 2>&1 | tee $@.log >/dev/$T
+	touch $@
+
 define test_arch
 test-$1: $(cprs) build/osie-test-env package-apps package-grubs build/$v/osie-$1.tar.gz build/$v/osie-runner-$1.tar.gz build/$v/repo-$1 $${packaged-$1} ci/ifup.sh ci/vm.sh build/$v/test-initramfs-$1/test-initramfs
 	$(E) "DOCKER   $$@"
@@ -213,10 +217,6 @@ else
 	ln -nsf $(CURDIR)/build/network-coverage /coverage
 	ci/vm.sh network_test | tee build/$@.log >/dev/$T
 endif
-
-build/osie-test-env: ci/Dockerfile
-	docker build -t osie-test-env ci 2>&1 | tee $@.log >/dev/$T
-	touch $@
 
 build/osie-aarch64.tar.gz: SED=/FROM/ s|.*|FROM multiarch/ubuntu-debootstrap:arm64-xenial|
 build/osie-x86_64.tar.gz: SED=
