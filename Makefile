@@ -255,7 +255,6 @@ build/$v/repo-x86_64:
 build/repo-x86_64:
 	$(Q)echo v${alpine_version_x86_64} > $@
 
-
 define fetcher_arch_parch
 build/initramfs-$2: installer/alpine/assets-$2/initramfs
 build/modloop-$2:   installer/alpine/assets-$2/modloop
@@ -265,16 +264,3 @@ build/initramfs-$2 build/modloop-$2 build/vmlinuz-$2:
 endef
 $(foreach parch,$(x86s),$(eval $(call fetcher_arch_parch,x86_64,$(parch))))
 $(foreach parch,$(arms),$(eval $(call fetcher_arch_parch,aarch64,$(parch))))
-
-.PHONY: check-checksums clean fetch info
-fetch: $(foreach parch,$(parches), build/initramfs-$(parch) build/modloop-$(parch) build/vmlinuz-$(parch))
-
-checksums :=
-define checksums_builder_parch
-checksums += $${checksum_$1_initramfs}  build/initramfs-$1
-checksums += $${checksum_$1_modloop}  build/modloop-$1
-checksums += $${checksum_$1_vmlinuz}  build/vmlinuz-$1
-endef
-$(foreach parch,$(parches),$(eval $(call checksums_builder_parch,$(parch))))
-check-checksums:
-	$(E) "${checksums}" | sed -e 's|^ ||' -e 's|\(\S\) \(\S\)|\1\n\2|g' | sha512sum -c | sort
