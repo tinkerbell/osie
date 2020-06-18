@@ -64,20 +64,19 @@ test: test-aarch64 test-x86_64 test-packet-networking
 v:
 	@echo $v
 
-define packager_parch
-.PHONY: package-$1
-packaged-$1 := $$(addprefix build/$$v/, initramfs-$1 modloop-$1 vmlinuz-$1)
-package-$1: $${packaged-$1}
-endef
-$(foreach parch,$(parches),$(eval $(call packager_parch,$(parch))))
-
-
 packaged-apps := $(addprefix build/$v/, osie-installer.sh osie-installer-rc rescue-helper.sh rescue-helper-rc runner.sh runner-rc workflow-helper.sh workflow-helper-rc)
 packaged-grubs := $(addprefix build/$v/,$(subst -,/,${grubs}))
 packaged-osies := build/$v/osie-aarch64.tar.gz build/$v/osie-x86_64.tar.gz
 packaged-repos := build/$v/repo-aarch64 build/$v/repo-x86_64
 packages := ${packaged-apps} ${packaged-grubs} ${packaged-osies} ${packaged-repos} build/$v/osie-runner-x86_64.tar.gz
-$(eval packages += $(foreach parch,$(parches),$${packaged-$(parch)}))
+
+define packager_parch
+.PHONY: package-$1
+packaged-$1 := $$(addprefix build/$$v/, initramfs-$1 modloop-$1 vmlinuz-$1)
+package-$1: $${packaged-$1}
+packages += $${packaged-$1}
+endef
+$(foreach parch,$(parches),$(eval $(call packager_parch,$(parch))))
 
 package: build/$v.tar.gz build/$v.tar.gz.sha512sum
 package-common: package-apps package-grubs
