@@ -778,11 +778,8 @@ if [ -f /var/cache/misc/*modloop*.SIGN.RSA.*.pub ]; then
 fi
 
 apkflags="--initramfs-diskless-boot --progress"
-if [ -z "$MAC_ADDRESS" ]; then
-	apkflags="$apkflags --no-network"
-else
-	apkflags="$apkflags --update-cache"
-fi
+# OSIE: always assume no network
+apkflags="$apkflags --no-network"
 
 if [ "$KOPT_quiet" = yes ]; then
 	apkflags="$apkflags --quiet"
@@ -799,7 +796,11 @@ mount -o bind /dev $sysroot/dev
 if [ -n "$ovlfiles" ]; then
 	apk add --root $sysroot $repo_opt $apkflags $pkgs <$ovlfiles
 else
-	apk add --root $sysroot $repo_opt $apkflags $pkgs
+	# OSIE: add apk packages from cache
+	#apk add --root $sysroot $repo_opt $apkflags $pkgs
+	mv /etc/apk/repositories /etc/apk/repositories.bak
+	apk add --root $sysroot $apkflags $(ls /etc/apk/cache/*.apk)
+	mv /etc/apk/repositories.bak /etc/apk/repositories
 fi
 umount $sysroot/sys $sysroot/proc $sysroot/dev
 eend $?
