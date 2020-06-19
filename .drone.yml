@@ -90,7 +90,6 @@ pipeline:
   package_common:
     image: osie-test-env
     commands:
-      - make -j$(nproc) fetch
       - make -j$(nproc) package-common
 
   package:

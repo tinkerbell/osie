@@ -73,13 +73,29 @@ packaged-osies := build/$v/osie-aarch64.tar.gz build/$v/osie-x86_64.tar.gz
 packaged-repos := build/$v/repo-aarch64 build/$v/repo-x86_64
 packages := ${packaged-apps} ${packaged-grubs} ${packaged-osie-runners} ${packaged-osies} ${packaged-repos}
 
-define packager_parch
-.PHONY: package-$1
-packaged-$1 := $$(addprefix build/$$v/, initramfs-$1 modloop-$1 vmlinuz-$1)
-package-$1: $${packaged-$1}
-packages += $${packaged-$1}
-endef
-$(foreach parch,$(parches),$(eval $(call packager_parch,$(parch))))
+.PHONY: package-2a2 package-aarch64 package-amp package-hua package-qcom package-tx2 package-x86_64
+packaged-2a2 := build/$v/initramfs-2a2 build/$v/modloop-2a2 build/$v/vmlinuz-2a2
+package-2a2: ${packaged-2a2}
+packages += ${packaged-2a2}
+packaged-aarch64 := build/$v/initramfs-aarch64 build/$v/modloop-aarch64 build/$v/vmlinuz-aarch64
+package-aarch64: ${packaged-aarch64}
+packages += ${packaged-aarch64}
+packaged-amp := build/$v/initramfs-amp build/$v/modloop-amp build/$v/vmlinuz-amp
+package-amp: ${packaged-amp}
+packages += ${packaged-amp}
+packaged-hua := build/$v/initramfs-hua build/$v/modloop-hua build/$v/vmlinuz-hua
+package-hua: ${packaged-hua}
+packages += ${packaged-hua}
+packaged-qcom := build/$v/initramfs-qcom build/$v/modloop-qcom build/$v/vmlinuz-qcom
+package-qcom: ${packaged-qcom}
+packages += ${packaged-qcom}
+packaged-tx2 := build/$v/initramfs-tx2 build/$v/modloop-tx2 build/$v/vmlinuz-tx2
+package-tx2: ${packaged-tx2}
+packages += ${packaged-tx2}
+packaged-x86_64 := build/$v/initramfs-x86_64 build/$v/modloop-x86_64 build/$v/vmlinuz-x86_64
+package-x86_64: ${packaged-x86_64}
+packages += ${packaged-x86_64}
+
 
 package: build/$v.tar.gz build/$v.tar.gz.sha512sum
 package-common: package-apps package-grubs
@@ -135,16 +151,56 @@ build/$v/osie-%: build/osie-%
 	$(E)"INSTALL  $@"
 	$(Q)install -D -m644 $< $@
 
-define initramfs_builder_arch_parch
-build/$$v/initramfs-$2: build/$$v-rootfs-$2 installer/alpine/init-$1
-	$(E)"CPIO     $$@"
-	$(Q) install -m755 installer/alpine/init-$1 build/$$v-rootfs-$2/init
-	$(Q) (cd build/$$v-rootfs-$2 && find -print0 | bsdcpio --null --quiet -oH newc | pigz -9) >$$@.osied
-	$(Q) install -D -m644 $$@.osied $$@
-	$(Q) touch $$@
-endef
-$(foreach parch,$(x86s),$(eval $(call initramfs_builder_arch_parch,x86_64,$(parch))))
-$(foreach parch,$(arms),$(eval $(call initramfs_builder_arch_parch,aarch64,$(parch))))
+
+build/$v/initramfs-2a2: build/$v-rootfs-2a2 installer/alpine/init-aarch64
+	$(E)"CPIO     $@"
+	$(Q) install -m755 installer/alpine/init-aarch64 build/$v-rootfs-2a2/init
+	$(Q) (cd build/$v-rootfs-2a2 && find -print0 | bsdcpio --null --quiet -oH newc | pigz -9) >$@.osied
+	$(Q) install -D -m644 $@.osied $@
+	$(Q) touch $@
+
+build/$v/initramfs-aarch64: build/$v-rootfs-aarch64 installer/alpine/init-aarch64
+	$(E)"CPIO     $@"
+	$(Q) install -m755 installer/alpine/init-aarch64 build/$v-rootfs-aarch64/init
+	$(Q) (cd build/$v-rootfs-aarch64 && find -print0 | bsdcpio --null --quiet -oH newc | pigz -9) >$@.osied
+	$(Q) install -D -m644 $@.osied $@
+	$(Q) touch $@
+
+build/$v/initramfs-amp: build/$v-rootfs-amp installer/alpine/init-aarch64
+	$(E)"CPIO     $@"
+	$(Q) install -m755 installer/alpine/init-aarch64 build/$v-rootfs-amp/init
+	$(Q) (cd build/$v-rootfs-amp && find -print0 | bsdcpio --null --quiet -oH newc | pigz -9) >$@.osied
+	$(Q) install -D -m644 $@.osied $@
+	$(Q) touch $@
+
+build/$v/initramfs-hua: build/$v-rootfs-hua installer/alpine/init-aarch64
+	$(E)"CPIO     $@"
+	$(Q) install -m755 installer/alpine/init-aarch64 build/$v-rootfs-hua/init
+	$(Q) (cd build/$v-rootfs-hua && find -print0 | bsdcpio --null --quiet -oH newc | pigz -9) >$@.osied
+	$(Q) install -D -m644 $@.osied $@
+	$(Q) touch $@
+
+build/$v/initramfs-qcom: build/$v-rootfs-qcom installer/alpine/init-aarch64
+	$(E)"CPIO     $@"
+	$(Q) install -m755 installer/alpine/init-aarch64 build/$v-rootfs-qcom/init
+	$(Q) (cd build/$v-rootfs-qcom && find -print0 | bsdcpio --null --quiet -oH newc | pigz -9) >$@.osied
+	$(Q) install -D -m644 $@.osied $@
+	$(Q) touch $@
+
+build/$v/initramfs-tx2: build/$v-rootfs-tx2 installer/alpine/init-aarch64
+	$(E)"CPIO     $@"
+	$(Q) install -m755 installer/alpine/init-aarch64 build/$v-rootfs-tx2/init
+	$(Q) (cd build/$v-rootfs-tx2 && find -print0 | bsdcpio --null --quiet -oH newc | pigz -9) >$@.osied
+	$(Q) install -D -m644 $@.osied $@
+	$(Q) touch $@
+
+build/$v/initramfs-x86_64: build/$v-rootfs-x86_64 installer/alpine/init-x86_64
+	$(E)"CPIO     $@"
+	$(Q) install -m755 installer/alpine/init-x86_64 build/$v-rootfs-x86_64/init
+	$(Q) (cd build/$v-rootfs-x86_64 && find -print0 | bsdcpio --null --quiet -oH newc | pigz -9) >$@.osied
+	$(Q) install -D -m644 $@.osied $@
+	$(Q) touch $@
+
 
 build/$v/modloop-%: build/modloop-%
 	$(E)"INSTALL  $@"
@@ -173,23 +229,35 @@ build/osie-test-env: ci/Dockerfile
 	docker build -t osie-test-env ci 2>&1 | tee $@.log >/dev/$T
 	touch $@
 
-define test_arch
-test-$1: $(cprs) build/osie-test-env package-apps package-grubs build/$v/osie-$1.tar.gz build/$v/osie-runner-$1.tar.gz build/$v/repo-$1 $${packaged-$1} ci/ifup.sh ci/vm.sh build/$v/test-initramfs-$1/test-initramfs
-	$(E)"DOCKER   $$@"
+test-aarch64: $(cprs) build/osie-test-env package-apps package-grubs build/$v/osie-aarch64.tar.gz build/$v/osie-runner-aarch64.tar.gz build/$v/repo-aarch64 ${packaged-aarch64} ci/ifup.sh ci/vm.sh build/$v/test-initramfs-aarch64/test-initramfs
+	$(E)"DOCKER   $@"
 ifneq ($(CI),drone)
 	$(Q)docker run --rm -ti \
 		--privileged \
-		--name $$(@F) \
+		--name $(@F) \
 		--volume $(CURDIR):/osie:ro \
 		--env OSES \
 		--env UEFI \
 		osie-test-env \
-		/osie/ci/vm.sh tests -C /osie/build/$v -k vmlinuz-$1 -i test-initramfs-$1/test-initramfs -m modloop-$1 -a $1 2>&1 | tee build/$$@.log >/dev/$T
+		/osie/ci/vm.sh tests -C /osie/build/$v -k vmlinuz-aarch64 -i test-initramfs-aarch64/test-initramfs -m modloop-aarch64 -a aarch64 2>&1 | tee build/$@.log >/dev/$T
 else
-		ci/vm.sh tests -C build/$v -k vmlinuz-$1 -i test-initramfs-$1/test-initramfs -m modloop-$1 -a $1 2>&1 | tee build/$$@.log >/dev/$T
+		ci/vm.sh tests -C build/$v -k vmlinuz-aarch64 -i test-initramfs-aarch64/test-initramfs -m modloop-aarch64 -a aarch64 2>&1 | tee build/$@.log >/dev/$T
 endif
-endef
-$(foreach arch,aarch64 x86_64,$(eval $(call test_arch,$(arch))))
+test-x86_64: $(cprs) build/osie-test-env package-apps package-grubs build/$v/osie-x86_64.tar.gz build/$v/osie-runner-x86_64.tar.gz build/$v/repo-x86_64 ${packaged-x86_64} ci/ifup.sh ci/vm.sh build/$v/test-initramfs-x86_64/test-initramfs
+	$(E)"DOCKER   $@"
+ifneq ($(CI),drone)
+	$(Q)docker run --rm -ti \
+		--privileged \
+		--name $(@F) \
+		--volume $(CURDIR):/osie:ro \
+		--env OSES \
+		--env UEFI \
+		osie-test-env \
+		/osie/ci/vm.sh tests -C /osie/build/$v -k vmlinuz-x86_64 -i test-initramfs-x86_64/test-initramfs -m modloop-x86_64 -a x86_64 2>&1 | tee build/$@.log >/dev/$T
+else
+		ci/vm.sh tests -C build/$v -k vmlinuz-x86_64 -i test-initramfs-x86_64/test-initramfs -m modloop-x86_64 -a x86_64 2>&1 | tee build/$@.log >/dev/$T
+endif
+
 
 build/$v-rootfs-%: build/initramfs-%
 	$(E)"EXTRACT  $@"
@@ -241,7 +309,6 @@ build/osie-runner-aarch64.tar.gz:
 	$(E)"FAKE     $@"
 	$(Q) touch $@
 
-# aarch64
 build/$v/repo-aarch64:
 	$(E)"LN       $@"
 	$(Q)ln -nsf ../../../alpine/edge $@
@@ -256,13 +323,52 @@ build/$v/repo-x86_64:
 build/repo-x86_64:
 	$(Q)echo v${alpine_version_x86_64} > $@
 
-define fetcher_arch_parch
-build/initramfs-$2: installer/alpine/assets-$2/initramfs
-build/modloop-$2:   installer/alpine/assets-$2/modloop
-build/vmlinuz-$2:   installer/alpine/assets-$2/vmlinuz
-build/initramfs-$2 build/modloop-$2 build/vmlinuz-$2:
+
+build/initramfs-2a2: installer/alpine/assets-2a2/initramfs
+build/modloop-2a2:   installer/alpine/assets-2a2/modloop
+build/vmlinuz-2a2:   installer/alpine/assets-2a2/vmlinuz
+build/initramfs-2a2 build/modloop-2a2 build/vmlinuz-2a2:
 	$(E)"LN       $@"
-	$(Q)ln -nsf ../$$< $$@
-endef
-$(foreach parch,$(x86s),$(eval $(call fetcher_arch_parch,x86_64,$(parch))))
-$(foreach parch,$(arms),$(eval $(call fetcher_arch_parch,aarch64,$(parch))))
+	$(Q)ln -nsf ../$< $@
+
+build/initramfs-aarch64: installer/alpine/assets-aarch64/initramfs
+build/modloop-aarch64:   installer/alpine/assets-aarch64/modloop
+build/vmlinuz-aarch64:   installer/alpine/assets-aarch64/vmlinuz
+build/initramfs-aarch64 build/modloop-aarch64 build/vmlinuz-aarch64:
+	$(E)"LN       $@"
+	$(Q)ln -nsf ../$< $@
+
+build/initramfs-amp: installer/alpine/assets-amp/initramfs
+build/modloop-amp:   installer/alpine/assets-amp/modloop
+build/vmlinuz-amp:   installer/alpine/assets-amp/vmlinuz
+build/initramfs-amp build/modloop-amp build/vmlinuz-amp:
+	$(E)"LN       $@"
+	$(Q)ln -nsf ../$< $@
+
+build/initramfs-hua: installer/alpine/assets-hua/initramfs
+build/modloop-hua:   installer/alpine/assets-hua/modloop
+build/vmlinuz-hua:   installer/alpine/assets-hua/vmlinuz
+build/initramfs-hua build/modloop-hua build/vmlinuz-hua:
+	$(E)"LN       $@"
+	$(Q)ln -nsf ../$< $@
+
+build/initramfs-qcom: installer/alpine/assets-qcom/initramfs
+build/modloop-qcom:   installer/alpine/assets-qcom/modloop
+build/vmlinuz-qcom:   installer/alpine/assets-qcom/vmlinuz
+build/initramfs-qcom build/modloop-qcom build/vmlinuz-qcom:
+	$(E)"LN       $@"
+	$(Q)ln -nsf ../$< $@
+
+build/initramfs-tx2: installer/alpine/assets-tx2/initramfs
+build/modloop-tx2:   installer/alpine/assets-tx2/modloop
+build/vmlinuz-tx2:   installer/alpine/assets-tx2/vmlinuz
+build/initramfs-tx2 build/modloop-tx2 build/vmlinuz-tx2:
+	$(E)"LN       $@"
+	$(Q)ln -nsf ../$< $@
+
+build/initramfs-x86_64: installer/alpine/assets-x86_64/initramfs
+build/modloop-x86_64:   installer/alpine/assets-x86_64/modloop
+build/vmlinuz-x86_64:   installer/alpine/assets-x86_64/vmlinuz
+build/initramfs-x86_64 build/modloop-x86_64 build/vmlinuz-x86_64:
+	$(E)"LN       $@"
+	$(Q)ln -nsf ../$< $@
