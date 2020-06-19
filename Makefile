@@ -264,11 +264,9 @@ installer/alpine/assets:
 		if [[ $${assets_changed} != "0" ]]; then ls -la ${PWD}/installer/alpine/assets-x86_64 && \
 			echo "Installer assets are changed ($${assets_changed} files) rebuilding" && \
 			make -j$(nproc) -C installer/alpine all && \
-			ls -la /tmp/$${DRONE_BUILD_NUMBER} && \
 			mv /tmp/$${DRONE_BUILD_NUMBER}/initramfs-x86_64 ${PWD}/installer/alpine/assets-x86_64/initramfs && \
 			mv /tmp/$${DRONE_BUILD_NUMBER}/modloop-x86_64 ${PWD}/installer/alpine/assets-x86_64/modloop && \
-			mv /tmp/$${DRONE_BUILD_NUMBER}/vmlinuz-x86_64 ${PWD}/installer/alpine/assets-x86_64/vmlinuz && \
-			ls -la ${PWD}/installer/alpine/assets-x86_64; \
+			mv /tmp/$${DRONE_BUILD_NUMBER}/vmlinuz-x86_64 ${PWD}/installer/alpine/assets-x86_64/vmlinuz; \
 		fi; \
 	fi;
 

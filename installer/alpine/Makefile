@@ -27,7 +27,7 @@ osie-alpine-initramfs-builder-aarch64: Dockerfile build.sh qemu-aarch64-static /
 
 osie-alpine-initramfs-builder-x86_64: Dockerfile build.sh qemu-aarch64-static
 	$(E) "IMAGE $@"
-	$(Q) docker build -f Dockerfile -t $@ . 1>$o 2>$e
+	$(Q) V=1 docker build -f Dockerfile -t $@ . 1>$o 2>$e
 	$(E) "IMAGE $@ successfully built"
 ifeq ($(CI),drone)
 	$(E) "mkdir -p /tmp/$${DRONE_BUILD_NUMBER}"
