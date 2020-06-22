@@ -10,6 +10,7 @@ import urllib.parse as parse
 
 import grpc
 import requests
+import srvlookup
 
 import hegel_pb2 as hegel
 import hegel_pb2_grpc
@@ -39,9 +40,27 @@ def failer():
     return func
 
 
-def connect_hegel(stub):
+def get_hegel_authority(facility):
+    try:
+        srv = srvlookup.lookup("grpc", domain=f"hegel.{facility}.packet.net")[0]
+        return f"{srv.hostname}:{srv.port}"
+    except:
+        authority = "hegel.packet.net:50060"
+        if facility == "lab1":
+            authority = "hegel-lab1.packet.net:50060"
+
+        return authority
+
+
+def connect_hegel(facility):
+    creds = grpc.ssl_channel_credentials()
+    authority = get_hegel_authority(facility)
+    channel = grpc.secure_channel(authority, creds)
+    stub = hegel_pb2_grpc.HegelStub(channel)
+
     iterations = 0
     for backoff in itertools.chain((0, 1, 2, 5, 10), itertools.repeat(10)):
+        iterations += 1
         try:
             if backoff > 0:
                 log.info("failed to connect, sleeping for %s seconds" % backoff)
@@ -50,7 +69,6 @@ def connect_hegel(stub):
 
             resp = stub.Get(hegel.GetRequest())
             watch = stub.Subscribe(hegel.SubscribeRequest())
-            iterations += 1
             return watch, resp
         except grpc.RpcError:
             pass
@@ -68,14 +86,7 @@ statedir = os.getenv("STATEDIR_HOST")
 if not statedir:
     fail("STATEDIR_HOST env var is missing, unable to proceed")
 
-authority = "hegel.packet.net:50060"
-if facility == "lab1":
-    authority = "hegel-lab1.packet.net:50060"
-
-creds = grpc.ssl_channel_credentials()
-channel = grpc.secure_channel(authority, creds)
-stub = hegel_pb2_grpc.HegelStub(channel)
-watch, resp = connect_hegel(stub)
+watch, resp = connect_hegel(facility)
 
 # TODO decide to keep or remove? means we'd ignore a failed deprov
 log.info("wiping disk partitions")
@@ -112,7 +123,7 @@ while True:
         log.info("hegel went away, attempting to reconnect")
         while True:
             try:
-                watch, resp = connect_hegel(stub)
+                watch, resp = connect_hegel(facility)
                 break
             except Exception as e:
                 log.error("could not connect to hegel, sleeping a bit")
