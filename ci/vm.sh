@@ -348,8 +348,8 @@ do_test() {
 	# 1. do not verify https cert for metadata.packet.net since we dont want to add real cert here
 	# 2. poweroff instead of reboot after install
 	sed -i \
+		-e '/^ensure_time$/ s|^|curl http://metadata.packet.net/bundle.pem >/tmp/caddy-cert.pem\n|' \
 		-e '/curl.*https:\/\/metadata.packet.net/ s|curl|curl --cacert /tmp/caddy-cert.pem|' \
-		-e '/^hardware_id=/ s|^|curl http://metadata.packet.net/bundle.pem >/tmp/caddy-cert.pem\n|' \
 		-e '/^\s*reboot$/ s|reboot|poweroff|' \
 		-e 's|\./cleanup.sh.*|poweroff|' \
 		osie-installer.sh runner.sh
