@@ -17,7 +17,7 @@ fail() {
 ensure_time() {
 	local d hwdate mddate month
 	local months='jan feb mar apr may jun jul aug sep oct nov dec'
-	d=$(curl -sI http://metadata.packet.net/metadata | sed -n '/^Date:/ s|Date: ||p')
+	d=$(curl -sI https://metadata.packet.net/metadata | sed -n '/^Date:/ s|Date: ||p')
 	# shellcheck disable=SC2018 disable=SC2019
 	month=$(echo "$d" | awk '{print $3}' | tr 'A-Z' 'a-z')
 	local i=1
