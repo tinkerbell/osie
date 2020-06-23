@@ -14,10 +14,15 @@ fail() {
 # sets the time to what metadata server has. This assumes that the metadata
 # service has a better chance of having its time synced. This is a hack until
 # we have ntp in each facility.
+#
+# This needs to be http because the whole reason for it is RTC might be wrong,
+# so if we were to try https in that scenario we'd get a certificate validity
+# error.
 ensure_time() {
 	local d hwdate mddate month
 	local months='jan feb mar apr may jun jul aug sep oct nov dec'
-	d=$(curl -sI http://metadata.packet.net/metadata | sed -n '/^Date:/ s|Date: ||p')
+	# *must* be http, not https
+	d=$(curl -sI "http://tinkerbell.$facility.packet.net" | sed -n '/^Date:/ s|Date: ||p')
 	# shellcheck disable=SC2018 disable=SC2019
 	month=$(echo "$d" | awk '{print $3}' | tr 'A-Z' 'a-z')
 	local i=1
@@ -60,6 +65,7 @@ EOF
 arch=$(uname -m)
 
 # Pull in kopts
+facility=$(sed -nr 's|.*\bfacility=(\S+).*|\1|p' /proc/cmdline)
 packet_base_url=$(sed -nr 's|.*\bpacket_base_url=(\S+).*|\1|p' /proc/cmdline)
 pwhash=$(sed -nr 's|.*\bpwhash=(\S+).*|\1|p' /proc/cmdline)
 kslug=$(sed -nr 's|.*\bslug=(\S+).*|\1|p' /proc/cmdline)
