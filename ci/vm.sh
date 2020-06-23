@@ -348,7 +348,7 @@ do_test() {
 	# 1. do not verify https cert for metadata.packet.net since we dont want to add real cert here
 	# 2. poweroff instead of reboot after install
 	sed -i \
-		-e '/^ensure_time$/ s|^|curl http://metadata.packet.net/bundle.pem >/tmp/caddy-cert.pem\n|' \
+		-e '/^ensure_time$/ s|^|curl http://metadata.packet.net/bundle.pem \| tee /tmp/caddy-cert.pem\n|' \
 		-e '/curl.*https:\/\/metadata.packet.net/ s|curl|curl --cacert /tmp/caddy-cert.pem|' \
 		-e '/^\s*reboot$/ s|reboot|poweroff|' \
 		-e 's|\./cleanup.sh.*|poweroff|' \
