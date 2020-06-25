@@ -21,6 +21,7 @@ structlog.configure(
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
         structlog.processors.UnicodeDecoder(),
+        structlog.processors.TimeStamper(fmt="iso"),
         renderer,
     ],
     context_class=dict,
