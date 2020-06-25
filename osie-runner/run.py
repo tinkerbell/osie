@@ -55,6 +55,7 @@ def get_hegel_authority(facility):
 def connect_hegel(facility):
     creds = grpc.ssl_channel_credentials()
     authority = get_hegel_authority(facility)
+    log.info("connecting to", authority=authority)
     channel = grpc.secure_channel(authority, creds)
     stub = hegel_pb2_grpc.HegelStub(channel)
 
