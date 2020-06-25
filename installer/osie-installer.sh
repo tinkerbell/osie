@@ -48,6 +48,7 @@ ensure_time() {
 }
 
 set -o errexit -o pipefail
+set -x
 
 # Create OSIE motd
 cat <<'EOF' >/etc/motd
