@@ -97,6 +97,8 @@ class Handler:
             log.info("network is not ready yet", network_ready=network_ready)
             return
 
+        args = ()
+
         metadata = cacher_to_metadata(j, tinkerbell)
         pre = j["preinstalled_operating_system_version"]
 
@@ -109,10 +111,9 @@ class Handler:
             old_state = metadata["state"]
             metadata["state"] = "osie.internal.check-env"
 
-        env = {"PACKET_BOOTDEV_MAC": os.getenv("PACKET_BOOTDEV_MAC", "")}
-        args = ("-M", "/statedir/metadata")
         log.info("writing metadata")
         write_statefile(self.statedir + "metadata", json.dumps(metadata))
+        args += ("-M", "/statedir/metadata")
 
         userdata = instance.get("userdata", "")
         if userdata:
@@ -120,6 +121,7 @@ class Handler:
             write_statefile(self.statedir + "userdata", userdata)
             args += ("-u", "/statedir/userdata")
 
+        env = {"PACKET_BOOTDEV_MAC": os.getenv("PACKET_BOOTDEV_MAC", "")}
         instance_id = metadata["id"]
         log = log.bind(hardware_id=hardware_id, instance_id=instance_id)
         start = datetime.now()
