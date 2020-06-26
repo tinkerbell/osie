@@ -76,6 +76,12 @@ class Handler:
         if j["state"] == "preinstalling":
             phone_home({"instance_id": hardware_id})
 
+    def setup_reboot(self):
+        self.log.info("setting up cleanup.sh with reboot")
+        write_statefile(
+            self.statedir + "cleanup.sh", "#!/usr/bin/env sh\n" + "reboot\n", 0o700
+        )
+
     def handle_provisioning(self, j):
         log = self.log
         statedir = self.host_state_dir
@@ -163,12 +169,7 @@ class Handler:
             )
 
             if ret.returncode != 0:
-                log.info("setting up cleanup.sh with reboot")
-                write_statefile(
-                    self.statedir + "cleanup.sh",
-                    "#!/usr/bin/env sh\n" + "reboot\n",
-                    0o700,
-                )
+                self.setup_reboot()
                 return True
 
             log.info("reverting metadata to correct state")
