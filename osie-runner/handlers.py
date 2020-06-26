@@ -97,46 +97,16 @@ class Handler:
             log.info("network is not ready yet", network_ready=network_ready)
             return
 
-        mismatch = False
-
-        pre = j["preinstalled_operating_system_version"]
-        pretag = get_slug_tag(pre)
-        instag = get_slug_tag(instance["operating_system_version"])
-        if pretag != instag:
-            log.info(
-                "preinstalled does not match instance selection",
-                preinstalled=pretag,
-                instance=instag,
-            )
-            mismatch = True
-
-        precpr = pre["storage"]
-        inscpr = instance["storage"]
-        if precpr != inscpr:
-            log.info(
-                "preinstalled cpr does not match instance cpr",
-                preinstalled=precpr,
-                instance=inscpr,
-            )
-            mismatch = True
-
-        userdata = instance.get("userdata")
-        if not userdata:
-            userdata = ""
-        custom_repo_tag = get_custom_image_from_userdata(userdata)
-        pre_repo_tag = "https://github.com/packethost/packet-images#" + pre.get(
-            "image_tag", ""
-        )
-        if custom_repo_tag and custom_repo_tag != pre_repo_tag:
-            log.info(
-                "using custom image",
-                custom_repo_tag=custom_repo_tag,
-                preinstalled_repo_tag=pre_repo_tag,
-            )
-            mismatch = True
-
         metadata = cacher_to_metadata(j, tinkerbell)
+        pre = j["preinstalled_operating_system_version"]
 
+        mismatch = False
+        if tag_differs(log, pre, instance):
+                mismatch = True
+        if storage_differs(log, pre, instance):
+                mismatch = True
+        if wants_custom_image(log, pre, instance):
+                mismatch = True
         if mismatch:
             log.info("temporarily overriding state to osie.internal.check-env")
             old_state = metadata["state"]
@@ -147,6 +117,7 @@ class Handler:
         log.info("writing metadata")
         write_statefile(self.statedir + "metadata", json.dumps(metadata))
 
+        userdata = instance.get("userdata", "")
         if userdata:
             log.info("writing userdata")
             write_statefile(self.statedir + "userdata", userdata)
@@ -288,3 +259,41 @@ def get_custom_image_from_userdata(userdata):
     tag = re.search(r".*\bimage_tag=(\S+).*", userdata)
     if repo and tag:
         return repo.group(1) + "#" + tag.group(1)
+
+
+def tag_differs(log, pre, instance):
+    pretag = get_slug_tag(pre)
+    instag = get_slug_tag(instance["operating_system_version"])
+    if pretag != instag:
+        log.info(
+            "preinstalled does not match instance selection",
+            preinstalled=pretag,
+            instance=instag,
+        )
+        return True
+
+
+def storage_differs(log, pre, instance):
+    precpr = pre["storage"]
+    inscpr = instance["storage"]
+    if precpr != inscpr:
+        log.info(
+            "preinstalled cpr does not match instance cpr",
+            preinstalled=precpr,
+            instance=inscpr,
+        )
+        return True
+
+
+def wants_custom_image(log, pre, instance):
+    custom_repo_tag = get_custom_image_from_userdata(instance.get("userdata", ""))
+    pre_repo_tag = "https://github.com/packethost/packet-images#" + pre.get(
+        "image_tag", ""
+    )
+    if custom_repo_tag and custom_repo_tag != pre_repo_tag:
+        log.info(
+            "using custom image",
+            custom_repo_tag=custom_repo_tag,
+            preinstalled_repo_tag=pre_repo_tag,
+        )
+        return True
