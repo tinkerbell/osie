@@ -92,6 +92,11 @@ class Handler:
         if not instance:
             return
 
+        network_ready = instance.get("network_ready")
+        if not network_ready:
+            log.info("network is not ready yet", network_ready=network_ready)
+            return
+
         mismatch = False
 
         pre = j["preinstalled_operating_system_version"]
@@ -131,11 +136,6 @@ class Handler:
             mismatch = True
 
         metadata = cacher_to_metadata(j, tinkerbell)
-
-        network_ready = instance.get("network_ready")
-        if not network_ready:
-            log.info("network is not ready yet", network_ready=network_ready)
-            return
 
         if mismatch:
             log.info("temporarily overriding state to osie.internal.check-env")
