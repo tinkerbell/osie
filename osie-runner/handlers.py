@@ -82,6 +82,22 @@ class Handler:
             self.statedir + "cleanup.sh", "#!/usr/bin/env sh\n" + "reboot\n", 0o700
         )
 
+    def wants_custom_osie(self, instance):
+        services = instance.get("services")
+        if services:
+            return "osie" in services
+
+        userdata = instance.get("userdata", "")
+
+        for l in userdata.splitlines():
+            match = re.search(r"""^\s*#\s*services=({.*"osie"\s*:\s*".*})$""", l)
+            if not match:
+                continue
+
+            return "osie" in json.loads(match.group(1))
+
+        return False
+
     def handle_provisioning(self, j):
         log = self.log
         statedir = self.host_state_dir
@@ -96,6 +112,12 @@ class Handler:
         if not network_ready:
             log.info("network is not ready yet", network_ready=network_ready)
             return
+
+        if self.wants_custom_osie(instance):
+            log.info("custom osie detected")
+            self.wipe(j)
+            self.setup_reboot()
+            return True
 
         args = ()
 
@@ -223,6 +245,7 @@ def cacher_to_metadata(j, tinkerbell):
         "password_hash": instance.get("crypted_root_password"),
         "phone_home_url": parse.urljoin(tinkerbell.geturl(), "phone-home"),
         "plan": j["plan_slug"],
+        "services": instance.get("services"),
         "state": j["state"],
         "storage": instance.get("storage", ""),
     }  # noqa: E122
