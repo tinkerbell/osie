@@ -100,13 +100,10 @@ class Handler:
         metadata = cacher_to_metadata(j, tinkerbell)
         pre = j["preinstalled_operating_system_version"]
 
-        mismatch = False
-        if tag_differs(log, pre, instance):
-                mismatch = True
-        if storage_differs(log, pre, instance):
-                mismatch = True
-        if wants_custom_image(log, pre, instance):
-                mismatch = True
+        mismatch = any(
+            checker(log, pre, instance)
+            for checker in (tag_differs, storage_differs, wants_custom_image)
+        )
         if mismatch:
             log.info("temporarily overriding state to osie.internal.check-env")
             old_state = metadata["state"]
