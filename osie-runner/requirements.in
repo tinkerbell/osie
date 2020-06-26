@@ -3,4 +3,5 @@ grpcio
 protobuf
 requests
 structlog
+srvlookup
 urllib3 >=1.24.2, <2
