@@ -25,7 +25,6 @@ packages=(
 	iproute2
 	jq
 	mdadm
-	mstflint
 	parted
 	pciutils
 	pv
