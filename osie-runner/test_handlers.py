@@ -170,8 +170,7 @@ def userdata_generator(
     "path,value",
     [
         pytest.param(None, None, id="normal"),
-        pytest.param("instance/userdata", None, id="userdata is None"),
-        pytest.param("instance/userdata", False, id="userdata is not-None-Falsy"),
+        pytest.param("instance/userdata", "", id="userdata is None"),
         pytest.param(
             "instance/userdata",
             userdata_generator(None, tag="image_tag"),
