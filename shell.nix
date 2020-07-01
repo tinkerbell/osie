@@ -9,7 +9,25 @@ in { pkgs ? import (_pkgs.fetchFromGitHub {
 
 with pkgs;
 
-mkShell {
+let
+  shfmt = buildGoPackage rec {
+    pname = "shfmt";
+    version = "2.6.4";
+
+    src = fetchFromGitHub {
+      owner = "mvdan";
+      repo = "sh";
+      rev = "v${version}";
+      sha256 = "1jifac0fi0sz6wzdgvk6s9xwpkdng2hj63ldbaral8n2j9km17hh";
+    };
+
+    goPackagePath = "mvdan.cc/sh";
+    subPackages = [ "cmd/shfmt" ];
+    buildFlagsArray = [ "-ldflags=-s -w -X main.version=${version}" ];
+
+  };
+
+in mkShell {
   buildInputs = [
     bash
     curl
