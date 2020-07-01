@@ -34,7 +34,7 @@ pipeline:
     image: nixos/nix:2.3.4
     commands:
       - export LANG=en_US.UTF-8
-      - nix-shell --run 'black -t py35 --check --diff --exclude "scripts/eng-tools" .'
+      - nix-shell --run 'black -t py35 --check --diff --exclude docker/scripts/packet-networking .'
       - nix-shell --run 'pylama docker $(ls osie-runner | grep -v hegel)'
 
   osie_runner_pytest:
