@@ -45,6 +45,7 @@ grubs := $(shell git ls-files grub/)
 osiesrcs := $(shell git ls-files docker/)
 
 E=@echo
+E+=
 ifeq ($(V),1)
 Q=
 else
@@ -88,7 +89,7 @@ package-osies: ${packaged-osies}
 package-repos: ${packaged-repos}
 
 deploy: package
-	$(E) "UPLOAD   s3/tinkerbell-oss/osie-uploads/$v.tar.gz"
+	$(E)"UPLOAD   s3/tinkerbell-oss/osie-uploads/$v.tar.gz"
 	$(Q)mc cp build/$v.tar.gz s3/tinkerbell-oss/osie-uploads/$v.tar.gz
 	$(Q)if [[ $${DRONE_BRANCH:-} == "master" ]]; then mc cp s3/tinkerbell-oss/osie-uploads/$v.tar.gz s3/tinkerbell-oss/osie-uploads/latest.tar.gz; fi
 	$(Q)echo "deploy this build with the following command:"
@@ -98,7 +99,7 @@ deploy: package
 	$(Q)echo
 
 upload-test: ${packages}
-	$(E) "UPLOAD   s3/tinkerbell-oss/osie-uploads/osie-testing/$v/"
+	$(E)"UPLOAD   s3/tinkerbell-oss/osie-uploads/osie-testing/$v/"
 	$(Q)mc cp --recursive build/$v/ s3/tinkerbell-oss/osie-uploads/osie-testing/$v/ || ( \
 		session=$$(mc session list --json | jq -r .sessionId); \
 		for i in {1..5}; do \
@@ -109,34 +110,34 @@ upload-test: ${packages}
 	)
 
 build/$v.tar.gz: ${packages}
-	$(E) "TAR.GZ   $@"
+	$(E)"TAR.GZ   $@"
 	$(Q)cd build && \
 		tar -cO $(sort $(subst build/,,$^)) | pigz >$(@F).tmp && \
 		mv $(@F).tmp $(@F)
 
 build/$v.tar.gz.sha512sum: build/$v.tar.gz
-	$(E) "SHASUM   $@"
+	$(E)"SHASUM   $@"
 	$(Q)sha512sum --tag $^ | sed 's|build/||' >$@
 
 ${packaged-grubs}: ${grubs}
-	$(E) "INSTALL  $@"
+	$(E)"INSTALL  $@"
 	$(Q)install -Dm644 $(addprefix grub/,$(subst /,-,$(patsubst build/$v/grub/%,%,$@))) $@
 
 build/$v/%-rc: apps/%-rc
-	$(E) "INSTALL  $@"
+	$(E)"INSTALL  $@"
 	$(Q)install -D -m644 $< $@
 
 build/$v/%.sh: apps/%.sh
-	$(E) "INSTALL  $@"
+	$(E)"INSTALL  $@"
 	$(Q)install -D -m644 $< $@
 
 build/$v/osie-%: build/osie-%
-	$(E) "INSTALL  $@"
+	$(E)"INSTALL  $@"
 	$(Q)install -D -m644 $< $@
 
 define initramfs_builder_arch_parch
 build/$$v/initramfs-$2: build/$$v-rootfs-$2 installer/alpine/init-$1
-	$(E) "CPIO     $$@"
+	$(E)"CPIO     $$@"
 	$(Q) install -m755 installer/alpine/init-$1 build/$$v-rootfs-$2/init
 	$(Q) (cd build/$$v-rootfs-$2 && find -print0 | bsdcpio --null --quiet -oH newc | pigz -9) >$$@.osied
 	$(Q) install -D -m644 $$@.osied $$@
@@ -146,15 +147,15 @@ $(foreach parch,$(x86s),$(eval $(call initramfs_builder_arch_parch,x86_64,$(parc
 $(foreach parch,$(arms),$(eval $(call initramfs_builder_arch_parch,aarch64,$(parch))))
 
 build/$v/modloop-%: build/modloop-%
-	$(E) "INSTALL  $@"
+	$(E)"INSTALL  $@"
 	$(Q)install -D -m644 $< $@
 
 build/$v/vmlinuz-%: build/vmlinuz-%
-	$(E) "INSTALL  $@"
+	$(E)"INSTALL  $@"
 	$(Q)install -D -m644 $< $@
 
 build/$v/test-initramfs-%/test-initramfs: build/$v/initramfs-% installer/alpine/init-%
-	$(E) "BUILD    $@"
+	$(E)"BUILD    $@"
 	$(Q) rm -rf $(@D)
 	$(Q) mkdir -p $(@D)
 	$(Q) cp $^ $(@D)/
@@ -174,7 +175,7 @@ build/osie-test-env: ci/Dockerfile
 
 define test_arch
 test-$1: $(cprs) build/osie-test-env package-apps package-grubs build/$v/osie-$1.tar.gz build/$v/osie-runner-$1.tar.gz build/$v/repo-$1 $${packaged-$1} ci/ifup.sh ci/vm.sh build/$v/test-initramfs-$1/test-initramfs
-	$(E) "DOCKER   $$@"
+	$(E)"DOCKER   $$@"
 ifneq ($(CI),drone)
 	$(Q)docker run --rm -ti \
 		--privileged \
@@ -191,13 +192,13 @@ endef
 $(foreach arch,aarch64 x86_64,$(eval $(call test_arch,$(arch))))
 
 build/$v-rootfs-%: build/initramfs-%
-	$(E) "EXTRACT  $@"
+	$(E)"EXTRACT  $@"
 	$(Q)rm -rf $@
 	$(Q)mkdir $@
 	$(Q)bsdtar -xf $< -C $@
 
 test-packet-networking: build/osie-test-env docker/scripts/packet-networking ci/test-network.sh $(shell find ci/network-test-files/ -type f | grep -v ':')
-	$(E) "DOCKER   $@"
+	$(E)"DOCKER   $@"
 ifneq ($(CI),drone)
 	$(Q)docker run --rm -ti \
 		--name $(@F) \
@@ -221,7 +222,7 @@ endif
 build/osie-aarch64.tar.gz: SED=/FROM/ s|.*|FROM multiarch/ubuntu-debootstrap:arm64-xenial|
 build/osie-x86_64.tar.gz: SED=
 build/osie-%.tar.gz: docker/Dockerfile ${osiesrcs}
-	$(E) "DOCKER   $@"
+	$(E)"DOCKER   $@"
 	$(Q)sed '${SED}' $< > $<.$*
 	$(Q)docker build -t osie:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
 	$(Q)docker save osie:$* > $@.tmp
@@ -230,26 +231,26 @@ build/osie-%.tar.gz: docker/Dockerfile ${osiesrcs}
 build/osie-runner-aarch64.tar.gz: SED=/FROM/ s|.*|FROM multiarch/alpine:arm64-v3.7|
 build/osie-runner-x86_64.tar.gz: SED=
 build/osie-runner-%.tar.gz: osie-runner/Dockerfile $(shell git ls-files osie-runner)
-	$(E) "DOCKER   $@"
+	$(E)"DOCKER   $@"
 	$(Q)sed '${SED}' $< > $<.$*
 	$(Q)docker build -t osie-runner:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
 	$(Q)docker save osie-runner:$* > $@.tmp
 	$(Q)mv $@.tmp $@
 
 build/osie-runner-aarch64.tar.gz:
-	$(E) "FAKE     $@"
+	$(E)"FAKE     $@"
 	$(Q) touch $@
 
 # aarch64
 build/$v/repo-aarch64:
-	$(E) "LN       $@"
+	$(E)"LN       $@"
 	$(Q)ln -nsf ../../../alpine/edge $@
 
 build/repo-aarch64:
 	$(Q)echo edge > $@
 
 build/$v/repo-x86_64:
-	$(E) "LN       $@"
+	$(E)"LN       $@"
 	$(Q)ln -nsf ../../../alpine/v${alpine_version_x86_64} $@
 
 build/repo-x86_64:
@@ -260,7 +261,7 @@ build/initramfs-$2: installer/alpine/assets-$2/initramfs
 build/modloop-$2:   installer/alpine/assets-$2/modloop
 build/vmlinuz-$2:   installer/alpine/assets-$2/vmlinuz
 build/initramfs-$2 build/modloop-$2 build/vmlinuz-$2:
-	$(E) "LN       $@"
+	$(E)"LN       $@"
 	$(Q)ln -nsf ../$$< $$@
 endef
 $(foreach parch,$(x86s),$(eval $(call fetcher_arch_parch,x86_64,$(parch))))
