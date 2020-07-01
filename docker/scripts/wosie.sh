@@ -83,10 +83,11 @@ else
 	echo "NOTICE: Custom image url found!"
 	echo "Overriding default image location with custom image_url"
 	image="$image_url"
+
+	ensure_reachable "${image}"
 fi
 echo "Image: $image"
 
-ensure_reachable "${image}"
 if ! wget --spider "${image}"; then
 	echo "$0: Image URL unavailable: $image" >&2
 	exit 1
