@@ -256,5 +256,6 @@ build/initramfs-{{platform}}: installer/alpine/assets-{{platform}}/initramfs
 build/modloop-{{platform}}:   installer/alpine/assets-{{platform}}/modloop
 build/vmlinuz-{{platform}}:   installer/alpine/assets-{{platform}}/vmlinuz
 build/initramfs-{{platform}} build/modloop-{{platform}} build/vmlinuz-{{platform}}:
+	$(E) "LN       $@"
 	$(Q)ln -nsf ../$< $@
 {% endfor -%}

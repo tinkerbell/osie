@@ -260,6 +260,7 @@ build/initramfs-$2: installer/alpine/assets-$2/initramfs
 build/modloop-$2:   installer/alpine/assets-$2/modloop
 build/vmlinuz-$2:   installer/alpine/assets-$2/vmlinuz
 build/initramfs-$2 build/modloop-$2 build/vmlinuz-$2:
+	$(E) "LN       $@"
 	$(Q)ln -nsf ../$$< $$@
 endef
 $(foreach parch,$(x86s),$(eval $(call fetcher_arch_parch,x86_64,$(parch))))
