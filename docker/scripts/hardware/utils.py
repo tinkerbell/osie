@@ -375,6 +375,7 @@ def normalize_vendor(vendor_string):
         "Micron Technology": [
             re.compile(r"^MICRON", re.IGNORECASE),
             re.compile(r"^002C00B3002C", re.IGNORECASE),
+            re.compile(r"^MTFD", re.IGNORECASE),
         ],
         "Synnex": re.compile(r"^SYNNEX", re.IGNORECASE),
         "Samsung": re.compile(r"^SAMSUNG", re.IGNORECASE),
