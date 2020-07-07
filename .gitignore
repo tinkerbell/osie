@@ -9,3 +9,4 @@ osie-initrd-*
 osie-vmlinuz-*
 osie-*.tar.gz
 osie-*.tar
+rules.mk

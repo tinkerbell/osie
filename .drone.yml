@@ -25,7 +25,7 @@ pipeline:
     group: ci1
     image: koalaman/shellcheck-alpine
     commands:
-      - shellcheck installer/*.sh ci/*.sh
+      - shellcheck apps/*.sh ci/*.sh
       - cd docker/scripts
       - shellcheck -x *.sh
 
@@ -34,7 +34,7 @@ pipeline:
     image: nixos/nix:2.3.4
     commands:
       - export LANG=en_US.UTF-8
-      - nix-shell --run 'black -t py35 --check --diff --exclude "scripts/eng-tools" .'
+      - nix-shell --run 'black -t py35 --check --diff --exclude docker/scripts/packet-networking .'
       - nix-shell --run 'pylama docker $(ls osie-runner | grep -v hegel)'
 
   osie_runner_pytest:
@@ -90,7 +90,6 @@ pipeline:
   package_common:
     image: osie-test-env
     commands:
-      - make -j$(nproc) fetch
       - make -j$(nproc) package-common
 
   package:

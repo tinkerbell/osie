@@ -56,8 +56,8 @@ RUN curl -fL https://github.com/mvdan/sh/releases/download/v2.3.0/shfmt_v2.3.0_l
     echo 'eef540565962cf1f5432c7e3cf212c333e096f9f481d6d441197c1cf878746d0 /bin/shfmt' | sha256sum -c && \
     chmod +x /bin/shfmt
 
-RUN pip install click jinja2-cli packet-python==1.38.2 && \
-    pip3 install click jinja2-cli packet-python==1.38.2 && \
+RUN pip install click packet-python==1.38.2 && \
+    pip3 install click j2cli packet-python==1.38.2 && \
     pip3 install coverage
 
 RUN curl -L https://github.com/git-lfs/git-lfs/releases/download/v2.5.1/git-lfs-linux-amd64-v2.5.1.tar.gz >/tmp/git-lfs.tar.gz && \

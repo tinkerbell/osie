@@ -1,17 +1,33 @@
-let
-  _pkgs = import <nixpkgs> {};
-in
-{ pkgs ? import (_pkgs.fetchFromGitHub { owner = "NixOS";
-                                         repo = "nixpkgs-channels";
-                                         # nixos-unstable @2019-05-28
-                                         rev = "eccb90a2d997d65dc514253b441e515d8e0241c3";
-                                         sha256 = "0ffa84mp1fgmnqx2vn43q9pypm3ip9y67dkhigsj598d8k1chzzw";
-                                       }) {}
-}:
+let _pkgs = import <nixpkgs> { };
+in { pkgs ? import (_pkgs.fetchFromGitHub {
+  owner = "NixOS";
+  repo = "nixpkgs-channels";
+  #branch@date: nixpkgs-unstable@2020-04-23
+  rev = "b95699970fb7d825fd4a710f5cfa3785a98435db";
+  sha256 = "0s9pjym3wi3ssp33cd2sj8fs9dlny5yhc7lhnj2lzadx8ianbf72";
+}) { } }:
 
 with pkgs;
 
-mkShell {
+let
+  shfmt = buildGoPackage rec {
+    pname = "shfmt";
+    version = "2.6.4";
+
+    src = fetchFromGitHub {
+      owner = "mvdan";
+      repo = "sh";
+      rev = "v${version}";
+      sha256 = "1jifac0fi0sz6wzdgvk6s9xwpkdng2hj63ldbaral8n2j9km17hh";
+    };
+
+    goPackagePath = "mvdan.cc/sh";
+    subPackages = [ "cmd/shfmt" ];
+    buildFlagsArray = [ "-ldflags=-s -w -X main.version=${version}" ];
+
+  };
+
+in mkShell {
   buildInputs = [
     bash
     curl
@@ -32,6 +48,7 @@ mkShell {
     python3Packages.flake8
     python3Packages.grpcio
     python3Packages.grpcio-tools
+    python3Packages.j2cli
     python3Packages.pip
     python3Packages.pip-tools
     python3Packages.pylama
