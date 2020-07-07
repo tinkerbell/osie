@@ -168,11 +168,12 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 		fi
 
 		gituri="${image_repo}"
+
+		ensure_reachable "$gituri"
 	fi
 	# Silence verbose notice about deatched HEAD state
 	git config --global advice.detachedHead false
 
-	ensure_reachable "$gituri"
 	git -C $assetdir init
 	echo -e "${GREEN}#### Adding git remote uri: ${gituri}${NC}"
 	git -C $assetdir remote add origin "${gituri}"

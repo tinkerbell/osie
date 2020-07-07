@@ -109,6 +109,8 @@ else
 		echo "$0: CPR URL unavailable: $cpr_url" >&2
 		exit 1
 	fi
+
+	ensure_reachable "${image}"
 fi
 
 echo "Image: $image"
@@ -120,7 +122,6 @@ if [ "$early_phone" -eq 1 ]; then
 	phone_home "${tinkerbell}" '{"instance_id":"'"$(jq -r .id "$metadata")"'"}'
 fi
 
-ensure_reachable "${image}"
 if ! wget --spider --quiet "${image}"; then
 	echo "$0: Image URL unavailable: $image" >&2
 	exit 1
