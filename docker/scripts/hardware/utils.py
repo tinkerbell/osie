@@ -217,7 +217,8 @@ def get_megaraid_prop(prop):
 
 
 def lshw():
-    return cmd_output("lshw", "-xml", "-quiet")
+    # Workaround for x.large.arm: Skip framebuffer test ("-disable fb")
+    return cmd_output("lshw", "-xml", "-quiet", "-disable", "fb")
 
 
 def lspci(pci_id):

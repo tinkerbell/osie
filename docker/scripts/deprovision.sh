@@ -109,7 +109,9 @@ if [[ $preserve_data == false ]]; then
 	nvme_drives=($(find /dev -regex ".*/nvme[0-9]+" | sort -h))
 	echo "Found ${#nvme_drives[@]} nvme drives"
 	nvme list
-	if ((${#nvme_drives[@]} > 0)); then
+	if [[ $class == x.large.arm ]]; then
+		echo "Skipping NVMe namespace management for $class hardware"
+	elif ((${#nvme_drives[@]} > 0)); then
 		for drive in "${nvme_drives[@]}"; do
 			nvme id-ctrl "$drive"
 			caps=$(nvme id-ctrl "$drive" -o json | jq -r '.oacs')
