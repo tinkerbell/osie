@@ -1,7 +1,8 @@
 ---
 clone:
   git:
-    image: quay.io/packet/drone-git
+    image: quay.io/packet/drone-git:mm-test-better-pr
+    pull: true
     tags: true
 
 pipeline:
