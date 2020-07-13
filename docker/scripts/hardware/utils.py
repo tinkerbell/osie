@@ -119,6 +119,11 @@ def get_smart_devices():
     return smart_map
 
 
+def get_nvme_attributes(device):
+    smartctl_json = cmd_output("smartctl", "--all", "--json", device)
+    return json.loads(smartctl_json)["nvme_smart_health_information_log"]
+
+
 def get_smart_attributes(device):
     start_line = 0
     attributes = cmd_output("smartctl", "-A", device).splitlines()
