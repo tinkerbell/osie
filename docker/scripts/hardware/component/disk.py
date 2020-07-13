@@ -59,7 +59,7 @@ class Disk(Component):
             if prop in self.lsblk:
                 return self.lsblk[prop]
             else:
-                return ""
+                return utils.get_nvme_diskprop(self.lsblk["name"], prop)
         elif self.__is_megaraid():
             return utils.get_smart_diskprop(self.lsblk["name"], prop)
         else:
