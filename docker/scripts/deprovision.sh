@@ -216,7 +216,7 @@ fi
 
 # Call firmware script to update components and firmware
 case "$class" in
-baremetal_2a2 | baremetal_2a4 | baremetal_2a5 | baremetal_hua)
+baremetal_2a2 | baremetal_2a4 | baremetal_hua)
 	echo "skipping hardware update for oddball aarch64s"
 	;;
 *)
