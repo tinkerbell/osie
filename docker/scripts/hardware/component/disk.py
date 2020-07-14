@@ -21,7 +21,9 @@ class Disk(Component):
         self.lsblk = lsblk
         self.data = {"size": self.__size(), "devname": self.lsblk["name"]}
 
-        if not self.__is_nvme():
+        if self.__is_nvme():
+            self.data["smart"] = utils.get_nvme_attributes(self.lsblk["name"])
+        else:
             self.data["smart"] = utils.get_smart_attributes(self.lsblk["name"])
 
         match = re.search(r"^(\S+)_(\S+_\S+)", self.__getter("model"))
@@ -59,7 +61,7 @@ class Disk(Component):
             if prop in self.lsblk:
                 return self.lsblk[prop]
             else:
-                return ""
+                return utils.get_nvme_diskprop(self.lsblk["name"], prop)
         elif self.__is_megaraid():
             return utils.get_smart_diskprop(self.lsblk["name"], prop)
         else:
