@@ -119,6 +119,11 @@ def get_smart_devices():
     return smart_map
 
 
+def get_nvme_attributes(device):
+    smartctl_json = cmd_output("smartctl", "--all", "--json", device)
+    return json.loads(smartctl_json)["nvme_smart_health_information_log"]
+
+
 def get_smart_attributes(device):
     start_line = 0
     attributes = cmd_output("smartctl", "-A", device).splitlines()
@@ -153,6 +158,22 @@ def get_smart_attributes(device):
         smart_attributes.append(dict(zip(attribute_keys, attr.split())))
 
     return smart_attributes
+
+
+def get_nvme_diskprop(device, prop):
+    regex = {
+        "model": re.compile(r"^Model Family:\s+(.*)$", re.MULTILINE),
+        "serial": re.compile(r"^Serial Number:\s+(.*)$", re.MULTILINE),
+        "firmware_version": re.compile(r"^Firmware Version:\s+(.*)$", re.MULTILINE),
+        "vendor": re.compile(r"^Device Model:\s+(.*)$", re.MULTILINE),
+        "size": re.compile(r"^User Capacity:\s+.*\[(.*)\]$", re.MULTILINE),
+    }
+
+    if prop not in regex:
+        return ""
+
+    smart_data = cmd_output("smartctl", "-i", device)
+    return __re_multiline_first(smart_data, regex[prop]).strip()
 
 
 def get_smart_diskprop(device, prop):
