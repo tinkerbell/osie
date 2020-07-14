@@ -116,6 +116,22 @@ pipeline:
       - aws_access_key_id
       - aws_secret_access_key
 
+  upload-pr:
+    image: osie-test-env
+    commands:
+      - set -v +x
+      - mc config host add s3 'https://s3.amazonaws.com' "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" --api s3v4
+      - set +v -x
+      - make deploy
+    when:
+      event:
+        - pull_request
+    secrets:
+      - source: public_aws_access_key_id
+        target: aws_access_key_id
+      - source: public_aws_secret_access_key
+        target: aws_secret_access_key
+
   test_aarch64_vm:
     group: test
     image: osie-test-env
