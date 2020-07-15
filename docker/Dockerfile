@@ -64,6 +64,17 @@ RUN apt-get update -y && \
     apt-get -qy clean && \
     rm -rf /var/lib/apt/lists/* /tmp/osie/
 
+# build smartmontools, done here so we can keep it cached as long as possible
+COPY build-smartmontools.sh /tmp/osie/
+RUN apt-get update -y && \
+    apt-get install -y build-essential && \
+    (cd /tmp/osie/ && ./build-smartmontools.sh) && \
+    apt-get -qy remove build-essential && \
+    apt-get -qy autoremove && \
+    apt-get -qy clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/osie/
+
+
 # build lxml, done here so we can keep it cached as long as possible
 COPY scripts/requirements.txt /tmp/osie/
 COPY scripts/packet-networking/ /tmp/osie/packet-networking/
