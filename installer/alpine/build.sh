@@ -34,12 +34,12 @@ mv /etc/mkinitfs/features.d/virtio.modules.tmp /etc/mkinitfs/features.d/virtio.m
 echo 'features="base ext2 ext3 ext4 keymap network packetrepo squashfs virtio eclypsium"' >/etc/mkinitfs/mkinitfs.conf
 kver=$(basename /lib/modules/*)
 mkinitfs -l "$kver"
-mkinitfs -o /assets/initramfs-vanilla "$kver"
+mkinitfs -o /assets/initramfs-$FLAVOR "$kver"
 
-cp /boot/vmlinuz-vanilla /assets/vmlinuz-vanilla
+cp /boot/vmlinuz-$FLAVOR /assets/vmlinuz-$FLAVOR
 
 # Make a new modloop
 mkdir -p modloop/
 cp -a /lib/modules/ modloop/
 cp -a /lib/firmware/ modloop/modules
-mksquashfs modloop/ /assets/modloop-vanilla -b 1048576 -comp xz -Xdict-size 100% -noappend
+mksquashfs modloop/ /assets/modloop-$FLAVOR -b 1048576 -comp xz -Xdict-size 100% -noappend
