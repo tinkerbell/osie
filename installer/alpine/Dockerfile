@@ -43,9 +43,9 @@ RUN mkdir -p /etc/apk/cache && \
 USER builder
 WORKDIR /home/builder
 
-ENV COMMIT bb52b0d3f60cd75197ef218362f193378dfd869d
-ENV FLAVOR vanilla
-ENV KERNEL 4.14.55
+ENV COMMIT 69b95a3d1dd1627416f45bcbfb93c6f2d5f0d68b
+ENV FLAVOR lts
+ENV KERFNEL 5.4.52
 ENV MAKEFLAGS -j$(($(nproc) * 2))
 # make sure PKGREL is +1 what is in APKGBUILD
 ENV PKGREL 1
