@@ -70,7 +70,7 @@ RUN true && \
         -e '/config.*x86_64/! p; /config.*x86_64/ { /config-'$FLAVOR'.x86_64/ p }' && \
     echo 'CONFIG_KEXEC=y' >> config-$FLAVOR.x86_64 && \
     abuild checksum && \
-    abuild -r && \
+    MAKEFLAGS=-j$(nproc) abuild -r && \
     abuild clean && \
     # Install the customized linux-vanilla package
     sudo apk add --no-scripts --update --upgrade /home/builder/packages/main/x86_64/linux-$FLAVOR*.apk
@@ -90,7 +90,7 @@ RUN echo "${ECLYPSIUM_DRIVER_SHA512}  ${ECLYPSIUM_DRIVER_FILENAME}" | sha512sum 
         -e "/^_kpkgrel=/ s/=.*/=$PKGREL/" \
         && \
     abuild checksum && \
-    abuild -r && \
+    MAKEFLAGS=-j$(nproc) abuild -r && \
     abuild clean
 
 USER root
