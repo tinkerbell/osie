@@ -58,17 +58,7 @@ RUN sed -i 's/silentoldconfig/olddefconfig/g' APKBUILD && \
     abuild clean
 
 USER root
-# RUN apk add --no-scripts --no-cache --update --upgrade /home/builder/packages/main/x86_64/linux-vanilla*.apk
 RUN apk add --no-scripts --update --upgrade /home/builder/packages/main/x86_64/linux-vanilla*.apk
-
-# ADD https://www.kernel.org/pub/linux/utils/kernel/kexec/kexec-tools-2.0.17.tar.gz .
-
-# RUN zcat kexec-tools-2.0.17.tar.gz | tar xvf - && \
-#   cd kexec-tools-2.0.17 && \
-#   sed 's/loff_t/off_t/g' -i vmcore-dmesg/vmcore-dmesg.c && \
-#   ./configure && \
-#   make && \
-#   make install
 
 ARG ECLYPSIUM_DRIVER_VERSION=2.0.0
 ARG ECLYPSIUM_DRIVER_SHA512=b9cfebc3b0abd834d73f025f925d896bea8d9dac2a3c3605980a94a35cd188db159ca165e5884863f5bd4a94d39861ecdf998cf8e99ea89d6f093a7bc64b5347
@@ -80,9 +70,6 @@ WORKDIR /home/builder
 
 ENV FLAVOR vanilla
 # Download the eclypsium driver abuild and build it
-# we force it to build for a vanilla kernel of a specific version with the sed(s) below
-# sed -i 's/4\.9\.65/4.14.34/g' APKBUILD && \
-# sed -i 's/\tmake/make kernel-src-dir="\/lib\/modules\/4.14.34-0-vanilla\/build" machine="x86_64"/' APKBUILD && \
 RUN echo "${ECLYPSIUM_DRIVER_SHA512}  ${ECLYPSIUM_DRIVER_FILENAME}" | sha512sum -c && \
     tar -zxvf ${ECLYPSIUM_DRIVER_FILENAME} && \
     cd aports/non-free/eclypsiumdriver && \
