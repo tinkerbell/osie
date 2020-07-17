@@ -1,5 +1,6 @@
+# vim: set filetype=make :
 alpine_version_aarch64 := 3.4
-alpine_version_x86_64 := 3.7
+alpine_version_x86_64 := 3.12
 
 arches := aarch64 x86_64
 x86s := x86_64
@@ -176,7 +177,7 @@ build/osie-test-env: ci/Dockerfile
 	touch $@
 
 {% for arch in platforms.values() | unique | sort -%}
-test-{{arch}}: $(cprs) build/osie-test-env package-apps package-grubs build/$v/osie-{{arch}}.tar.gz build/$v/osie-runner-{{arch}}.tar.gz build/$v/repo-{{arch}} ${packaged-{{arch}}} ci/ifup.sh ci/vm.sh build/$v/test-initramfs-{{arch}}/test-initramfs
+test-{{arch}}: $(cprs) build/osie-test-env package-apps package-grubs build/$v/osie-{{arch}}.tar.gz build/$v/osie-runner-{{arch}}.tar.gz build/$v/repo-{{arch}} ${packaged-{{arch}}} ci/ifup.sh ci/vm.sh build/$v/test-initramfs-{{arch}}/test-initramfs {%- if arch == "aarch64" %} /proc/sys/fs/binfmt_misc/qemu-aarch64{% endif %}
 	$(E)"DOCKER   $@"
 ifneq ($(CI),drone)
 	$(Q)docker run --rm -ti \
@@ -220,8 +221,9 @@ else
 	ci/vm.sh network_test | tee build/$@.log >/dev/$T
 endif
 
+build/osie-aarch64.tar.gz: /proc/sys/fs/binfmt_misc/qemu-aarch64
 build/osie-aarch64.tar.gz: SED=/FROM/ s|.*|FROM multiarch/ubuntu-debootstrap:arm64-xenial|
-build/osie-x86_64.tar.gz: SED=
+build/osie-x86_64.tar.gz:  SED=
 build/osie-%.tar.gz: docker/Dockerfile ${osiesrcs}
 	$(E)"DOCKER   $@"
 	$(Q)sed '${SED}' $< > $<.$*
@@ -229,8 +231,9 @@ build/osie-%.tar.gz: docker/Dockerfile ${osiesrcs}
 	$(Q)docker save osie:$* > $@.tmp
 	$(Q)mv $@.tmp $@
 
+build/osie-runner-aarch64.tar.gz: /proc/sys/fs/binfmt_misc/qemu-aarch64
 build/osie-runner-aarch64.tar.gz: SED=/FROM/ s|.*|FROM multiarch/alpine:arm64-v3.7|
-build/osie-runner-x86_64.tar.gz: SED=
+build/osie-runner-x86_64.tar.gz:  SED=
 build/osie-runner-%.tar.gz: osie-runner/Dockerfile $(shell git ls-files osie-runner)
 	$(E)"DOCKER   $@"
 	$(Q)sed '${SED}' $< > $<.$*
@@ -264,3 +267,37 @@ build/initramfs-{{platform}} build/modloop-{{platform}} build/vmlinuz-{{platform
 	$(E)"LN       $@"
 	$(Q)ln -nsf ../$< $@
 {% endfor -%}
+
+assets-aarch64: installer/alpine/assets-aarch64/initramfs installer/alpine/assets-aarch64/modloop installer/alpine/assets-aarch64/vmlinuz
+build/osie-alpine-initramfs-builder-aarch64: installer/alpine/Dockerfile installer/alpine/build.sh installer/alpine/eclypsiumdriver-alpine-* installer/alpine/qemu-aarch64-static /proc/sys/fs/binfmt_misc/qemu-aarch64
+	$(E)"IMAGE $@"
+	$(Q)sed '/^FROM alpine/ s| .*| arm64v8/alpine:3.6|' installer/alpine/Dockerfile > installer/alpine/Dockerfile.aarch64
+	$(Q)docker build -f installer/alpine/Dockerfile.aarch64 -t $@ installer/alpine/ 2>&1 | tee $@.log >/dev/$T
+	$(Q)touch $@
+
+assets-x86_64: installer/alpine/assets-x86_64/initramfs installer/alpine/assets-x86_64/modloop installer/alpine/assets-x86_64/vmlinuz
+build/osie-alpine-initramfs-builder-x86_64:  installer/alpine/Dockerfile installer/alpine/build.sh installer/alpine/eclypsiumdriver-alpine-* installer/alpine/qemu-aarch64-static
+	$(E)"IMAGE $@"
+	$(Q)docker build -f installer/alpine/Dockerfile -t $@ installer/alpine/ 2>&1 | tee $@.log >/dev/$T
+	$(Q)touch $@
+ifeq ($(CI),drone)
+	$(Q)mkdir -p /tmp/$${DRONE_BUILD_NUMBER}
+	$(Q)docker run -v /tmp/$${DRONE_BUILD_NUMBER}:/assets --name assets_$${DRONE_BUILD_NUMBER} $@
+	$(Q)docker rm -f assets_$${DRONE_BUILD_NUMBER}
+endif
+installer/alpine/assets-x86_64/initramfs installer/alpine/assets-x86_64/modloop installer/alpine/assets-x86_64/vmlinuz: build/osie-alpine-initramfs-builder-x86_64
+	$(E)"BUILD $@"
+	$(Q)docker run --rm -v ${PWD}/${@D}/:/assets/ --name=osie-assets-x86_64-${@F} $< ${@F} 2>&1 | tee build/osie-assets-x86_64-${@F}.log >/dev/$T
+
+installer/alpine/qemu-aarch64-static:
+	$(E)"GET   $@"
+	#$(Q)wget -v https://github.com/multiarch/qemu-user-static/releases/download/v5.0.0-2/$(@F) -O $@
+	$(Q)wget -v https://github.com/multiarch/qemu-user-static/releases/download/v2.9.1-1/$(@F) -O $@
+
+/proc/sys/fs/binfmt_misc/qemu-aarch64:
+	$(E)'You need to configure qemu-aarch64-static for aarch64 programs, for example:'
+	$(E)
+	$(E)'        docker run --rm --privileged multiarch/qemu-user-static:register --reset'
+	$(E)
+	$(E)'and can disable all binfmt with:'
+	$(E)

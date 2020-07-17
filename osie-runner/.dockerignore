@@ -1,3 +1,5 @@
 Dockerfile*
 requirements.in
 __pycache__
+Tupfile
+osie-runner*.tar.gz

@@ -1,6 +1,6 @@
-FROM alpine:3.7
+FROM alpine:3.12
 
-ENTRYPOINT /build.sh
+ENTRYPOINT [ "/build.sh" ]
 VOLUME /assets
 
 COPY qemu-aarch64-static /usr/bin/
@@ -20,7 +20,7 @@ RUN mkdir -p /etc/apk/cache && \
         && \
     apk add --no-scripts --update --upgrade --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing \
         kexec-tools \
-	&& \
+        && \
     apk cache sync && \
     mv /etc/apk/cache /cache && \
     apk add --no-scripts --no-cache --update --upgrade \
@@ -30,12 +30,8 @@ RUN mkdir -p /etc/apk/cache && \
         busybox-initscripts \
         coreutils \
         linux-headers \
+	sudo \
         && \
-    # remove edge when linux-vanilla is > 4.14.8 and has the nfp driver enabled,
-    # likely alpine v3.8
-    apk add --no-scripts --no-cache --update --upgrade --repository http://dl-cdn.alpinelinux.org/alpine/edge/main \
-        linux-firmware \
-	&& \
     adduser -G abuild -g "Alpine Package Builder" -s /bin/ash -D builder && \
     echo "builder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
     apk update
@@ -45,8 +41,8 @@ WORKDIR /home/builder
 
 ENV COMMIT 69b95a3d1dd1627416f45bcbfb93c6f2d5f0d68b
 ENV FLAVOR lts
-ENV KERFNEL 5.4.52
-ENV MAKEFLAGS -j$(($(nproc) * 2))
+ENV KERNEL 5.4.52
+ENV MAKEFLAGS -j4
 # make sure PKGREL is +1 what is in APKGBUILD
 ENV PKGREL 1
 
@@ -55,12 +51,21 @@ RUN true && \
     abuild-keygen -a -i -n && \
     # Fetch alpine package tree \
     curl -fL https://github.com/alpinelinux/aports/archive/$COMMIT.tar.gz | tar -zxf - && \
-    mv aports-$COMMIT aports
+    mv aports-$COMMIT aports && \
+    # Good to always have updated firmware
+    cd aports/main/linux-firmware && \
+    abuild checksum && \
+    abuild -r && \
+    abuild clean && \
+    ls /home/builder/packages/main/x86_64/linux-firmware*.apk && \
+    echo about to install && \
+    sudo apk add --no-scripts --update --upgrade /home/builder/packages/main/x86_64/linux-firmware*.apk && \
+    cd ../../.. && \
     # Build customized linux-$FLAVOR package \
     cd aports/main/linux-$FLAVOR && \
     sed -i APKBUILD \
         -e 's/silentoldconfig/olddefconfig/g' \
-	-e "/^pkgrel=/ s/=.*/$PKGREL/" && \
+	-e "/^pkgrel=/ s/=.*/=$PKGREL/" && \
     # we only want to build the config-lts.x86_64 kernel, so we need remove to any lines that look like config.*x86_64 but is not config-lts.x86_46 \
     # explanation: \
     #   /config.*x86_64/! p :: if line does *not* match config.*x86_64 print it \
@@ -69,11 +74,14 @@ RUN true && \
     sed -i APKBUILD -n \
         -e '/config.*x86_64/! p; /config.*x86_64/ { /config-lts.x86_64/ p }' && \
     echo 'CONFIG_KEXEC=y' >> config-$FLAVOR.x86_64 && \
+    echo 'CONFIG_IONIC=y' >> config-$FLAVOR.x86_64 && \
     abuild checksum && \
     abuild -r && \
     abuild clean && \
     # Install the customized linux-vanilla package \
     sudo apk add --no-scripts --update --upgrade /home/builder/packages/main/x86_64/linux-$FLAVOR*.apk
+
+RUN ls /home/builder/packages/main/x86_64/linux-*.apk
 
 ARG ECLYPSIUM_DRIVER_VERSION=2.0.0
 ARG ECLYPSIUM_DRIVER_SHA512=b9cfebc3b0abd834d73f025f925d896bea8d9dac2a3c3605980a94a35cd188db159ca165e5884863f5bd4a94d39861ecdf998cf8e99ea89d6f093a7bc64b5347
@@ -87,11 +95,12 @@ RUN echo "${ECLYPSIUM_DRIVER_SHA512}  ${ECLYPSIUM_DRIVER_FILENAME}" | sha512sum 
     cd aports/non-free/eclypsiumdriver && \
     sed -i APKBUILD \
         -e "/^_kver=/ s/=.*/=$KERNEL/" \
-        -e "/^_kpkgrel=/ s/=*/=$PKGREL/" \
+        -e "/^_kpkgrel=/ s/=.*/=$PKGREL/" \
         && \
     abuild checksum && \
     abuild -r && \
     abuild clean && \
+    sudo apk add --no-scripts --no-cache --update --upgrade /home/builder/packages/non-free/x86_64/eclypsium*.apk
 
 USER root
 RUN sudo mv /cache /etc/apk/cache
