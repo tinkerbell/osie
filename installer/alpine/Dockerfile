@@ -53,11 +53,10 @@ RUN true && \
     # Setup self-signed keys to sign the built packages \
     abuild-keygen -a -i -n && \
     # Fetch alpine package tree \
-    git clone -b master https://github.com/alpinelinux/aports && \
-    cd aports && \
-    git checkout $COMMIT && \
+    curl -fL https://github.com/alpinelinux/aports/archive/$COMMIT.tar.gz | tar -zxf - && \
+    mv aports-$COMMIT aports
     # Build customized linux-$FLAVOR package \
-    cd main/linux-$FLAVOR && \
+    cd aports/main/linux-$FLAVOR && \
     sed -i APKBUILD \
         -e 's/silentoldconfig/olddefconfig/g' \
 	-e "/^pkgrel=/ s/=.*/$PKGREL/" && \
