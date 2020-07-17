@@ -7,33 +7,33 @@ COPY qemu-aarch64-static /usr/bin/
 
 RUN mkdir -p /etc/apk/cache
 RUN apk add --update --upgrade \
-    alpine-base \
-    curl \
-    docker \
-    jq \
-    mdadm \
-    mkinitfs \
-    musl-utils \
-    openssh \
-    squashfs-tools \
-    tcpdump \
-    ;
+        alpine-base \
+        curl \
+        docker \
+        jq \
+        mdadm \
+        mkinitfs \
+        musl-utils \
+        openssh \
+        squashfs-tools \
+        tcpdump \
+        ;
 RUN apk cache sync
 RUN mv /etc/apk/cache /cache
 RUN apk add --no-scripts --no-cache --update --upgrade \
-    abuild \
-    alpine-sdk \
-    build-base \
-    busybox-initscripts \
-    coreutils \
-    linux-headers \
-    ;
+        abuild \
+        alpine-sdk \
+        build-base \
+        busybox-initscripts \
+        coreutils \
+        linux-headers \
+        ;
 
 # remove edge when linux-vanilla is > 4.14.8 and has the nfp driver enabled,
 # likely alpine v3.8
 RUN apk add --no-scripts --no-cache --update --upgrade --repository http://dl-cdn.alpinelinux.org/alpine/edge/main \
-    linux-firmware \
-    ;
+        linux-firmware \
+        ;
 
 RUN adduser -G abuild -g "Alpine Package Builder" -s /bin/ash -D builder && \
     echo "builder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
