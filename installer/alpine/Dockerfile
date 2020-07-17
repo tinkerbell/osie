@@ -61,6 +61,13 @@ RUN true && \
     sed -i APKBUILD \
         -e 's/silentoldconfig/olddefconfig/g' \
 	-e "/^pkgrel=/ s/=.*/=$PKGREL/" && \
+    # we only want to build the config-$FLAVOR.x86_64 kernel, so we need remove to any lines that look like config.*x86_64 but is not config-$FLAVOR.x86_46 \
+    # explanation: \
+    #   /config.*x86_64/! p       :: if line does *not* match config.*x86_64 (on account of the trailing ! after /.../) print it \
+    #   /config.*x86_64/ { ... }  :: apply sub expression only for lines that match the pattern (so everything not ^) \
+    #   /config-$FLAVOR.x86_64/ p :: print the config-$FLAVOR.x86_64 lines \
+    sed -i APKBUILD -n \
+        -e '/config.*x86_64/! p; /config.*x86_64/ { /config-'$FLAVOR'.x86_64/ p }' && \
     echo 'CONFIG_KEXEC=y' >> config-$FLAVOR.x86_64 && \
     abuild checksum && \
     abuild -r && \
