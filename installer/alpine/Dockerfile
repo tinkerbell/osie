@@ -46,6 +46,7 @@ WORKDIR /home/builder
 ENV COMMIT bb52b0d3f60cd75197ef218362f193378dfd869d
 ENV FLAVOR vanilla
 ENV KERNEL 4.14.55
+ENV MAKEFLAGS -j$(($(nproc) * 2))
 # make sure PKGREL is +1 what is in APKGBUILD
 ENV PKGREL 1
 
@@ -82,7 +83,8 @@ RUN echo "${ECLYPSIUM_DRIVER_SHA512}  ${ECLYPSIUM_DRIVER_FILENAME}" | sha512sum 
         -e "/^_kpkgrel=/ s/=*/=$PKGREL/" \
         && \
     abuild checksum && \
-    abuild -r
+    abuild -r && \
+    abuild clean && \
 
 USER root
 RUN sudo mv /cache /etc/apk/cache
