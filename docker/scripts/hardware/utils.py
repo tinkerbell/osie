@@ -120,8 +120,14 @@ def get_smart_devices():
 
 
 def get_nvme_attributes(device):
-    smartctl_json = cmd_output("smartctl", "--all", "--json", device)
-    return json.loads(smartctl_json)["nvme_smart_health_information_log"]
+    try:
+        smartctl_json = cmd_output("smartctl", "--all", "--json", device)
+        return json.loads(smartctl_json)["nvme_smart_health_information_log"]
+    except Exception:
+        print(
+            "\n\n !! Garbage data received, suspected ancient smartctl, upgrade suggested !! \n\n"
+        )
+        return
 
 
 def get_smart_attributes(device):
