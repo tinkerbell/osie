@@ -253,6 +253,11 @@ def lspci(pci_id):
     return _lspci
 
 
+def get_mellanox_part_number(pci_id):
+    tree = etree.fromstring(mlxup_query(pci_id))
+    return tree[0].attrib["partNumber"]
+
+
 def get_mellanox_prop(pci_id, prop):
     regex = {
         "firmware_version": re.compile(r"^FW Version:\s*(.*)$", re.MULTILINE),
