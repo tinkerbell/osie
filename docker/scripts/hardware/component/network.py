@@ -56,6 +56,7 @@ class Network(Component):
                 self.firmware_version = utils.get_mellanox_prop(
                     self.pci_id, "firmware_version"
                 )
+                self.model = utils.get_mellanox_part_number(self.pci_id)
                 self.data["mellanox_psid"] = utils.get_mellanox_prop(
                     self.pci_id, "psid"
                 )
