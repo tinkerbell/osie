@@ -38,6 +38,7 @@ endif
 qemu-aarch64-static:
 	$(E) "GET   $@"
 	$(Q) wget -q https://github.com/multiarch/qemu-user-static/releases/download/v2.9.1-1/$@
+	$(Q) chmod 755 $@
 
 /proc/sys/fs/binfmt_misc/qemu-aarch64:
 	$(E) 'You need to configure qemu-aarch64-static for aarch64 programs, for example:'
