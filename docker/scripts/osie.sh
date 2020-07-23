@@ -65,6 +65,9 @@ BASEURL=${BASEURL:-http://install.$facility.packet.net/misc/osie/current}
 # location, we should not trample it
 mirror=${mirror:-http://mirror.$facility.packet.net}
 
+## Tell the API we're connected to the magic install system
+phone_home "${tinkerbell}" '{"type":"provisioning.104"}'
+
 ## Pre-prov check
 echo -e "${GREEN}#### Starting pre-provisioning checks...${NC}"
 
@@ -186,6 +189,9 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	echo -e "${GREEN}###### Performing a checkout of FETCH_HEAD${NC}"
 	git -C $assetdir checkout FETCH_HEAD
 
+	# Tell the API that the OS image has been retrieved
+	phone_home "${tinkerbell}" '{"type":"provisioning.104.50"}'
+
 	OS=${OS%%:*}
 
 	## Assemble configurables
@@ -215,9 +221,6 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 
 	is_uefi && uefi=true || uefi=false
 
-	## Execute the callback to API
-	phone_home "${tinkerbell}" '{"type":"provisioning.104"}'
-
 	if [[ $deprovision_fast == false ]] && [[ $preserve_data == false ]]; then
 		echo -e "${GREEN}Checking disks for existing partitions...${NC}"
 		if fdisk -l "${disks[@]}" 2>/dev/null | grep Disklabel >/dev/null; then
@@ -229,7 +232,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 
 	echo "Disk candidates are ready for partitioning."
 
-	# Inform the API about partitioning
+	# Tell the API that partitioning is complete
 	phone_home "${tinkerbell}" '{"type":"provisioning.105"}'
 
 	echo -e "${GREEN}#### Running CPR disk config${NC}"
@@ -247,7 +250,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	# Ensure critical OS dirs
 	mkdir -p $target/{dev,proc,sys}
 
-	# Inform the API about OS/package installation
+	# Tell the API that OS packages have been installed
 	phone_home "${tinkerbell}" '{"type":"provisioning.106"}'
 
 	mkdir -p $target/etc/mdadm
@@ -399,7 +402,7 @@ EOF
 		echo "Cloud-init post-install - cloud-init-nonet does not exist. skipping edit"
 	fi
 
-	# Inform the API about cloud-init complete
+	# Tell the API that cloud-init packages have been installed and configured
 	phone_home "${tinkerbell}" '{"type":"provisioning.108"}'
 
 	# Adjust failsafe delays for first boot delay
@@ -550,10 +553,11 @@ cat $target/etc/machine-id
 
 echo -e "${GREEN}#### Setting up network config${NC}"
 packet-networking -t $target -M "$metadata" -o "$(detect_os $target)" -vvv
-# Inform the API about target network configured
+
+# Tell the API that the server networking interfaces have been configured
 phone_home "${tinkerbell}" '{"type":"provisioning.107"}'
 
-# Inform the API about installation complete
+# Tell the API that installation is complete and the server is being rebooted
 phone_home "${tinkerbell}" '{"type":"provisioning.109"}'
 echo -e "${GREEN}#### Done${NC}"
 
