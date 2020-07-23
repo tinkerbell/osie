@@ -20,6 +20,7 @@ export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 # basic mounts
 mount -t proc -o noexec,nosuid,nodev proc /proc
 mount -t sysfs -o noexec,nosuid,nodev sysfs /sys
+mount -t cgroup -o all cgroup /sys/fs/cgroup
 
 # some helpers
 ebegin() {
