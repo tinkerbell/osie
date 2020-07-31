@@ -126,7 +126,7 @@ setup_inittab_console() {
 ip_choose_if() {
 	if [ -n "$KOPT_BOOTIF" ]; then
 		mac=$(printf "%s\n" "$KOPT_BOOTIF" | sed 's/^01-//;s/-/:/g')
-		dev=$(grep -l $mac /sys/class/net/*/address | head -n 1)
+		dev=$(grep -il $mac /sys/class/net/*/address | head -n 1)
 		dev=${dev%/*}
 		[ -n "$dev" ] && echo "${dev##*/}" && return
 	fi
@@ -337,6 +337,7 @@ myopts="alpine_dev autodetect autoraid chart cryptroot cryptdm cryptheader crypt
 	pkgs quiet root_size root usbdelay ip alpine_repo apkovl alpine_start splash
 	blacklist overlaytmpfs rootfstype rootflags nbd resume s390x_net dasd ssh_key
 	BOOTIF"
+myopts="$myopts packet_bootdev_mac"
 
 for opt; do
 	case "$opt" in
@@ -354,6 +355,10 @@ for opt; do
 		esac
 	done
 done
+
+if [ x"$KOPT_BOOTIF" == x ] && [ x"$KOPT_packet_bootdev_mac" != x ]; then
+	KOPT_BOOTIF=$KOPT_packet_bootdev_mac
+fi
 
 [ "$KOPT_quiet" = yes ] || echo "Alpine Init $VERSION"
 
