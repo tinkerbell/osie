@@ -171,7 +171,7 @@ build/osie-test-env: ci/Dockerfile
 	touch $@
 
 {% for arch in platforms.values() | unique | sort -%}
-test-{{arch}}: $(cprs) build/osie-test-env package-apps package-grubs build/$v/osie-{{arch}}.tar.gz build/$v/osie-runner-{{arch}}.tar.gz build/$v/repo-{{arch}} ${packaged-{{arch}}} ci/ifup.sh ci/vm.sh build/$v/test-initramfs-{{arch}}/test-initramfs
+test-{{arch}}: $(cprs) build/osie-test-env package-apps package-grubs build/$v/osie-{{arch}}.tar.gz build/$v/osie-runner-{{arch}}.tar.gz build/$v/repo-{{arch}} ${packaged-{{arch}}} ci/ifup.sh ci/vm.sh build/$v/test-initramfs-{{arch}}/test-initramfs {%- if arch == "aarch64" %} /proc/sys/fs/binfmt_misc/qemu-aarch64{% endif %}
 	$(E) "DOCKER   $@"
 ifneq ($(CI),drone)
 	$(Q) docker run --rm -ti \
@@ -215,8 +215,9 @@ else
 	ci/vm.sh network_test | tee build/$@.log >/dev/$T
 endif
 
+build/osie-aarch64.tar.gz: /proc/sys/fs/binfmt_misc/qemu-aarch64
 build/osie-aarch64.tar.gz: SED=/FROM/ s|.*|FROM multiarch/ubuntu-debootstrap:arm64-xenial|
-build/osie-x86_64.tar.gz: SED=
+build/osie-x86_64.tar.gz:  SED=
 build/osie-%.tar.gz: docker/Dockerfile ${osiesrcs}
 	$(E) "DOCKER   $@"
 	$(Q) sed '${SED}' $< > $<.$*
@@ -224,8 +225,9 @@ build/osie-%.tar.gz: docker/Dockerfile ${osiesrcs}
 	$(Q) docker save osie:$* > $@.tmp
 	$(Q) mv $@.tmp $@
 
+build/osie-runner-aarch64.tar.gz: /proc/sys/fs/binfmt_misc/qemu-aarch64
 build/osie-runner-aarch64.tar.gz: SED=/FROM/ s|.*|FROM multiarch/alpine:arm64-v3.7|
-build/osie-runner-x86_64.tar.gz: SED=
+build/osie-runner-x86_64.tar.gz:  SED=
 build/osie-runner-%.tar.gz: osie-runner/Dockerfile $(shell git ls-files osie-runner)
 	$(E) "DOCKER   $@"
 	$(Q) sed '${SED}' $< > $<.$*
