@@ -259,3 +259,32 @@ build/initramfs-{{platform}} build/modloop-{{platform}} build/vmlinuz-{{platform
 	$(E) "LN       $@"
 	$(Q) ln -nsf ../$< $@
 {% endfor -%}
+
+assets-aarch64: installer/alpine/assets-aarch64/initramfs installer/alpine/assets-aarch64/modloop installer/alpine/assets-aarch64/vmlinuz
+build/osie-alpine-initramfs-builder-aarch64: installer/alpine/Dockerfile installer/alpine/build.sh installer/alpine/eclypsiumdriver-alpine-* installer/alpine/qemu-aarch64-static /proc/sys/fs/binfmt_misc/qemu-aarch64
+	$(E) "IMAGE $@"
+	$(Q) sed '/^FROM alpine/ s| .*| arm64v8/alpine:3.6|' installer/alpine/Dockerfile > installer/alpine/Dockerfile.aarch64
+	$(Q) docker build -f installer/alpine/Dockerfile.aarch64 -t $@ installer/alpine/ 2>&1 | tee $@.log >/dev/$T
+	$(Q) touch $@
+
+assets-x86_64: installer/alpine/assets-x86_64/initramfs installer/alpine/assets-x86_64/modloop installer/alpine/assets-x86_64/vmlinuz
+build/osie-alpine-initramfs-builder-x86_64:  installer/alpine/Dockerfile installer/alpine/build.sh installer/alpine/eclypsiumdriver-alpine-* installer/alpine/qemu-aarch64-static
+	$(E) "IMAGE $@"
+	$(Q) docker build -f installer/alpine/Dockerfile -t $@ installer/alpine/ 2>&1 | tee $@.log >/dev/$T
+	$(Q) touch $@
+installer/alpine/assets-x86_64/initramfs installer/alpine/assets-x86_64/modloop installer/alpine/assets-x86_64/vmlinuz: build/osie-alpine-initramfs-builder-x86_64
+	$(E) "BUILD $@"
+	$(Q) docker run --rm -v ${PWD}/${@D}/:/assets/ --name=osie-assets-x86_64-${@F} $< ${@F} 2>&1 | tee build/osie-assets-x86_64-${@F}.log >/dev/$T
+
+installer/alpine/qemu-aarch64-static:
+	$(E) "GET   $@"
+	$(Q) wget https://github.com/multiarch/qemu-user-static/releases/download/v5.0.0-2/$(@F) -O $@
+	$(Q) chmod 755 $@
+
+/proc/sys/fs/binfmt_misc/qemu-aarch64:
+	$(E) 'You need to configure qemu-aarch64-static for aarch64 programs, for example:'
+	$(E) ''
+	$(E) '        docker run --rm --privileged multiarch/qemu-user-static:register --reset'
+	$(E) ''
+	$(E) 'and can disable all binfmt with:'
+	$(E) ''

@@ -50,5 +50,5 @@ case $1 in
 vmlinuz) build_vmlinuz ;;
 initramfs) build_initramfs ;;
 modloop) build_modloop ;;
-*) build_vmlinuz build initramfs build_modloop ;;
+*) echo "unknown argument: $1" >&2 && exit 1 ;;
 esac
