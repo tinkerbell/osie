@@ -41,7 +41,7 @@ unpack_apkovl() {
 	fi
 
 	# we need openssl. let apk handle deps
-	apk add --quiet --initdb --repositories-file $repofile openssl || return 1
+	apk add --no-progress --quiet --initdb --repositories-file $repofile openssl || return 1
 
 	if ! openssl list -1 -cipher-commands | grep "^$suffix$" >/dev/null; then
 		errstr="Cipher $suffix is not supported"
@@ -586,7 +586,7 @@ fi
 if [ -f "$ovl" ]; then
 	ebegin "Loading user settings from $ovl"
 	# create apk db and needed /dev/null and /tmp first
-	apk add --root $sysroot --initdb --quiet
+	apk add --no-progress --root $sysroot --initdb --quiet
 
 	unpack_apkovl "$ovl" $sysroot
 	eend $? $errstr || ovlfiles=
@@ -714,7 +714,7 @@ if [ -f /var/cache/misc/*modloop*.SIGN.RSA.*.pub ]; then
 	pkgs="$pkgs openssl"
 fi
 
-apkflags="--initramfs-diskless-boot --progress"
+apkflags="--initramfs-diskless-boot"
 if [ -z "$MAC_ADDRESS" ]; then
 	apkflags="$apkflags --no-network"
 else
@@ -734,9 +734,9 @@ mount -o bind /sys $sysroot/sys
 mount -o bind /proc $sysroot/proc
 mount -o bind /dev $sysroot/dev
 if [ -n "$ovlfiles" ]; then
-	apk add --root $sysroot $repo_opt $apkflags $pkgs <$ovlfiles
+	apk add --no-progress --root $sysroot $repo_opt $apkflags $pkgs <$ovlfiles
 else
-	apk add --root $sysroot $repo_opt $apkflags $pkgs
+	apk add --no-progress --root $sysroot $repo_opt $apkflags $pkgs
 fi
 umount $sysroot/sys $sysroot/proc $sysroot/dev
 eend $?
