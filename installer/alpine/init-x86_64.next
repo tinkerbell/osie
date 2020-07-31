@@ -191,8 +191,16 @@ configure_ip() {
 			return 1
 		fi
 		ebegin "Obtaining IP via DHCP ($device)..."
-		ifconfig "$device" 0.0.0.0
-		udhcpc -i "$device" -f -q
+		for i in $(seq 5); do
+			ip link set dev $device down
+			sleep 5
+			ip link set dev $device up
+			sleep 5
+			udhcpc -i $device -f -q -n &&
+				echo "Sleeping for network up..." &&
+				sleep 5 &&
+				break
+		done
 		eend $?
 	else
 		# manual configuration
