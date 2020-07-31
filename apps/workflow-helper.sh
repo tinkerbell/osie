@@ -58,7 +58,7 @@ rm -f /sbin/mdev
 
 mkdir /worker
 
-docker run --privileged -t \
+docker run --privileged -t --name "tink-worker" \
 	-e "container_uuid=$id" \
 	-e "WORKER_ID=$worker_id" \
 	-e "DOCKER_REGISTRY=$docker_registry" \
