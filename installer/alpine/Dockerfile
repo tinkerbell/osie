@@ -91,7 +91,8 @@ RUN echo "${ECLYPSIUM_DRIVER_SHA512}  ${ECLYPSIUM_DRIVER_FILENAME}" | sha512sum 
         && \
     abuild checksum && \
     MAKEFLAGS=-j$(nproc) abuild -r && \
-    abuild clean
+    abuild clean && \
+    sudo apk add --no-scripts --no-cache --update --upgrade /home/builder/packages/non-free/x86_64/eclypsium*.apk
 
 USER root
 RUN sudo mv /cache /etc/apk/cache

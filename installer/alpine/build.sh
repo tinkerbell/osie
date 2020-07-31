@@ -5,9 +5,6 @@ set -o errexit -o nounset -o pipefail -o xtrace
 # shellcheck disable=SC2039
 [[ $(uname -m) == aarch64 ]] && echo "aarch64 isn't _really_ tested/supported yet" && exit 1
 
-# Install the eclypsiumdriver package previously built in the Dockerfile
-apk add --no-scripts --no-cache --update --upgrade /home/builder/packages/non-free/x86_64/eclypsium*.apk
-
 # Eclypsium driver and supporting modules (IPMI)
 cat >/etc/mkinitfs/features.d/eclypsium.modules <<EOF
 extra/eclypsiumdriver.ko
