@@ -112,8 +112,7 @@ upload-test: ${packages}
 build/$v.tar.gz: ${packages}
 	$(E) "TAR.GZ   $@"
 	$(Q) cd build && \
-		tar -cO $(sort $(subst build/,,$^)) | pigz >$(@F).tmp && \
-		mv $(@F).tmp $(@F)
+		tar -cO $(sort $(subst build/,,$^)) | pigz >$(@F)
 
 build/$v.tar.gz.sha512sum: build/$v.tar.gz
 	$(E) "SHASUM   $@"
@@ -222,7 +221,8 @@ build/osie-%.tar.gz: docker/Dockerfile ${osiesrcs}
 	$(E) "DOCKER   $@"
 	$(Q) sed '${SED}' $< > $<.$*
 	$(Q) docker build -t osie:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
-	$(Q) docker save osie:$* > $@
+	$(Q) docker save osie:$* > $@.tmp
+	$(Q) mv $@.tmp $@
 
 build/osie-runner-aarch64.tar.gz: SED=/FROM/ s|.*|FROM multiarch/alpine:arm64-v3.7|
 build/osie-runner-x86_64.tar.gz: SED=
@@ -230,7 +230,8 @@ build/osie-runner-%.tar.gz: osie-runner/Dockerfile $(shell git ls-files osie-run
 	$(E) "DOCKER   $@"
 	$(Q) sed '${SED}' $< > $<.$*
 	$(Q) docker build -t osie-runner:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
-	$(Q) docker save osie-runner:$* > $@
+	$(Q) docker save osie-runner:$* > $@.tmp
+	$(Q) mv $@.tmp $@
 
 build/osie-runner-aarch64.tar.gz:
 	$(E) "FAKE     $@"

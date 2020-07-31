@@ -4,6 +4,8 @@ SHELL := bash
 .SUFFIXES:
 MAKEFLAGS +=  --no-builtin-rules
 
+.DELETE_ON_ERROR:
+
 E=@echo
 ifeq ($(V),1)
 Q=
