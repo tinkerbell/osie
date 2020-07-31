@@ -12,12 +12,6 @@ target_checksum = $(word 4,$(subst -, ,$(1)))
 build_path = $(word 3,$(1))/$(word 2,$(1))-vanilla-$(word 1,$(1))
 target_to_path = $(call build_path,$(subst -, ,$(1)))
 
-SHELL := bash
-.SHELLFLAGS := -o pipefail -c
-
-.SUFFIXES:
-MAKEFLAGS +=  --no-builtin-rules
-
 v := $(shell git describe --dirty)
 ifeq (-g,$(findstring -g,$v))
 build_git_version := true

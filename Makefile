@@ -1,3 +1,9 @@
+SHELL := bash
+.SHELLFLAGS := -o pipefail -c
+
+.SUFFIXES:
+MAKEFLAGS +=  --no-builtin-rules
+
 E=@echo
 ifeq ($(V),1)
 Q=
