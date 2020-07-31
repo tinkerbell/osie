@@ -569,8 +569,8 @@ if [ -z "$KOPT_apkovl" ]; then
 elif is_url "$KOPT_apkovl"; then
 	# Fetch apkovl via network
 	MACHINE_UUID=$(cat /sys/class/dmi/id/product_uuid 2>/dev/null)
-	url="${KOPT_apkovl/{MAC\}/$MAC_ADDRESS}"
-	url="${url/{UUID\}/$MACHINE_UUID}"
+	url="${KOPT_apkovl/\{MAC\}/$MAC_ADDRESS}"
+	url="${url/\{UUID\}/$MACHINE_UUID}"
 	ovl=/tmp/${url##*/}
 	wget -O "$ovl" "$url" || ovl=
 else
