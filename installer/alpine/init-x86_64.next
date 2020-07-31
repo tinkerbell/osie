@@ -247,7 +247,7 @@ relocate_mount() {
 # find the dirs under ALPINE_MNT that are boot repositories
 find_boot_repositories() {
 	if [ -n "$ALPINE_REPO" ]; then
-		echo "$ALPINE_REPO"
+		echo "$ALPINE_REPO" | tr ',' '\n' | sort -u
 	else
 		find /media/* -name .boot_repository -type f -maxdepth 3 |
 			sed 's:/.boot_repository$::'
