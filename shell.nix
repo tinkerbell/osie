@@ -30,6 +30,7 @@ let
 in mkShell {
   buildInputs = [
     bash
+    cpio
     curl
     docker
     git
@@ -37,7 +38,7 @@ in mkShell {
     gnumake
     gnused
     libarchive
-    minio
+    minio-client
     pigz
     python3
     python3Packages.black
@@ -55,7 +56,6 @@ in mkShell {
     python3Packages.pytest
     python3Packages.pytestcov
     python3Packages.structlog
-    rsync
     shellcheck
     shfmt
     unzip

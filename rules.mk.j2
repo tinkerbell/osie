@@ -161,7 +161,7 @@ build/$v/test-initramfs-%/test-initramfs: build/$v/initramfs-% installer/alpine/
 		sed -i 's|curl |curl --insecure |g' init-* && \
 		mv init-* init && \
 		chmod +x init && \
-		gunzip initramfs.cpio.gz && \
+		unpigz initramfs.cpio.gz && \
 		echo init | cpio -oH newc --append -O initramfs.cpio && \
 		pigz -9 initramfs.cpio && \
 		mv initramfs.cpio.gz $(@F)
