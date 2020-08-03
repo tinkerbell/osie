@@ -277,7 +277,7 @@ build/osie-alpine-initramfs-builder-aarch64: /proc/sys/fs/binfmt_misc/qemu-aarch
 endif
 build/osie-alpine-initramfs-builder-aarch64: installer/alpine/Dockerfile installer/alpine/build.sh installer/alpine/eclypsiumdriver-alpine-* installer/alpine/qemu-aarch64-static
 	$(E) "IMAGE $@"
-	$(Q) sed '/^FROM alpine/ s| .*| arm64v8/alpine:3.6|' installer/alpine/Dockerfile > installer/alpine/Dockerfile.aarch64
+	$(Q) sed '/^FROM alpine/ s| .*| arm64v8/alpine:3.6\nCOPY qemu-aarch64-static /usr/bin|' installer/alpine/Dockerfile >installer/alpine/Dockerfile.aarch64
 	$(Q) docker build -f installer/alpine/Dockerfile.aarch64 -t $@ installer/alpine/ 2>&1 | tee $@.log >/dev/$T
 	$(Q) touch $@
 
