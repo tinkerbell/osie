@@ -282,7 +282,7 @@ build/osie-alpine-initramfs-builder-aarch64: installer/alpine/Dockerfile install
 	$(Q) touch $@
 
 assets-x86_64: installer/alpine/assets-x86_64/initramfs installer/alpine/assets-x86_64/modloop installer/alpine/assets-x86_64/vmlinuz
-build/osie-alpine-initramfs-builder-x86_64:  installer/alpine/Dockerfile installer/alpine/build.sh installer/alpine/eclypsiumdriver-alpine-* installer/alpine/qemu-aarch64-static
+build/osie-alpine-initramfs-builder-x86_64:  installer/alpine/Dockerfile installer/alpine/build.sh installer/alpine/eclypsiumdriver-alpine-*
 	$(E) "IMAGE $@"
 	$(Q) docker build -f installer/alpine/Dockerfile -t $@ installer/alpine/ 2>&1 | tee $@.log >/dev/$T
 	$(Q) touch $@

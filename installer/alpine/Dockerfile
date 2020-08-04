@@ -3,8 +3,6 @@ FROM alpine:3.7
 ENTRYPOINT [ "/build.sh" ]
 VOLUME /assets
 
-COPY qemu-aarch64-static /usr/bin/
-
 RUN mkdir -p /etc/apk/cache && \
     apk add --update --upgrade \
         alpine-base \
