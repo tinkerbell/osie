@@ -646,6 +646,8 @@ if [ -f "$sysroot/etc/.default_boot_services" -o ! -f "$ovl" ]; then
 
 	rc_add firstboot default
 
+	rc_add $packet_action default
+
 	rm -f "$sysroot/etc/.default_boot_services"
 fi
 
@@ -806,6 +808,14 @@ setup_inittab_console
 
 ! [ -f "$sysroot"/etc/resolv.conf ] && [ -f /etc/resolv.conf ] &&
 	cp /etc/resolv.conf "$sysroot"/etc
+
+# Setup OSIE helper
+ebegin "Fetching Packet $packet_action files"
+base="${KOPT_packet_base_url:-http://install.$KOPT_facility.packet.net/misc/osie/current}" &&
+	wget "$base/$packet_action-rc" -O "$sysroot/etc/init.d/${packet_action}" &&
+	wget "$base/$packet_action.sh" -O "$sysroot/sbin/${packet_action}" &&
+	chmod +x "$sysroot/etc/init.d/${packet_action}" "$sysroot/sbin/${packet_action}"
+eend $?
 
 # setup bootchart for switch_root
 chart_init=""
