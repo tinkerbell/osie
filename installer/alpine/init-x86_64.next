@@ -385,6 +385,7 @@ esac
 
 case "$KOPT_packet_state" in
 '') ;;
+deprovisioning) KOPT_modules="$KOPT_modules,eclypsiumdriver,ipmi_devintf" ;;
 preinstalling) packet_action=runner ;;
 *) echo "ignoring packet_state: $KOPT_packet_state" ;;
 esac
