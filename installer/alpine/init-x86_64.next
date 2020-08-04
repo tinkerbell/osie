@@ -345,7 +345,7 @@ myopts="alpine_dev autodetect autoraid chart cryptroot cryptdm cryptheader crypt
 	pkgs quiet root_size root usbdelay ip alpine_repo apkovl alpine_start splash
 	blacklist overlaytmpfs rootfstype rootflags nbd resume s390x_net dasd ssh_key
 	BOOTIF"
-myopts="$myopts facility packet_action packet_bootdev_mac packet_state"
+myopts="$myopts facility packet_action packet_base_url packet_bootdev_mac packet_state"
 
 for opt; do
 	case "$opt" in
