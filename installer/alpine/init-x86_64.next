@@ -345,7 +345,7 @@ myopts="alpine_dev autodetect autoraid chart cryptroot cryptdm cryptheader crypt
 	pkgs quiet root_size root usbdelay ip alpine_repo apkovl alpine_start splash
 	blacklist overlaytmpfs rootfstype rootflags nbd resume s390x_net dasd ssh_key
 	BOOTIF"
-myopts="$myopts facility packet_action packet_bootdev_mac"
+myopts="$myopts facility packet_action packet_bootdev_mac packet_state"
 
 for opt; do
 	case "$opt" in
@@ -381,6 +381,12 @@ install) packet_action=osie-installer ;;
 rescue) packet_action=rescue-helper ;;
 workflow) packet_action=workflow-helper ;;
 *) eend 1 "unknown packet_action: $KOPT_packet_action" ;;
+esac
+
+case "$KOPT_packet_state" in
+'') ;;
+preinstalling) packet_action=runner ;;
+*) echo "ignoring packet_state: $KOPT_packet_state" ;;
 esac
 eend
 
