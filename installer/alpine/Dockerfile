@@ -87,7 +87,7 @@ ARG ECLYPSIUM_DRIVER_FILENAME=eclypsiumdriver-alpine-${ECLYPSIUM_DRIVER_VERSION}
 
 COPY ${ECLYPSIUM_DRIVER_FILENAME} /home/builder/
 
-# Download the eclypsium driver abuild and build it
+# Install the eclypsium driver
 RUN echo "${ECLYPSIUM_DRIVER_SHA512}  ${ECLYPSIUM_DRIVER_FILENAME}" | sha512sum -c && \
     tar -zxvf ${ECLYPSIUM_DRIVER_FILENAME} && \
     cd aports/non-free/eclypsiumdriver && \
@@ -98,7 +98,7 @@ RUN echo "${ECLYPSIUM_DRIVER_SHA512}  ${ECLYPSIUM_DRIVER_FILENAME}" | sha512sum 
     abuild checksum && \
     MAKEFLAGS=-j$(nproc) abuild -r && \
     abuild clean && \
-    sudo apk add --no-scripts --no-cache --update --upgrade /home/builder/packages/non-free/x86_64/eclypsium*.apk
+    sudo apk add --no-scripts --update --upgrade /home/builder/packages/non-free/x86_64/eclypsium*.apk
 
 USER root
 RUN sudo mv /cache /etc/apk/cache && \
