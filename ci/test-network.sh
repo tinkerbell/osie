@@ -187,6 +187,7 @@ out=$(mktemp -d)
 
 # shellcheck disable=SC2207
 oses=($(env_or_json "${OSES:-}" 'keys|.[]'))
+pids=()
 for os in "${oses[@]}"; do
 	case $os in
 	rh | vz) echo "$os is not supported, skipping" && continue ;;
@@ -208,12 +209,18 @@ for os in "${oses[@]}"; do
 			ports=($(jq -r ".$os.\"$type\".$maker[]" $json))
 			echo "os=$os type=$type maker=$maker mode=$mode ports=${ports[*]}"
 			COVERAGE_FILE=/coverage/.coverage.$os-$type-$maker-$mode test_do &>"$out/$os-$type-$maker-$mode.out" &
+			pids+=($!)
 		done
 	done
 done
-wait
+
+ret=0
+# `wait -n $pid...` returns the exit status of the waited pid(s), `wait` alone returns the exit status of the *last* process waited for... which is likely 0
+wait -n "${pids[@]}" || ret=$?
 
 find "$out" -type f ! -empty -print -and -exec cat {} \;
 
 cd /coverage
 coverage combine -a
+
+exit $ret
