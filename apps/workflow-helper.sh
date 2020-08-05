@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/ash
+
+# shellcheck shell=dash
 
 docker_registry=$(sed -nr 's|.*\bdocker_registry=(\S+).*|\1|p' /proc/cmdline)
 grpc_authority=$(sed -nr 's|.*\bgrpc_authority=(\S+).*|\1|p' /proc/cmdline)
