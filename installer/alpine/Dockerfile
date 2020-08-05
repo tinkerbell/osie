@@ -74,6 +74,7 @@ RUN true && \
     sed -i APKBUILD -n \
         -e '/config.*x86_64/! p; /config.*x86_64/ { /config-'$FLAVOR'.x86_64/ p }' && \
     echo 'CONFIG_KEXEC=y' >> config-$FLAVOR.x86_64 && \
+    echo 'CONFIG_IONIC=y' >> config-$FLAVOR.x86_64 && \
     abuild checksum && \
     MAKEFLAGS=-j$(nproc) abuild -r && \
     abuild clean && \
