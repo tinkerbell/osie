@@ -62,9 +62,6 @@ ______          _        _                _
 ##          Task Runner Environment          ##
 EOF
 
-# stop mdev from messing with us once and for all
-rm -f /sbin/mdev
-
 facility=$(sed -nr 's|.*\bfacility=(\S+).*|\1|p' /proc/cmdline)
 
 ensure_time
@@ -106,6 +103,9 @@ if ! docker images "osie:$arch" | grep osie >/dev/null; then
 		docker load |
 		tee
 fi
+
+# stop mdev from messing with us once and for all
+rm -f /sbin/mdev
 
 # make sure messages show up in all consoles
 # we skip first because it's already going there via stdout
