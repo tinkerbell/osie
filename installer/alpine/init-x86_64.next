@@ -383,6 +383,7 @@ workflow) packet_action=workflow-helper ;;
 *) eend 1 "unknown packet_action: $KOPT_packet_action" ;;
 esac
 
+KOPT_pkgs="curl,docker,jq,mdadm,openssh,kexec-tools,tcpdump"
 case "$KOPT_packet_state" in
 '') ;;
 deprovisioning) KOPT_modules="$KOPT_modules,eclypsiumdriver,ipmi_devintf" ;;
