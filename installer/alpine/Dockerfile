@@ -1,4 +1,4 @@
-FROM alpine:3.7
+FROM alpine:3.12
 
 ENTRYPOINT [ "/build.sh" ]
 VOLUME /assets
