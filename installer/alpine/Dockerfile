@@ -16,9 +16,6 @@ RUN mkdir -p /etc/apk/cache && \
         squashfs-tools \
         tcpdump \
         && \
-    apk add --no-scripts --update --upgrade --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing \
-        kexec-tools \
-        && \
     apk cache sync && \
     mv /etc/apk/cache /cache && \
     apk add --no-scripts --no-cache --update --upgrade \
@@ -49,6 +46,13 @@ RUN true && \
     # Fetch alpine package tree \
     curl -fL https://github.com/alpinelinux/aports/archive/$COMMIT.tar.gz | tar -zxf - && \
     mv aports-$COMMIT aports && \
+    # Install pinned kexec-tools package
+    cd aports/testing/kexec-tools && \
+    abuild checksum && \
+    MAKEFLAGS=-j$(nproc) abuild -r && \
+    abuild clean && \
+    # Install it later when we have /etc/apk/cache in place again, so it gets added to the initramfs
+    cd ../../.. && \
     # Install pinned linux-firmware package
     cd aports/main/linux-firmware && \
     abuild checksum && \
@@ -96,6 +100,10 @@ RUN echo "${ECLYPSIUM_DRIVER_SHA512}  ${ECLYPSIUM_DRIVER_FILENAME}" | sha512sum 
     sudo apk add --no-scripts --no-cache --update --upgrade /home/builder/packages/non-free/x86_64/eclypsium*.apk
 
 USER root
-RUN sudo mv /cache /etc/apk/cache
+RUN sudo mv /cache /etc/apk/cache && \
+    # Now we install kexec-tools
+    sudo apk add --no-scripts --update --upgrade /home/builder/packages/testing/x86_64/kexec-tools*.apk && \
+    # Clear out installed file since it was empty before kexec-tools
+    truncate -s0 /etc/apk/cache/installed
 
 COPY build.sh /build.sh
