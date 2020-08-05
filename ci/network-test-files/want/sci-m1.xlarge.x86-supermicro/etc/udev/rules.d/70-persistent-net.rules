@@ -4,7 +4,7 @@
 # line, and change only the value of the NAME= key.
 
 # PCI device (custom name provided by external tool to mimic Predictable Network Interface Names)
-SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="@MAC0@", ATTR{dev_id}=="0x0", ATTR{type}=="1", KERNEL=="eth*", NAME="dummy0"
+SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="@MAC0@", ATTR{dev_id}=="0x0", ATTR{type}=="1", NAME="dummy0"
 
 # PCI device (custom name provided by external tool to mimic Predictable Network Interface Names)
-SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="@MAC1@", ATTR{dev_id}=="0x0", ATTR{type}=="1", KERNEL=="eth*", NAME="dummy1"
+SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="@MAC1@", ATTR{dev_id}=="0x0", ATTR{type}=="1", NAME="dummy1"
