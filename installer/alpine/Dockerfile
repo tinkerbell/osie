@@ -30,11 +30,6 @@ RUN mkdir -p /etc/apk/cache && \
         linux-headers \
         sudo \
         && \
-    # remove edge when linux-vanilla is > 4.14.8 and has the nfp driver enabled,
-    # likely alpine v3.8
-    apk add --no-scripts --no-cache --update --upgrade --repository http://dl-cdn.alpinelinux.org/alpine/edge/main \
-        linux-firmware \
-	&& \
     adduser -G abuild -g "Alpine Package Builder" -s /bin/ash -D builder && \
     echo "builder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
     apk update
@@ -54,6 +49,14 @@ RUN true && \
     # Fetch alpine package tree \
     curl -fL https://github.com/alpinelinux/aports/archive/$COMMIT.tar.gz | tar -zxf - && \
     mv aports-$COMMIT aports && \
+    # Install pinned linux-firmware package
+    cd aports/main/linux-firmware && \
+    abuild checksum && \
+    MAKEFLAGS=-j$(nproc) abuild -r && \
+    abuild clean && \
+    echo about to install && \
+    sudo apk add --no-scripts --update --upgrade /home/builder/packages/main/x86_64/linux-firmware*.apk && \
+    cd ../../.. && \
     # Build customized linux-$FLAVOR package \
     cd aports/main/linux-$FLAVOR && \
     sed -i APKBUILD \
