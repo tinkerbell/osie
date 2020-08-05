@@ -86,9 +86,14 @@ phone_home_url=$(jq -r .phone_home_url "$metadata")
 trap fail EXIT
 
 service docker start
-until docker info; do
+i=0
+# shellcheck disable=SC2169
+until docker info >/dev/null || [[ $i -gt 5 ]]; do
+	echo "Sleeping to wait for docker to start up"
 	sleep 3
+	i=$((i + 1))
 done
+docker info
 
 reason='unable to fetch/load osie-runner image'
 if ! docker images "osie-runner:$arch" | grep osie >/dev/null; then
