@@ -93,18 +93,18 @@ ifdef DRONE_PULL_REQUEST
 s3Bucket := tinkerbell-oss-pr
 endif
 deploy: package
-	$(E)"UPLOAD   s3/tinkerbell-oss/osie-uploads/$v.tar.gz"
-	$(Q)mc cp build/$v.tar.gz s3/${s3Bucket}/osie-uploads/$v.tar.gz
-	$(Q)if [[ $${DRONE_BUILD_EVENT:-} == "push" ]] && [[ $${DRONE_BRANCH:-} == "master" ]]; then mc cp s3/tinkerbell-oss/osie-uploads/$v.tar.gz s3/tinkerbell-oss/osie-uploads/latest.tar.gz; fi
-	$(Q)echo "deploy this build with the following command:"
-	$(Q)echo -n "./scripts/deploy osie update $v -m \"$$"
-	$(Q)echo -n "(sed -n '/^## \[/,$$ {/\S/!q; p}' CHANGELOG.md)\" "
-	$(Q)echo -n "$$(sed 's|.*= ||' build/$v.tar.gz.sha512sum)"
-	$(Q)echo
+	$(E) "UPLOAD   s3/tinkerbell-oss/osie-uploads/$v.tar.gz"
+	$(Q) mc cp build/$v.tar.gz s3/${s3Bucket}/osie-uploads/$v.tar.gz
+	$(Q) if [[ $${DRONE_BUILD_EVENT:-} == "push" ]] && [[ $${DRONE_BRANCH:-} == "master" ]]; then mc cp s3/tinkerbell-oss/osie-uploads/$v.tar.gz s3/tinkerbell-oss/osie-uploads/latest.tar.gz; fi
+	$(Q) echo "deploy this build with the following command:"
+	$(Q) echo -n "./scripts/deploy osie update $v -m \"$$"
+	$(Q) echo -n "(sed -n '/^## \[/,$$ {/\S/!q; p}' CHANGELOG.md)\" "
+	$(Q) echo -n "$$(sed 's|.*= ||' build/$v.tar.gz.sha512sum)"
+	$(Q) echo
 
 upload-test: ${packages}
-	$(E)"UPLOAD   s3/tinkerbell-oss/osie-uploads/osie-testing/$v/"
-	$(Q)mc cp --recursive build/$v/ s3/tinkerbell-oss/osie-uploads/osie-testing/$v/ || ( \
+	$(E) "UPLOAD   s3/tinkerbell-oss/osie-uploads/osie-testing/$v/"
+	$(Q) mc cp --recursive build/$v/ s3/tinkerbell-oss/osie-uploads/osie-testing/$v/ || ( \
 		session=$$(mc session list --json | jq -r .sessionId); \
 		for i in {1..5}; do \
 			mc session resume $$session && exit 0; \
@@ -114,34 +114,34 @@ upload-test: ${packages}
 	)
 
 build/$v.tar.gz: ${packages}
-	$(E)"TAR.GZ   $@"
-	$(Q)cd build && \
+	$(E) "TAR.GZ   $@"
+	$(Q) cd build && \
 		tar -cO $(sort $(subst build/,,$^)) | pigz >$(@F).tmp && \
 		mv $(@F).tmp $(@F)
 
 build/$v.tar.gz.sha512sum: build/$v.tar.gz
-	$(E)"SHASUM   $@"
-	$(Q)sha512sum --tag $^ | sed 's|build/||' >$@
+	$(E) "SHASUM   $@"
+	$(Q) sha512sum --tag $^ | sed 's|build/||' >$@
 
 ${packaged-grubs}: ${grubs}
-	$(E)"INSTALL  $@"
-	$(Q)install -Dm644 $(addprefix grub/,$(subst /,-,$(patsubst build/$v/grub/%,%,$@))) $@
+	$(E) "INSTALL  $@"
+	$(Q) install -Dm644 $(addprefix grub/,$(subst /,-,$(patsubst build/$v/grub/%,%,$@))) $@
 
 build/$v/%-rc: apps/%-rc
-	$(E)"INSTALL  $@"
-	$(Q)install -D -m644 $< $@
+	$(E) "INSTALL  $@"
+	$(Q) install -D -m644 $< $@
 
 build/$v/%.sh: apps/%.sh
-	$(E)"INSTALL  $@"
-	$(Q)install -D -m644 $< $@
+	$(E) "INSTALL  $@"
+	$(Q) install -D -m644 $< $@
 
 build/$v/osie-%: build/osie-%
-	$(E)"INSTALL  $@"
-	$(Q)install -D -m644 $< $@
+	$(E) "INSTALL  $@"
+	$(Q) install -D -m644 $< $@
 
 {% for platform, arch in platforms.items() %}
 build/$v/initramfs-{{platform}}: build/$v-rootfs-{{platform}} installer/alpine/init-{{arch}}
-	$(E)"CPIO     $@"
+	$(E) "CPIO     $@"
 	$(Q) install -m755 installer/alpine/init-{{arch}} build/$v-rootfs-{{platform}}/init
 	$(Q) (cd build/$v-rootfs-{{platform}} && find -print0 | bsdcpio --null --quiet -oH newc | pigz -9) >$@.osied
 	$(Q) install -D -m644 $@.osied $@
@@ -149,15 +149,15 @@ build/$v/initramfs-{{platform}}: build/$v-rootfs-{{platform}} installer/alpine/i
 {% endfor %}
 
 build/$v/modloop-%: build/modloop-%
-	$(E)"INSTALL  $@"
-	$(Q)install -D -m644 $< $@
+	$(E) "INSTALL  $@"
+	$(Q) install -D -m644 $< $@
 
 build/$v/vmlinuz-%: build/vmlinuz-%
-	$(E)"INSTALL  $@"
-	$(Q)install -D -m644 $< $@
+	$(E) "INSTALL  $@"
+	$(Q) install -D -m644 $< $@
 
 build/$v/test-initramfs-%/test-initramfs: build/$v/initramfs-% installer/alpine/init-%
-	$(E)"BUILD    $@"
+	$(E) "BUILD    $@"
 	$(Q) rm -rf $(@D)
 	$(Q) mkdir -p $(@D)
 	$(Q) cp $^ $(@D)/
@@ -177,9 +177,9 @@ build/osie-test-env: ci/Dockerfile
 
 {% for arch in platforms.values() | unique | sort -%}
 test-{{arch}}: $(cprs) build/osie-test-env package-apps package-grubs build/$v/osie-{{arch}}.tar.gz build/$v/osie-runner-{{arch}}.tar.gz build/$v/repo-{{arch}} ${packaged-{{arch}}} ci/ifup.sh ci/vm.sh build/$v/test-initramfs-{{arch}}/test-initramfs
-	$(E)"DOCKER   $@"
+	$(E) "DOCKER   $@"
 ifneq ($(CI),drone)
-	$(Q)docker run --rm -ti \
+	$(Q) docker run --rm -ti \
 		--privileged \
 		--name $(@F) \
 		--volume $(CURDIR):/osie:ro \
@@ -193,15 +193,15 @@ endif
 {% endfor %}
 
 build/$v-rootfs-%: build/initramfs-%
-	$(E)"EXTRACT  $@"
-	$(Q)rm -rf $@
-	$(Q)mkdir $@
-	$(Q)bsdtar -xf $< -C $@
+	$(E) "EXTRACT  $@"
+	$(Q) rm -rf $@
+	$(Q) mkdir $@
+	$(Q) bsdtar -xf $< -C $@
 
 test-packet-networking: build/osie-test-env docker/scripts/packet-networking ci/test-network.sh $(shell find ci/network-test-files/ -type f | grep -v ':')
-	$(E)"DOCKER   $@"
+	$(E) "DOCKER   $@"
 ifneq ($(CI),drone)
-	$(Q)docker run --rm -ti \
+	$(Q) docker run --rm -ti \
 		--name $(@F) \
 		--dns=147.75.207.207 \
 		--cap-add=NET_ADMIN \
@@ -223,44 +223,42 @@ endif
 build/osie-aarch64.tar.gz: SED=/FROM/ s|.*|FROM multiarch/ubuntu-debootstrap:arm64-xenial|
 build/osie-x86_64.tar.gz: SED=
 build/osie-%.tar.gz: docker/Dockerfile ${osiesrcs}
-	$(E)"DOCKER   $@"
-	$(Q)sed '${SED}' $< > $<.$*
-	$(Q)docker build -t osie:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
-	$(Q)docker save osie:$* > $@.tmp
-	$(Q)mv $@.tmp $@
+	$(E) "DOCKER   $@"
+	$(Q) sed '${SED}' $< > $<.$*
+	$(Q) docker build -t osie:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
+	$(Q) docker save osie:$* > $@
 
 build/osie-runner-aarch64.tar.gz: SED=/FROM/ s|.*|FROM multiarch/alpine:arm64-v3.7|
 build/osie-runner-x86_64.tar.gz: SED=
 build/osie-runner-%.tar.gz: osie-runner/Dockerfile $(shell git ls-files osie-runner)
-	$(E)"DOCKER   $@"
-	$(Q)sed '${SED}' $< > $<.$*
-	$(Q)docker build -t osie-runner:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
-	$(Q)docker save osie-runner:$* > $@.tmp
-	$(Q)mv $@.tmp $@
+	$(E) "DOCKER   $@"
+	$(Q) sed '${SED}' $< > $<.$*
+	$(Q) docker build -t osie-runner:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
+	$(Q) docker save osie-runner:$* > $@
 
 build/osie-runner-aarch64.tar.gz:
-	$(E)"FAKE     $@"
+	$(E) "FAKE     $@"
 	$(Q) touch $@
 
 build/$v/repo-aarch64:
-	$(E)"LN       $@"
-	$(Q)ln -nsf ../../../alpine/edge $@
+	$(E) "LN       $@"
+	$(Q) ln -nsf ../../../alpine/edge $@
 
 build/repo-aarch64:
-	$(Q)echo edge > $@
+	$(Q) echo edge > $@
 
 build/$v/repo-x86_64:
-	$(E)"LN       $@"
-	$(Q)ln -nsf ../../../alpine/v${alpine_version_x86_64} $@
+	$(E) "LN       $@"
+	$(Q) ln -nsf ../../../alpine/v${alpine_version_x86_64} $@
 
 build/repo-x86_64:
-	$(Q)echo v${alpine_version_x86_64} > $@
+	$(Q) echo v${alpine_version_x86_64} > $@
 
 {% for platform in platforms %}
 build/initramfs-{{platform}}: installer/alpine/assets-{{platform}}/initramfs
 build/modloop-{{platform}}:   installer/alpine/assets-{{platform}}/modloop
 build/vmlinuz-{{platform}}:   installer/alpine/assets-{{platform}}/vmlinuz
 build/initramfs-{{platform}} build/modloop-{{platform}} build/vmlinuz-{{platform}}:
-	$(E)"LN       $@"
-	$(Q)ln -nsf ../$< $@
+	$(E) "LN       $@"
+	$(Q) ln -nsf ../$< $@
 {% endfor -%}
