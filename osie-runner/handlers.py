@@ -88,6 +88,8 @@ class Handler:
             return "osie" in services
 
         userdata = instance.get("userdata", "")
+        if not userdata:
+            return False
 
         for l in userdata.splitlines():
             match = re.search(r"""^\s*#\s*services=({.*"osie"\s*:\s*".*})$""", l)
