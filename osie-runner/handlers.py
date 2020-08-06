@@ -76,6 +76,28 @@ class Handler:
         if j["state"] == "preinstalling":
             phone_home({"instance_id": hardware_id})
 
+    def setup_reboot(self):
+        self.log.info("setting up cleanup.sh with reboot")
+        write_statefile(
+            self.statedir + "cleanup.sh", "#!/usr/bin/env sh\n" + "reboot\n", 0o700
+        )
+
+    def wants_custom_osie(self, instance):
+        services = instance.get("services")
+        if services:
+            return "osie" in services
+
+        userdata = instance.get("userdata", "")
+
+        for l in userdata.splitlines():
+            match = re.search(r"""^\s*#\s*services=({.*"osie"\s*:\s*".*})$""", l)
+            if not match:
+                continue
+
+            return "osie" in json.loads(match.group(1))
+
+        return False
+
     def handle_provisioning(self, j):
         log = self.log
         statedir = self.host_state_dir
@@ -86,66 +108,42 @@ class Handler:
         if not instance:
             return
 
-        mismatch = False
-
-        pre = j["preinstalled_operating_system_version"]
-        pretag = get_slug_tag(pre)
-        instag = get_slug_tag(instance["operating_system_version"])
-        if pretag != instag:
-            log.info(
-                "preinstalled does not match instance selection",
-                preinstalled=pretag,
-                instance=instag,
-            )
-            mismatch = True
-
-        precpr = pre["storage"]
-        inscpr = instance["storage"]
-        if precpr != inscpr:
-            log.info(
-                "preinstalled cpr does not match instance cpr",
-                preinstalled=precpr,
-                instance=inscpr,
-            )
-            mismatch = True
-
-        userdata = instance.get("userdata")
-        if not userdata:
-            userdata = ""
-        custom_repo_tag = get_custom_image_from_userdata(userdata)
-        pre_repo_tag = "https://github.com/packethost/packet-images#" + pre.get(
-            "image_tag", ""
-        )
-        if custom_repo_tag and custom_repo_tag != pre_repo_tag:
-            log.info(
-                "using custom image",
-                custom_repo_tag=custom_repo_tag,
-                preinstalled_repo_tag=pre_repo_tag,
-            )
-            mismatch = True
-
-        metadata = cacher_to_metadata(j, tinkerbell)
-
         network_ready = instance.get("network_ready")
         if not network_ready:
             log.info("network is not ready yet", network_ready=network_ready)
             return
 
+        if self.wants_custom_osie(instance):
+            log.info("custom osie detected")
+            self.wipe(j)
+            self.setup_reboot()
+            return True
+
+        args = ()
+
+        metadata = cacher_to_metadata(j, tinkerbell)
+        pre = j["preinstalled_operating_system_version"]
+
+        mismatch = any(
+            checker(log, pre, instance)
+            for checker in (tag_differs, storage_differs, wants_custom_image)
+        )
         if mismatch:
             log.info("temporarily overriding state to osie.internal.check-env")
             old_state = metadata["state"]
             metadata["state"] = "osie.internal.check-env"
 
-        env = {"PACKET_BOOTDEV_MAC": os.getenv("PACKET_BOOTDEV_MAC", "")}
-        args = ("-M", "/statedir/metadata")
         log.info("writing metadata")
         write_statefile(self.statedir + "metadata", json.dumps(metadata))
+        args += ("-M", "/statedir/metadata")
 
+        userdata = instance.get("userdata", "")
         if userdata:
             log.info("writing userdata")
             write_statefile(self.statedir + "userdata", userdata)
             args += ("-u", "/statedir/userdata")
 
+        env = {"PACKET_BOOTDEV_MAC": os.getenv("PACKET_BOOTDEV_MAC", "")}
         instance_id = metadata["id"]
         log = log.bind(hardware_id=hardware_id, instance_id=instance_id)
         start = datetime.now()
@@ -163,12 +161,7 @@ class Handler:
             )
 
             if ret.returncode != 0:
-                log.info("setting up cleanup.sh with reboot")
-                write_statefile(
-                    self.statedir + "cleanup.sh",
-                    "#!/usr/bin/env sh\n" + "reboot\n",
-                    0o700,
-                )
+                self.setup_reboot()
                 return True
 
             log.info("reverting metadata to correct state")
@@ -252,6 +245,7 @@ def cacher_to_metadata(j, tinkerbell):
         "password_hash": instance.get("crypted_root_password"),
         "phone_home_url": parse.urljoin(tinkerbell.geturl(), "phone-home"),
         "plan": j["plan_slug"],
+        "services": instance.get("services"),
         "state": j["state"],
         "storage": instance.get("storage", ""),
     }  # noqa: E122
@@ -287,3 +281,41 @@ def get_custom_image_from_userdata(userdata):
     tag = re.search(r".*\bimage_tag=(\S+).*", userdata)
     if repo and tag:
         return repo.group(1) + "#" + tag.group(1)
+
+
+def tag_differs(log, pre, instance):
+    pretag = get_slug_tag(pre)
+    instag = get_slug_tag(instance["operating_system_version"])
+    if pretag != instag:
+        log.info(
+            "preinstalled does not match instance selection",
+            preinstalled=pretag,
+            instance=instag,
+        )
+        return True
+
+
+def storage_differs(log, pre, instance):
+    precpr = pre["storage"]
+    inscpr = instance["storage"]
+    if precpr != inscpr:
+        log.info(
+            "preinstalled cpr does not match instance cpr",
+            preinstalled=precpr,
+            instance=inscpr,
+        )
+        return True
+
+
+def wants_custom_image(log, pre, instance):
+    custom_repo_tag = get_custom_image_from_userdata(instance.get("userdata", ""))
+    pre_repo_tag = "https://github.com/packethost/packet-images#" + pre.get(
+        "image_tag", ""
+    )
+    if custom_repo_tag and custom_repo_tag != pre_repo_tag:
+        log.info(
+            "using custom image",
+            custom_repo_tag=custom_repo_tag,
+            preinstalled_repo_tag=pre_repo_tag,
+        )
+        return True

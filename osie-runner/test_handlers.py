@@ -170,8 +170,7 @@ def userdata_generator(
     "path,value",
     [
         pytest.param(None, None, id="normal"),
-        pytest.param("instance/userdata", None, id="userdata is None"),
-        pytest.param("instance/userdata", False, id="userdata is not-None-Falsy"),
+        pytest.param("instance/userdata", "", id="userdata is None"),
         pytest.param(
             "instance/userdata",
             userdata_generator(None, tag="image_tag"),
@@ -449,3 +448,43 @@ def test_existence_of_loop_sh(mocked_run_osie):
     assert handlers.write_statefile.call_args_list[1][0][0] == metadata
     assert os.path.exists(metadata)
     handler.run_osie.assert_called_with(*c)
+
+
+@pytest.mark.parametrize(
+    "instance,want",
+    [
+        ({}, False),
+        ({"services": None}, False),
+        ({"services": {}}, False),
+        ({"services": {"not-osie": "v42"}}, False),
+        ({"services": {"osie": "v42"}}, True),
+        ({"userdata": ""}, False),
+        ({"userdata": """services={"osie":"userdata osie"}"""}, False),
+        ({"userdata": """#services={"osie":"userdata osie"}junk"""}, False),
+        ({"userdata": """#services={"osie":"userdata osie"}"""}, True),
+        (
+            {
+                "userdata": """I'm a little teapot\n#services={"osie":"userdata osie"}\nshort and stout!"""
+            },
+            True,
+        ),
+        ({"userdata": """#cloud-config\n#services={"osie":"userdata osie"}"""}, True),
+        ({"userdata": """#!/usr/bin/bash\n#services={"osie":"userdata osie"}"""}, True),
+    ],
+    ids=[
+        "empty instance",
+        "services is None",
+        "services is empty",
+        "services does not have osie",
+        "services has osie",
+        "userdata is empty",
+        "userdata not commented",
+        "userdata has junk at eol",
+        "userdata is solo",
+        "userdata has extra content",
+        "userdata cloud-config",
+        "userdata bash",
+    ],
+)
+def test_wants_custom_osie(handler, instance, want):
+    assert handler.wants_custom_osie(instance) == want
