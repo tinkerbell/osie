@@ -322,3 +322,5 @@ def wants_custom_image(log, pre, instance):
             preinstalled_repo_tag=pre_repo_tag,
         )
         return True
+
+    return False
