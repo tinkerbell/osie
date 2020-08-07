@@ -225,6 +225,7 @@ def cacher_to_metadata(j, tinkerbell):
             "ip_addresses": [],
             "operating_system_version": os,
             "storage": storage,
+            "userdata": None,
         }
 
     os = instance["operating_system_version"]
