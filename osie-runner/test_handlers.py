@@ -498,6 +498,7 @@ def test_wants_custom_osie(handler, instance, want):
     [
         ({}, {}, False),
         ({}, {"userdata": ""}, False),
+        ({}, {"userdata": None}, False),
         (
             {"image_tag": "image"},
             {
@@ -530,6 +531,7 @@ def test_wants_custom_osie(handler, instance, want):
     ids=[
         "empty instance",
         "userdata is empty",
+        "userdata is None",
         "userdata has same image_repo",
         "userdata has same image",
         "userdata has only different image_repo",

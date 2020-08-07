@@ -311,7 +311,11 @@ def storage_differs(log, pre, instance):
 
 
 def wants_custom_image(log, pre, instance):
-    custom_repo_tag = get_custom_image_from_userdata(instance.get("userdata", ""))
+    userdata = instance.get("userdata", "")
+    if not userdata:
+        return False
+
+    custom_repo_tag = get_custom_image_from_userdata(userdata)
     pre_repo_tag = "https://github.com/packethost/packet-images#" + pre.get(
         "image_tag", ""
     )
