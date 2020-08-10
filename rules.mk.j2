@@ -189,7 +189,7 @@ build/$v/test-initramfs-%/test-initramfs: build/$v/initramfs-% installer/alpine/
 	mv initramfs.cpio.gz $(@F)
 
 build/osie-test-env: ci/Dockerfile
-	docker build -t osie-test-env ci 2>&1 | tee $@.log >/dev/$T
+	docker build -t osie-test-env:${version} ci 2>&1 | tee $@.log >/dev/$T
 	touch $@
 
 {% for arch in platforms.values() | unique | sort -%}
@@ -207,7 +207,7 @@ ifneq ($(CI),drone)
 		--volume $(CURDIR):/osie:ro \
 		--env OSES \
 		--env UEFI \
-		osie-test-env \
+		osie-test-env:${version} \
 		/osie/ci/vm.sh tests -C /osie/build/$v -k vmlinuz-{{arch}} -i test-initramfs-{{arch}}/test-initramfs -m modloop-{{arch}} -a {{arch}} 2>&1 | tee build/$@.log >/dev/$T
 else
 		ci/vm.sh tests -C build/$v -k vmlinuz-{{arch}} -i test-initramfs-{{arch}}/test-initramfs -m modloop-{{arch}} -a {{arch}} 2>&1 | tee build/$@.log >/dev/$T
