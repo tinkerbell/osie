@@ -47,7 +47,7 @@ ensure_time() {
 	fi
 }
 
-set -o errexit -o pipefail
+set -o errexit -o pipefail -o xtrace
 set -x
 
 # Create OSIE motd

@@ -12,7 +12,7 @@ function init() {
 	BYELLOW='\033[0;33;5;7m'
 	NC='\033[0m' # No Color
 
-	set -o errexit -o pipefail
+	set -o errexit -o pipefail -o xtrace
 }
 
 function rainbow() {

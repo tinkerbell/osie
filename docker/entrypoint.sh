@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -o errexit -o pipefail
+set -o errexit -o pipefail -o xtrace
 
 cmd=$1
 shift
