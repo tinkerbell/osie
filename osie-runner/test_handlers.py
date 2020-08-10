@@ -1,6 +1,7 @@
 import copy
 import crypt
 import json
+import logging
 import os
 import re
 import stat
@@ -490,3 +491,54 @@ def test_existence_of_loop_sh(mocked_run_osie):
 )
 def test_wants_custom_osie(handler, instance, want):
     assert handler.wants_custom_osie(instance) == want
+
+
+@pytest.mark.parametrize(
+    "pre,instance,want",
+    [
+        ({}, {}, False),
+        ({}, {"userdata": ""}, False),
+        ({}, {"userdata": None}, False),
+        (
+            {"image_tag": "image"},
+            {
+                "userdata": "#image_repo=https://github.com/packet-images/packet-images.git"
+            },
+            False,
+        ),
+        ({"image_tag": "image"}, {"userdata": "#image_tag=image"}, False),
+        (
+            {"image_tag": "image"},
+            {"userdata": "#image_repo=https://github.com/somefork/packet-images.git"},
+            False,
+        ),
+        ({"image_tag": "image"}, {"userdata": "#image_tag=some-other-image"}, False),
+        (
+            {"image_tag": "image"},
+            {
+                "userdata": "#image_repo=https://github.com/somefork/packet-images.git\n#image_tag=image"
+            },
+            True,
+        ),
+        (
+            {"image_tag": "image"},
+            {
+                "userdata": "#image_repo=https://github.com/packet-images/packet-images.git\n#image_tag=some-other-image"
+            },
+            True,
+        ),
+    ],
+    ids=[
+        "empty instance",
+        "userdata is empty",
+        "userdata is None",
+        "userdata has same image_repo",
+        "userdata has same image",
+        "userdata has only different image_repo",
+        "userdata has only different image",
+        "userdata has different image_repo",
+        "userdata has different image",
+    ],
+)
+def test_wants_custom_image(pre, instance, want):
+    assert handlers.wants_custom_image(logging.getLogger(), pre, instance) == want
