@@ -28,6 +28,13 @@ target_checksum = $(word 4,$(subst -, ,$(1)))
 build_path = $(word 3,$(1))/$(word 2,$(1))-vanilla-$(word 1,$(1))
 target_to_path = $(call build_path,$(subst -, ,$(1)))
 
+ifdef DRONE_BUILD_NUMBER
+ifdef DRONE_COMMIT_SHA
+v := ${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
+endif
+endif
+
+ifndef v
 v := $(shell git describe --dirty)
 ifeq (-g,$(findstring -g,$v))
 build_git_version := true
@@ -45,6 +52,7 @@ d := $(subst dirty,$d,$(findstring dirty,$v))
 b := $(shell git symbolic-ref HEAD | sed -e 's|^refs/heads/||' -e 's|/|-|g' -e 's|^|,b=|')
 v := $t-n=$n,c=$c$b$d
 v := $(patsubst %dirty,dirty,$v)
+endif
 endif
 v := osie-$v
 
