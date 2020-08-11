@@ -2,38 +2,39 @@
 FROM alpine:3.12
 
 RUN apk add --no-cache --no-progress --update --upgrade \
-    bash \
-    bridge-utils \
-    coreutils \
-    cpio \
-    curl \
-    diffutils \
-    dnsmasq \
-    docker \
-    eudev \
-    file \
-    findutils \
-    gcc \
-    git \
-    go \
-    gptfdisk \
-    iptables \
-    jq \
-    libarchive-tools \
-    lshw \
-    make \
-    musl-dev \
-    ovmf \
-    pigz \
-    py3-pip \
-    python3 \
-    python3-dev \
-    qemu-system-aarch64 \
-    qemu-system-x86_64 \
-    rsync \
-    socat \
-    util-linux \
-    && apk add --no-cache --update --upgrade \
+        bash \
+        bridge-utils \
+        coreutils \
+        cpio \
+        curl \
+        diffutils \
+        dnsmasq \
+        docker \
+        eudev \
+        file \
+        findutils \
+        gcc \
+        git \
+        go \
+        gptfdisk \
+        iptables \
+        jq \
+        libarchive-tools \
+        lshw \
+        make \
+        musl-dev \
+        ovmf \
+        pigz \
+        py3-pip \
+        python3 \
+        python3-dev \
+        qemu-system-aarch64 \
+        qemu-system-x86_64 \
+        rsync \
+        socat \
+        util-linux \
+        && \
+    apk add --no-cache --update --upgrade \
         --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing \
         cfssl \
    ;
