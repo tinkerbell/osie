@@ -14,6 +14,11 @@ pipeline:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
+  avoid-builing-alpine-files:
+    image: alpine
+    commands:
+      - ./installer/alpine/skip-building-alpine-files
+
   shfmt:
     group: ci1
     image: nixos/nix:2.3.4

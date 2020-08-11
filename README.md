@@ -1,36 +1,55 @@
-# osie
+# OSIE
 
 [![Build Status](https://drone.packet.net/api/badges/tinkerbell/osie/status.svg)](https://drone.packet.net/tinkerbell/osie)
 
-# Deploying
-OSIE is built and uploaded to a self-hosted minio instance in ewr for master and tag builds.
-Production deployments should only be done from tags.
-Use the [git-tag-and-release](https://github.com/tinkerbell/eng-tools/blob/master/git-tag-and-release) script found in the [eng-tools repo](https://github.com/tinkerbell/eng-tools)
-At the end of the `upload` step, drone will output the command that can be run locally to deploy to some/all of production.
+OSIE is the Operating System Installation Environment.
+It consists of an Alpine Linux based netboot image which fetches a prebuilt Ubuntu 16.04 container that does the actual installation.
+All of the above is built from this repository using `GNU Make`.
 
-# CI / Drone / Testing
+## Building OSIE
 
-Commits to osie will be built and tested by [Drone CI](https://drone.packet.net/tinkerbell/osie/)
-Configuration for the build can be found in the root of the repo in .drone.yml
+### Ubuntu Based Container
+The OSIE Ubuntu based container is built with `docker` for both `aarch64` and `x86_64`.
+Some packages are rebuilt with different settings (git, using openssl) or updated upstream sources are built/installed.
+These can be built individually with `make build/osie-aarch64.tar.gz` or `make build build/osie-x86_64.tar.gz`.
 
-# Alpine Kernel Compilation
+### Alpine Based Netboot Image
+The OSIE Alpine boot files are built in an Alpine Docker container.
+All the packages are built at container build time, including the kernel.
+The built/installed packages are later used at run time to generate `initramfs` and `modloop` files.
 
-The alpine kernel/initrd is built using the Dockerfile contained in installer/alpine.
+##### Note: Skipping Alpine Kernel Builds
 
-Inside that Dockerfile we build linux-vanilla from the edge aports tree after enabling KEXEC in the config.
-This build takes a very long time.
+Building the Alpine Linux Kernel takes a _long_ time, on account of building just about _all_ of the kernel modules.
+This is usually not needed as we don't mess with the kernel configuration very often.
+Unfortunately, `make` will try to build the kernel unless certain steps are taken (usually only on initial `git clone`).
+Skipping these builds can be done by running the `installer/alpine/skip-building-alpine-files` script, which updates the modified timestamp of the source files so `make` will not try to rebuild.
 
-Any kernel modules you would like to be included in the resulting modloop need to be listed in build.sh
+#### Build Dependencies
 
-make V=1 will build the alpine kernel, initrd, and module set with full verbosity enabled.
-The build artifacts will be placed in a folder named assets-$arch, only x86_64 is currently built.
+The build dependencies can be seen in `Makefile` and `rules.mk.j2`, they are the source of truth.
+The packages found in [shell.nix](./shell.nix) are good second source.
+Using [nix-shell](https://nixos.org/nix/manual/#sec-nix-shell) or [lorri](https://github.com/target/lorri) along with [direnv](https://direnv.net/) is **highly** recommended.
 
-Assets from assets-x86_64 then need to be uploaded to install.ewr1.packet.net into /srv/www/install/alpine/boot/3.7
-Each file's sha512sum needs to then be updated in the main Makefile (in the root of the source repo).
-During 'make package' these files will be downloaded, merged with some additional content and bundled up into the tarball for distribution to the various facility install servers.
+Otherwise, ensure the following tools are installed:
 
-# Installing Alpine packages
+- bash
+- curl
+- cpio
+- docker
+- git
+- git-lfs
+- gnumake
+- gnused
+- [j2cli](https://pypi.org/project/j2cli) (for j2)
+- libarchive (for bsdcpio, bsdtar)
+- minio (for mc)
+- pigz (and unpigz)
 
+# Adding Alpine Packages To initramfs
+
+The Alpine x86_64 initramfs image used is fully self-reliant.
+We embed the .apk files, and repo metadata into the initramfs for all packages used as part of `/init`.
 Alpine packages should be installed in the installer/alpine/Dockerfile like so:
 
 ```Dockerfile
@@ -43,7 +62,7 @@ Those package names then need to be added to installer/alpine/init-x86_64 in thi
 KOPT_pkgs="curl,docker,jq,mdadm,openssh,kexec-tools"
 ```
 
-If you need to install packages from a non-standard alpine repo, the URI will need to be listed in installer/alpine/init-x86_64 like so:
+If you need to install packages from a non-standard alpine repo, the URL will need to be listed in installer/alpine/init-x86_64 like so:
 
 ```sh
 ALPINE_REPO="http://dl-cdn.alpinelinux.org/alpine/v3.7/main,http://dl-cdn.alpinelinux.org/alpine/v3.7/community,http://dl-cdn.alpinelinux.org/alpine/edge/testing"

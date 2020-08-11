@@ -85,8 +85,6 @@ metadata=$statedir/metadata
 userdata=$statedir/userdata
 mkdir -p "$statedir"
 
-service docker start
-
 reason='unable to fetch metadata'
 echo "metadata:"
 curl -sSL --connect-timeout 60 https://metadata.packet.net/metadata |
@@ -135,9 +133,15 @@ cat <<-EOF | grep -v '^\s*$'
 	${packet_base_url:+packet_base_url: $packet_base_url}
 EOF
 
-until docker info; do
+service docker start
+i=0
+# shellcheck disable=SC2169
+until docker info >/dev/null || [[ $i -gt 5 ]]; do
+	echo "Sleeping to wait for docker to start up"
 	sleep 3
+	i=$((i + 1))
 done
+docker info
 
 reason='unable to fetch/load osie image'
 if ! docker images "osie:$arch" | grep osie >/dev/null; then

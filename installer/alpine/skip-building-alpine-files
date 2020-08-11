@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+cd "${0%/*}"
+touch build.sh Dockerfile eclypsiumdriver-alpine-*
+cd $OLDPWD
+touch build/osie-alpine-initramfs-builder-aarch64 build/osie-alpine-initramfs-builder-x86_64
+touch installer/alpine/assets-*/*

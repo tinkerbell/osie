@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/ash
+
+# shellcheck shell=dash
 
 docker_registry=$(sed -nr 's|.*\bdocker_registry=(\S+).*|\1|p' /proc/cmdline)
 grpc_authority=$(sed -nr 's|.*\bgrpc_authority=(\S+).*|\1|p' /proc/cmdline)
@@ -42,11 +44,14 @@ mkdir -p /etc/docker/ /etc/docker/certs.d/ "/etc/docker/certs.d/$docker_registry
 cp ca.pem "/etc/docker/certs.d/$docker_registry/ca.crt"
 
 service docker start
-
-until docker info; do
-	echo 'Waiting for docker to respond...'
+i=0
+# shellcheck disable=SC2169
+until docker info >/dev/null || [[ $i -gt 5 ]]; do
+	echo "Sleeping to wait for docker to start up"
 	sleep 3
+	i=$((i + 1))
 done
+docker info
 
 until docker login "$docker_registry" -u "$registry_username" -p "$registry_password"; do
 	echo 'Waiting for docker to respond...'

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+cat <<'EOF'
+Hello there!
+
+You are about to build the Alpine Linux Kernel, with just about every module
+enabled. This will most certainly take a while, unless you regularly compile the
+Linux Kernel and are doing this on a *very* beefy build machine.
+
+Unless you've edited any of the files in the installer/alpine directory then you
+most likely do *not* want to be doing this. Go ahead and run the
+`installer/alpine/skip-building-alpine-files` script to have `make` avoid
+doing the build. This should only be needed once or so, on a fresh `git clone`
+and such.
+
+Yes this is a hack.
+Yes I feel bad about it.
+Yes I will *happily* take PRs that avoid this need.
+Yes minimizing the modules built would help.
+Yes using a better build system would help, preferably somethign like `tup` or `nix`.
+EOF

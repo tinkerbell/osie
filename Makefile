@@ -1,3 +1,11 @@
+SHELL := bash
+.SHELLFLAGS := -o pipefail -c
+
+.SUFFIXES:
+MAKEFLAGS +=  --no-builtin-rules
+
+.DELETE_ON_ERROR:
+
 E=@echo
 ifeq ($(V),1)
 Q=
