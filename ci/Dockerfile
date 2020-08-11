@@ -20,7 +20,6 @@ RUN apk add --no-cache --no-progress --update --upgrade \
         iptables \
         jq \
         libarchive-tools \
-        lshw \
         make \
         musl-dev \
         ovmf \
@@ -34,6 +33,13 @@ RUN apk add --no-cache --no-progress --update --upgrade \
         socat \
         util-linux \
         && \
+    mv /etc/apk/repositories /etc/apk/repositories.old && \
+    apk add --no-cache --update --upgrade \
+        --repository=http://dl-cdn.alpinelinux.org/alpine/v3.11/main \
+        --repository=http://dl-cdn.alpinelinux.org/alpine/v3.11/community \
+        lshw \
+        && \
+    mv /etc/apk/repositories.old /etc/apk/repositories && \
     apk add --no-cache --update --upgrade \
         --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing \
         cfssl \
