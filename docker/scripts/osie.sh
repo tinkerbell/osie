@@ -97,11 +97,6 @@ else
 	custom_image=true
 fi
 
-# Phone home to tink NOW if non-packet custom image is used
-if [ "$early_phone" -eq 1 ]; then
-	phone_home "${tinkerbell}" '{"instance_id":"'"$(jq -r .id "$metadata")"'"}'
-fi
-
 target="/mnt/target"
 cprconfig=/tmp/config.cpr
 cprout=/statedir/cpr.json
@@ -552,6 +547,11 @@ phone_home "${tinkerbell}" '{"type":"provisioning.107"}'
 # Inform the API about installation complete
 phone_home "${tinkerbell}" '{"type":"provisioning.109"}'
 echo -e "${GREEN}#### Done${NC}"
+
+# Phone home to tink NOW if non-packet custom image is used
+if [ "$early_phone" -eq 1 ]; then
+	phone_home "${tinkerbell}" '{"instance_id":"'"$(jq -r .id "$metadata")"'"}'
+fi
 
 ## End installation
 etimer=$(date +%s)
