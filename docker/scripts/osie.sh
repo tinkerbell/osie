@@ -97,8 +97,12 @@ else
 	custom_image=true
 fi
 
-# Phone home to tink NOW if non-packet custom image is used
+# Phone home to tink NOW if non-packet custom image is used. We don't do this
+# later in case the custom OS image or url is bad, to ensure instance will be
+# preserved for the user to troubleshoot.
 if [ "$early_phone" -eq 1 ]; then
+	# Re-DHCP so we obtain an IP that will last beyond the early phone_home
+	reacquire_dhcp "$(ip_choose_if)"
 	phone_home "${tinkerbell}" '{"instance_id":"'"$(jq -r .id "$metadata")"'"}'
 fi
 
