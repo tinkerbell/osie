@@ -3,7 +3,9 @@ FROM alpine:3.12
 ENTRYPOINT [ "/build.sh" ]
 VOLUME /assets
 
-RUN mkdir -p /etc/apk/cache && \
+RUN true && \
+    # Setup a cache dir so apk will cache the apks
+    mkdir -p /etc/apk/cache && \
     apk add --update --upgrade \
         alpine-base \
         curl \
@@ -16,9 +18,9 @@ RUN mkdir -p /etc/apk/cache && \
         squashfs-tools \
         tcpdump \
         && \
+    # A cache sync ensure all the deps are cached, even if the dep was pre-installed already and thus not needed to be fetched
     apk cache sync && \
-    mv /etc/apk/cache /cache && \
-    apk add --no-scripts --no-cache --update --upgrade \
+    apk add --no-scripts --no-cache --update --upgrade --cache-dir /tmp/non-persisted-apk-cache-dir \
         abuild \
         alpine-sdk \
         build-base \
@@ -103,10 +105,12 @@ RUN echo "${ECLYPSIUM_DRIVER_SHA512}  ${ECLYPSIUM_DRIVER_FILENAME}" | sha512sum 
         /home/builder/packages/non-free/x86_64/eclypsium*.apk
 
 USER root
-RUN sudo mv /cache /etc/apk/cache && \
-    # Now we install kexec-tools
-    sudo apk add --no-scripts --update --upgrade /home/builder/packages/testing/x86_64/kexec-tools*.apk && \
-    # Clear out installed file since it was empty before kexec-tools
-    truncate -s0 /etc/apk/cache/installed
+RUN true && \
+    # Copy kexec-tools to cache dir, won't work with just `apk add $names`
+    # but does for us since we do `apk add *.apk` and apk just does the install
+    cp -a /home/builder/packages/testing/*.apk /etc/apk/cache/ && \
+    # Clear out installed file since it was empty before
+    truncate -s0 /etc/apk/cache/installed && \
+    # Avoid apk caching these package by changing the cache-dir setting,
 
 COPY build.sh /build.sh
