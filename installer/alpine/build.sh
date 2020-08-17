@@ -19,6 +19,7 @@ build_initramfs() {
 
 	cat >/etc/mkinitfs/features.d/packetrepo.files <<-EOF
 		/etc/apk/cache/*
+		/etc/apk/repos/*
 	EOF
 
 	cat <<-EOF | sort -u >/etc/mkinitfs/features.d/virtio.modules.tmp

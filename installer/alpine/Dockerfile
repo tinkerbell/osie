@@ -96,6 +96,13 @@ RUN echo "${ECLYPSIUM_DRIVER_SHA512}  ${ECLYPSIUM_DRIVER_FILENAME}" | sha512sum 
     sudo apk add --no-scripts --no-cache --update --upgrade --cache-dir /tmp/non-persisted-apk-cache-dir \
         /home/builder/packages/non-free/x86_64/eclypsium*.apk
 
+# Remove built and installed packages, these never get installed at runtime
+RUN rm -rf /home/builder/packages/*
+
+
+# Build packages we want to install at osie runtime from this aports checkout #
+###############################################################################
+
 # Build pinned kexec-tools package
 RUN cd aports/testing/kexec-tools && \
     abuild checksum && \
@@ -104,11 +111,10 @@ RUN cd aports/testing/kexec-tools && \
 
 USER root
 RUN true && \
-    # Copy kexec-tools to cache dir, won't work with just `apk add $names`
-    # but does for us since we do `apk add *.apk` and apk just does the install
-    cp -a /home/builder/packages/testing/*.apk /etc/apk/cache/ && \
+    # Setup our own repos
+    mkdir -p /etc/apk/repos && \
+    cp -a /home/builder/packages/* /etc/apk/repos && \
     # Clear out installed file since it was empty before
-    truncate -s0 /etc/apk/cache/installed && \
-    # Avoid apk caching these package by changing the cache-dir setting,
+    truncate -s0 /etc/apk/cache/installed
 
 COPY build.sh /build.sh
