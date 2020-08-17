@@ -40,29 +40,30 @@ ENV KERNEL 5.4.52
 # make sure PKGREL is +1 what is in APKGBUILD
 ENV PKGREL 1
 
-RUN true && \
-    # Setup self-signed keys to sign the built packages \
-    abuild-keygen -a -i -n && \
+# Setup self-signed keys to sign the built packages
+RUN abuild-keygen -a -i -n && \
     # Fetch alpine package tree \
     curl -fL https://github.com/alpinelinux/aports/archive/$COMMIT.tar.gz | tar -zxf - && \
-    mv aports-$COMMIT aports && \
-    # Install pinned kexec-tools package
-    cd aports/testing/kexec-tools && \
+    mv aports-$COMMIT aports
+
+# Install pinned kexec-tools package
+RUN cd aports/testing/kexec-tools && \
     abuild checksum && \
     MAKEFLAGS=-j$(nproc) abuild -r && \
     abuild clean && \
-    # Install it later when we have /etc/apk/cache in place again, so it gets added to the initramfs
-    cd ../../.. && \
-    # Install pinned linux-firmware package
-    cd aports/main/linux-firmware && \
+    sudo apk add --no-scripts --no-cache --update --upgrade --cache-dir /tmp/non-persisted-apk-cache-dir \
+        /home/builder/packages/main/x86_64/linux-$FLAVOR*.apk \
+
+# Install pinned linux-firmware package
+RUN cd aports/main/linux-firmware && \
     abuild checksum && \
     MAKEFLAGS=-j$(nproc) abuild -r && \
     abuild clean && \
-    echo about to install && \
-    sudo apk add --no-scripts --update --upgrade /home/builder/packages/main/x86_64/linux-firmware*.apk && \
-    cd ../../.. && \
-    # Build customized linux-$FLAVOR package \
-    cd aports/main/linux-$FLAVOR && \
+    sudo apk add --no-scripts --no-cache --update --upgrade --cache-dir /tmp/non-persisted-apk-cache-dir \
+        /home/builder/packages/main/x86_64/linux-firmware*.apk
+
+# Install customized linux-$FLAVOR package \
+RUN cd aports/main/linux-$FLAVOR && \
     sed -i APKBUILD \
         -e 's/silentoldconfig/olddefconfig/g' \
         -e "/^pkgrel=/ s/=.*/=$PKGREL/" && \
@@ -78,8 +79,8 @@ RUN true && \
     abuild checksum && \
     MAKEFLAGS=-j$(nproc) abuild -r && \
     abuild clean && \
-    # Install the customized linux-vanilla package
-    sudo apk add --no-scripts --update --upgrade /home/builder/packages/main/x86_64/linux-$FLAVOR*.apk
+    sudo apk add --no-scripts --no-cache --update --upgrade --cache-dir /tmp/non-persisted-apk-cache-dir \
+        /home/builder/packages/main/x86_64/linux-$FLAVOR*.apk
 
 ARG ECLYPSIUM_DRIVER_VERSION=2.0.0
 ARG ECLYPSIUM_DRIVER_SHA512=b9cfebc3b0abd834d73f025f925d896bea8d9dac2a3c3605980a94a35cd188db159ca165e5884863f5bd4a94d39861ecdf998cf8e99ea89d6f093a7bc64b5347
@@ -98,7 +99,8 @@ RUN echo "${ECLYPSIUM_DRIVER_SHA512}  ${ECLYPSIUM_DRIVER_FILENAME}" | sha512sum 
     abuild checksum && \
     MAKEFLAGS=-j$(nproc) abuild -r && \
     abuild clean && \
-    sudo apk add --no-scripts --update --upgrade /home/builder/packages/non-free/x86_64/eclypsium*.apk
+    sudo apk add --no-scripts --no-cache --update --upgrade --cache-dir /tmp/non-persisted-apk-cache-dir \
+        /home/builder/packages/non-free/x86_64/eclypsium*.apk
 
 USER root
 RUN sudo mv /cache /etc/apk/cache && \
