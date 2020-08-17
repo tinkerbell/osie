@@ -416,6 +416,7 @@ fi
 #   alpine_repo=http://...   -- network repository
 ALPINE_REPO=${KOPT_alpine_repo}
 [ "$ALPINE_REPO" = "auto" ] && ALPINE_REPO=
+ALPINE_REPO="${ALPINE_REPO:+$ALPINE_REPO,}http://dl-cdn.alpinelinux.org/alpine/v3.12/main,http://dl-cdn.alpinelinux.org/alpine/v3.12/community"
 
 # hide kernel messages
 [ "$KOPT_quiet" = yes ] && dmesg -n 1
@@ -704,6 +705,9 @@ pkgs="$pkgs alpine-base"
 # copy keys so apk finds them. apk looks for stuff relative --root
 mkdir -p $sysroot/etc/apk/keys/
 cp -a /etc/apk/keys $sysroot/etc/apk
+
+# copy the cached packages
+cp -a /etc/apk/cache $sysroot/etc/apk
 
 # generate apk repositories file. needs to be done after relocation
 find_boot_repositories >$repofile
