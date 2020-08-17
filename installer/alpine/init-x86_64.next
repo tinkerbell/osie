@@ -748,12 +748,7 @@ if [ -f /var/cache/misc/*modloop*.SIGN.RSA.*.pub ]; then
 	pkgs="$pkgs openssl"
 fi
 
-apkflags="--initramfs-diskless-boot"
-if [ -z "$MAC_ADDRESS" ]; then
-	apkflags="$apkflags --no-network"
-else
-	apkflags="$apkflags --update-cache"
-fi
+apkflags="--initramfs-diskless-boot --no-network"
 
 if [ "$KOPT_quiet" = yes ]; then
 	apkflags="$apkflags --quiet"
