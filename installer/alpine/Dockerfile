@@ -48,14 +48,6 @@ RUN abuild-keygen -a -i -n && \
     curl -fL https://github.com/alpinelinux/aports/archive/$COMMIT.tar.gz | tar -zxf - && \
     mv aports-$COMMIT aports
 
-# Install pinned kexec-tools package
-RUN cd aports/testing/kexec-tools && \
-    abuild checksum && \
-    MAKEFLAGS=-j$(nproc) abuild -r && \
-    abuild clean && \
-    sudo apk add --no-scripts --no-cache --update --upgrade --cache-dir /tmp/non-persisted-apk-cache-dir \
-        /home/builder/packages/main/x86_64/linux-$FLAVOR*.apk \
-
 # Install pinned linux-firmware package
 RUN cd aports/main/linux-firmware && \
     abuild checksum && \
@@ -103,6 +95,12 @@ RUN echo "${ECLYPSIUM_DRIVER_SHA512}  ${ECLYPSIUM_DRIVER_FILENAME}" | sha512sum 
     abuild clean && \
     sudo apk add --no-scripts --no-cache --update --upgrade --cache-dir /tmp/non-persisted-apk-cache-dir \
         /home/builder/packages/non-free/x86_64/eclypsium*.apk
+
+# Build pinned kexec-tools package
+RUN cd aports/testing/kexec-tools && \
+    abuild checksum && \
+    MAKEFLAGS=-j$(nproc) abuild -r && \
+    abuild clean
 
 USER root
 RUN true && \
