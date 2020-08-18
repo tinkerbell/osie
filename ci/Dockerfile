@@ -1,39 +1,46 @@
 # vim: set expandtab shiftwidth=4 softtabstop=4:
-FROM alpine:3.10
+FROM alpine:3.12
 
 RUN apk add --no-cache --no-progress --update --upgrade \
-    bash \
-    bridge-utils \
-    coreutils \
-    cpio \
-    curl \
-    diffutils \
-    dnsmasq \
-    docker \
-    eudev \
-    file \
-    findutils \
-    git \
-    go \
-    gptfdisk \
-    iptables \
-    jq \
-    libarchive-tools \
-    lshw \
-    make \
-    musl-dev \
-    ovmf \
-    pigz \
-    py2-pip \
-    qemu-system-aarch64 \
-    qemu-system-x86_64 \
-    rsync \
-    socat \
-    util-linux \
-    python3 \
-    python3-dev \
-    gcc \
-    && apk add --no-cache --update --upgrade \
+        bash \
+        bridge-utils \
+        coreutils \
+        cpio \
+        curl \
+        diffutils \
+        dnsmasq \
+        docker \
+        eudev \
+        file \
+        findutils \
+        gcc \
+        git \
+        go \
+        gptfdisk \
+        iptables \
+        jq \
+        libarchive-tools \
+        make \
+        musl-dev \
+        ovmf \
+        pigz \
+        py3-pip \
+        python3 \
+        python3-dev \
+        qemu-system-aarch64 \
+        qemu-system-x86_64 \
+        rsync \
+        socat \
+        util-linux \
+        && \
+    mv /etc/apk/repositories /etc/apk/repositories.old && \
+    apk add --no-cache --update --upgrade \
+        --repository=http://dl-cdn.alpinelinux.org/alpine/v3.11/main \
+        --repository=http://dl-cdn.alpinelinux.org/alpine/v3.11/community \
+        lshw \
+        && \
+    mv /etc/apk/repositories.old /etc/apk/repositories && \
+    apk add --no-cache --update --upgrade \
         --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing \
         cfssl \
    ;
@@ -56,8 +63,7 @@ RUN curl -fL https://github.com/mvdan/sh/releases/download/v2.3.0/shfmt_v2.3.0_l
     echo 'eef540565962cf1f5432c7e3cf212c333e096f9f481d6d441197c1cf878746d0 /bin/shfmt' | sha256sum -c && \
     chmod +x /bin/shfmt
 
-RUN pip install click packet-python==1.38.2 && \
-    pip3 install click j2cli packet-python==1.38.2 && \
+RUN pip3 install click j2cli packet-python==1.38.2 && \
     pip3 install coverage
 
 RUN curl -L https://github.com/git-lfs/git-lfs/releases/download/v2.5.1/git-lfs-linux-amd64-v2.5.1.tar.gz >/tmp/git-lfs.tar.gz && \
