@@ -40,7 +40,7 @@ pipeline:
     commands:
       - export LANG=en_US.UTF-8
       - nix-shell --run 'black -t py35 --check --diff --exclude docker/scripts/packet-networking .'
-      - nix-shell --run 'pylama docker $(ls osie-runner | grep -v hegel)'
+      - nix-shell --run 'pylama --ignore=E203 docker $(ls osie-runner | grep -v hegel)'
 
   osie_runner_pytest:
     group: ci1
