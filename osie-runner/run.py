@@ -54,14 +54,15 @@ def get_hegel_authority(facility):
 
 def connect_hegel(facility):
     creds = grpc.ssl_channel_credentials()
-    authority = get_hegel_authority(facility)
-    log.info("connecting to", authority=authority)
-    channel = grpc.secure_channel(authority, creds)
-    stub = hegel_pb2_grpc.HegelStub(channel)
 
     iterations = 0
     for backoff in itertools.chain((0, 1, 2, 5, 10), itertools.repeat(10)):
         iterations += 1
+        authority = get_hegel_authority(facility)
+        log.info("connecting to", authority=authority)
+        channel = grpc.secure_channel(authority, creds)
+        stub = hegel_pb2_grpc.HegelStub(channel)
+
         try:
             if backoff > 0:
                 log.info("failed to connect, sleeping for %s seconds" % backoff)
