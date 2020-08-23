@@ -532,6 +532,7 @@ EOF_ET
 else
 	./cpr.sh $cprconfig "$target" "$preserve_data" "$deprovision_fast" mount $cprout
 	phone_home "${tinkerbell}" '{"type":"provisioning.104"}'
+	phone_home "${tinkerbell}" '{"type":"provisioning.104.50"}'
 	phone_home "${tinkerbell}" '{"type":"provisioning.105"}'
 	phone_home "${tinkerbell}" '{"type":"provisioning.106"}'
 	phone_home "${tinkerbell}" '{"type":"provisioning.108"}'
