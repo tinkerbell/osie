@@ -236,7 +236,7 @@ def cacher_to_metadata(j, tinkerbell):
         "hostname": instance["hostname"],
         "id": instance["id"],
         "network": {
-            "addresses": instance["ip_addresses"],
+            "addresses": instance.get("ip_addresses", []),
             "bonding": {"mode": j["bonding_mode"]},
             "interfaces": [
                 {"bond": p["data"]["bond"], "mac": p["data"]["mac"], "name": p["name"]}
