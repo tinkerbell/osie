@@ -67,13 +67,6 @@ pipeline:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
-  network_test:
-    group: ci1
-    image: osie-test-env
-    privileged: true
-    commands:
-      - make T=1 test-packet-networking
-
   osie_scripts_test:
     group: ci1
     image: osie-test-env
@@ -83,7 +76,7 @@ pipeline:
   generate_coverage_xml:
     image: osie-test-env
     commands:
-      - coverage combine build/network-coverage/.coverage osie-runner/.coverage
+      - coverage combine osie-runner/.coverage
       - coverage report
       - coverage xml
 
