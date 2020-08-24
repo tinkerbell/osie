@@ -220,7 +220,7 @@ baremetal_2a2 | baremetal_2a4 | baremetal_hua)
 	echo "skipping hardware update for oddball aarch64s"
 	;;
 *)
-	packet-hardware --verbose --tinkerbell "${tinkerbell}/hardware-components"
+	packet-hardware inventory --verbose --tinkerbell "${tinkerbell}/hardware-components"
 	;;
 esac
 
