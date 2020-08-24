@@ -74,35 +74,13 @@ RUN apt-get update -y && \
     apt-get -qy clean && \
     rm -rf /var/lib/apt/lists/* /tmp/osie/
 
+ARG PACKET_HARDWARE_COMMIT=4702a57d31a86c12ae6b016a88edcc15ee64a42d
 
-# build lxml, done here so we can keep it cached as long as possible
-COPY scripts/requirements.txt /tmp/osie/
 COPY scripts/packet-networking/ /tmp/osie/packet-networking/
-RUN apt-get -qy update && \
-    apt-get install -y \
-      build-essential \
-      libxml2-dev \
-      libxslt1-dev \
-      python3-dev \
-      python3-pip \
-      python3-setuptools \
-      python3-wheel \
-      zlib1g-dev && \
-    pip3 install -r /tmp/osie/requirements.txt && \
-    pip3 install --upgrade setuptools && \
+RUN curl https://bootstrap.pypa.io/get-pip.py | python3 && \
+    pip3 install git+https://github.com/packethost/packet-hardware.git@${PACKET_HARDWARE_COMMIT} && \
     pip3 install /tmp/osie/packet-networking && \
-    apt-get remove -y \
-      build-essential \
-      libxml2-dev \
-      libxslt1-dev \
-      python3-dev \
-      python3-pip \
-      python3-setuptools \
-      python3-wheel \
-      zlib1g-dev && \
-    apt-get -qy autoremove && \
-    apt-get -qy clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/osie ~/.cache/pip*
+    rm -rf ~/.cache/pip*
 
 # static prebuilt git-lfs packages
 COPY lfs/git-lfs-linux-*-v2.5.1-4-g2f166e02 /tmp/osie/
