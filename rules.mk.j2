@@ -198,7 +198,7 @@ build/$v-rootfs-%: build/initramfs-%
 	$(Q) mkdir $@
 	$(Q) bsdtar -xf $< -C $@
 
-test-packet-networking: build/osie-test-env docker/scripts/packet-networking ci/test-network.sh $(shell find ci/network-test-files/ -type f | grep -v ':')
+test-packet-networking: build/osie-test-env ci/test-network.sh $(shell find ci/network-test-files/ -type f | grep -v ':')
 	$(E) "DOCKER   $@"
 ifneq ($(CI),drone)
 	$(Q) docker run --rm -ti \

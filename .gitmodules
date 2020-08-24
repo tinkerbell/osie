@@ -1,6 +1,3 @@
-[submodule "docker/scripts/packet-networking"]
-	path = docker/scripts/packet-networking
-	url = https://github.com/packethost/packet-networking
 [submodule "docker/tests/shunit"]
 	path = docker/tests/shunit
 	url = https://github.com/kward/shunit2

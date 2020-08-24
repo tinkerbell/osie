@@ -75,11 +75,11 @@ RUN apt-get update -y && \
     rm -rf /var/lib/apt/lists/* /tmp/osie/
 
 ARG PACKET_HARDWARE_COMMIT=4702a57d31a86c12ae6b016a88edcc15ee64a42d
+ARG PACKET_NETWORKING_COMMIT=dd13b2a94daace22ecd97f053b878dbfcf20cb80
 
-COPY scripts/packet-networking/ /tmp/osie/packet-networking/
 RUN curl https://bootstrap.pypa.io/get-pip.py | python3 && \
     pip3 install git+https://github.com/packethost/packet-hardware.git@${PACKET_HARDWARE_COMMIT} && \
-    pip3 install /tmp/osie/packet-networking && \
+    pip3 install git+https://github.com/packethost/packet-networking.git@${PACKET_NETWORKING_COMMIT} && \
     rm -rf ~/.cache/pip*
 
 # static prebuilt git-lfs packages
