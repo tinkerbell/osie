@@ -67,9 +67,16 @@ class Handler:
         log = log.bind(hardware_id=hardware_id, instance_id=instance_id)
         start = datetime.now()
 
+        env = {"PACKET_BOOTDEV_MAC": os.getenv("PACKET_BOOTDEV_MAC", "")}
         log.info("running docker")
         self.run_osie(
-            hardware_id, instance_id, tinkerbell, statedir, "flavor-runner.sh", args
+            hardware_id,
+            instance_id,
+            tinkerbell,
+            statedir,
+            "flavor-runner.sh",
+            args,
+            env,
         )
         log.info("finished", elapsed=str(datetime.now() - start))
 

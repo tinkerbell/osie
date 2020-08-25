@@ -99,6 +99,7 @@ def test_preinstalling(handler):
         handler.host_state_dir,
         "flavor-runner.sh",
         ("-M", "/statedir/metadata"),
+        {"PACKET_BOOTDEV_MAC": ""},
     )
 
     handler.handle_preinstalling(cacher_preinstalling)
