@@ -55,6 +55,17 @@ if [[ $state == 'osie.internal.check-env' ]]; then
 	exit 0
 fi
 
+# On errors, run autofail() before exiting
+autofail_reason='unknown, just started osie'
+function autofail() {
+	# Passthrough for when the main script exits normally
+	# shellcheck disable=SC2181
+	(($? == 0)) && exit
+
+	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"${autofail_reason}"'"}'
+}
+trap autofail EXIT
+
 OS=$os${tag:+:$tag}
 
 # if $BASEURL is not empty then the user specifically passed in the artifacts
@@ -71,6 +82,7 @@ phone_home "${tinkerbell}" '{"type":"provisioning.104"}'
 ## Pre-prov check
 echo -e "${GREEN}#### Starting pre-provisioning checks...${NC}"
 
+autofail_reason='no block devices detected for install'
 echo "Number of drives found: ${#disks[*]}"
 if ((${#disks[*]} != 0)); then
 	echo "Disk candidate check successful"
@@ -83,6 +95,7 @@ else
 fi
 
 custom_image=false
+autofail_reason='error during custom image check'
 echo -e "${GREEN}#### Checking userdata for custom image...${NC}"
 image_repo=$(sed -nr 's|.*\bimage_repo=(\S+).*|\1|p' "$userdata")
 image_tag=$(sed -nr 's|.*\bimage_tag=(\S+).*|\1|p' "$userdata")
@@ -105,6 +118,7 @@ fi
 # preserved for the user to troubleshoot.
 if [ "$early_phone" -eq 1 ]; then
 	# Re-DHCP so we obtain an IP that will last beyond the early phone_home
+	autofail_reason='failure during reacquire_dhcp'
 	reacquire_dhcp "$(ip_choose_if)"
 	phone_home "${tinkerbell}" '{"instance_id":"'"$(jq -r .id "$metadata")"'"}'
 fi
@@ -112,6 +126,7 @@ fi
 target="/mnt/target"
 cprconfig=/tmp/config.cpr
 cprout=/statedir/cpr.json
+autofail_reason='error during custom cpr_url check'
 echo -e "${GREEN}#### Checking userdata for custom cpr_url...${NC}"
 cpr_url=$(sed -nr 's|.*\bcpr_url=(\S+).*|\1|p' "$userdata")
 if [[ -z ${cpr_url} ]]; then
@@ -135,6 +150,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	## Fetch install assets via git
 	assetdir=/tmp/assets
 	mkdir $assetdir
+	autofail_reason='error during OS image fetch'
 	echo -e "${GREEN}#### Fetching image (and more) via git ${NC}"
 
 	# config hosts entry so git-lfs assets from github and our github-mirror are
@@ -260,6 +276,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	fi
 
 	# ensure unique dbus/systemd machine-id
+	autofail_reason='error setting machine-id'
 	echo -e "${GREEN}#### Setting machine-id${NC}"
 	rm -f $target/etc/machine-id $target/var/lib/dbus/machine-id
 	systemd-machine-id-setup --root=$target
@@ -267,6 +284,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	[[ -d $target/var/lib/dbus ]] && ln -nsf /etc/machine-id $target/var/lib/dbus/machine-id
 
 	# Install kernel and initrd
+	autofail_reason='error installing kernel/modules/initrd to target'
 	echo -e "${GREEN}#### Copying kernel, modules, and initrd to target $target ${NC}"
 	tar --warning=no-timestamp -zxf "$kernel" -C $target/boot
 	kversion=$(vmlinuz_version $target/boot/vmlinuz)
@@ -291,6 +309,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	cp "$target/boot/$initrdname" /statedir/initrd
 
 	# Install grub
+	autofail_reason='error installing grub'
 	echo -e "${GREEN}#### Installing GRUB2${NC}"
 
 	wget "$grub" -O /tmp/grub.template
@@ -315,10 +334,12 @@ EOF
 	rm -rf $target/etc/init/*.override
 
 	if [[ $custom_image == false ]]; then
+		autofail_reason='error setting up package repos'
 		echo -e "${GREEN}#### Setting up package repos${NC}"
 		./repos.sh -a "$arch" -t $target -f "$facility" -M "$metadata"
 	fi
 
+	autofail_reason='error configuring cloud-init'
 	echo -e "${GREEN}#### Configuring cloud-init for Packet${NC}"
 	if [ -f $target/etc/cloud/cloud.cfg ]; then
 		case ${OS} in
@@ -411,6 +432,7 @@ EOF
 		sed -i 's/Waiting up to 60/Waiting up to 10/g' $target/etc/init/failsafe.conf
 	fi
 
+	autofail_reason='error running misc post-install tasks'
 	echo -e "${GREEN}#### Run misc post-install tasks${NC}"
 	install -m755 -o root -g root /home/packet/packet-block-storage-* $target/usr/bin
 	if [ -f $target/usr/sbin/policy-rc.d ]; then
