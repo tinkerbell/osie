@@ -63,6 +63,7 @@ ______          _        _                _
 EOF
 
 facility=$(sed -nr 's|.*\bfacility=(\S+).*|\1|p' /proc/cmdline)
+syslog_host=$(sed -nr 's|.*\bsyslog_host=(\S+).*|\1|p' /proc/cmdline)
 
 ensure_time
 
@@ -82,6 +83,7 @@ packet_base_url=$(sed -nr 's|.*\bpacket_base_url=(\S+).*|\1|p' /proc/cmdline)
 packet_bootdev_mac=$(sed -nr 's|.*\bpacket_bootdev_mac=(\S+).*|\1|p' /proc/cmdline)
 facility=$(jq -r .facility "$metadata")
 phone_home_url=$(jq -r .phone_home_url "$metadata")
+tinkerbell=$(jq -r .phone_home_url "$metadata" | sed -e 's|^http://||' -e 's|/.*||')
 
 trap fail EXIT
 
@@ -120,9 +122,12 @@ other_consoles=$(
 		head -n-1
 )
 
+[ -z "$syslog_host" ] && syslog_host="$tinkerbell"
+
 while true; do
 	reason='docker exited with an error'
 	docker run -ti \
+		-e "RLOGHOST=$syslog_host" \
 		-e "PACKET_BASE_URL=$packet_base_url" \
 		-e "PACKET_BOOTDEV_MAC=${packet_bootdev_mac:-}" \
 		-e "STATEDIR_HOST=$statedir" \

@@ -71,6 +71,7 @@ packet_base_url=$(sed -nr 's|.*\bpacket_base_url=(\S+).*|\1|p' /proc/cmdline)
 pwhash=$(sed -nr 's|.*\bpwhash=(\S+).*|\1|p' /proc/cmdline)
 kslug=$(sed -nr 's|.*\bslug=(\S+).*|\1|p' /proc/cmdline)
 eclypsium_token=$(sed -nr 's|.*\beclypsium_token=(\S+).*|\1|p' /proc/cmdline)
+syslog_host=$(sed -nr 's|.*\bsyslog_host=(\S+).*|\1|p' /proc/cmdline)
 
 case $kslug in
 *deprovision*) state=deprovision ;;
@@ -180,11 +181,13 @@ other_consoles=$(
 		head -n-1
 )
 
+[ -z "$syslog_host" ] && syslog_host="$tinkerbell"
+
 reason='docker exited with an error'
 docker run --privileged -ti \
 	-h "${hardware_id}" \
 	-e "container_uuid=$id" \
-	-e "RLOGHOST=$tinkerbell" \
+	-e "RLOGHOST=$syslog_host" \
 	-e "ECLYPSIUM_TOKEN=${eclypsium_token:-}" \
 	-v /dev:/dev \
 	-v /dev/console:/dev/console \
