@@ -573,7 +573,11 @@ fi
 
 autofail_reason='error setting root password'
 echo -e "${GREEN}#### Setting password${NC}"
-set_pw "root" "$pwhash" $target/etc/shadow
+pwuser="root"
+if [[ ${OS} =~ vmware_nsx_3_0_0 ]]; then
+	pwuser="admin"
+fi
+set_pw "$pwuser" "$pwhash" $target/etc/shadow
 
 # ensure unique dbus/systemd machine-id, will be based off of container_uuid aka instance_id
 autofail_reason='error setting machine-id'
