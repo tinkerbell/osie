@@ -23,7 +23,9 @@ class Handler:
     ):
         cmd = ("docker", "run", "--rm", "--privileged", "-ti", "-h", hardware_id)
 
-        envs = (f"container_uuid={instance_id}", f"RLOGHOST={tinkerbell.hostname}")
+        rloghost = os.getenv("RLOGHOST", tinkerbell.hostname)
+
+        envs = (f"container_uuid={instance_id}", f"RLOGHOST={rloghost}")
         envs += tuple(itertools.starmap("=".join, zip(env.items())))
         # prepends a '-e' before each env
         cmd += tuple(itertools.chain(*zip(("-e",) * len(envs), envs)))
