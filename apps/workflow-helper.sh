@@ -11,6 +11,10 @@ registry_password=$(sed -nr 's|.*\bregistry_password=(\S+).*|\1|p' /proc/cmdline
 tinkerbell=$(sed -nr 's|.*\btinkerbell=(\S+).*|\1|p' /proc/cmdline)
 worker_id=$(sed -nr 's|.*\bworker_id=(\S+).*|\1|p' /proc/cmdline)
 id=$(curl --connect-timeout 60 "$tinkerbell:50061/metadata" | jq -r .id)
+log_driver=$(sed -nr 's|.*\blog_driver=(\S+).*|\1|p' /proc/cmdline)
+log_tag=$(sed -nr 's|.*\blog_tag=(\S+).*|\1|p' /proc/cmdline)
+log_server_address=$(sed -nr 's|.*\blog_server_address=(\S+).*|\1|p' /proc/cmdline)
+log_server_address_type=$(sed -nr 's|.*\blog_server_address_type=(\S+).*|\1|p' /proc/cmdline)
 
 # Create workflow motd
 cat <<'EOF'
@@ -71,8 +75,15 @@ docker run --privileged -t --name "tink-worker" \
 	-e "TINKERBELL_CERT_URL=$grpc_cert_url" \
 	-e "REGISTRY_USERNAME=$registry_username" \
 	-e "REGISTRY_PASSWORD=$registry_password" \
+	-e "LOG_DRIVER=$log_driver" \
+	-e "LOG_SERVER_ADDRESS_TYPE=$log_server_address_type" \
+	-e "LOG_SERVER_ADDRESS=$log_server_address" \
+	-e "LOG_TAG=$log_tag" \
 	-v /worker:/worker \
 	-v /var/run/docker.sock:/var/run/docker.sock \
 	-t \
 	--net host \
+	--log-driver "$log_driver" \
+	--log-opt "$log_server_address_type"="$log_server_address" \
+	--log-opt tag="$log_tag" \
 	"$docker_registry/tink-worker:latest"
