@@ -71,6 +71,10 @@ docker run --privileged -t --name "tink-worker" \
 	-e "TINKERBELL_CERT_URL=$grpc_cert_url" \
 	-e "REGISTRY_USERNAME=$registry_username" \
 	-e "REGISTRY_PASSWORD=$registry_password" \
+	-e "ROLLBAR_TOKEN=ignored" \
+	-e "ROLLBAR_DISABLE=-1" \
+	-e "PACKET_ENV=testing" \
+	-e "PACKET_VERSION=ignored" \
 	-v /worker:/worker \
 	-v /var/run/docker.sock:/var/run/docker.sock \
 	-t \
