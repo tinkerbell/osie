@@ -63,7 +63,7 @@ function autofail() {
 	(($? == 0)) && exit
 
 	print_stack_trace
-	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"${autofail_reason}"'"}'
+	puttink "${tinkerbell}" phone-home '{"type":"autofail", "reason":"'"${autofail_reason}"'"}'
 }
 trap autofail EXIT
 
