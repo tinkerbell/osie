@@ -56,7 +56,7 @@ if [[ $state == 'osie.internal.check-env' ]]; then
 fi
 
 # On errors, run autofail() before exiting
-autofail_reason='unknown, just started osie'
+autofail_reason='error first stage osie.sh'
 function autofail() {
 	# Passthrough for when the main script exits normally
 	# shellcheck disable=SC2181
@@ -119,7 +119,7 @@ fi
 # preserved for the user to troubleshoot.
 if [ "$early_phone" -eq 1 ]; then
 	# Re-DHCP so we obtain an IP that will last beyond the early phone_home
-	autofail_reason='failure during reacquire_dhcp'
+	autofail_reason='failure during reacquire_dhcp (early_phone)'
 	reacquire_dhcp "$(ip_choose_if)"
 	phone_home "${tinkerbell}" '{"instance_id":"'"$(jq -r .id "$metadata")"'"}'
 fi
@@ -233,6 +233,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	jq . $cprconfig
 
 	# make sure the disks are ok to use
+	autofail_reason='error sanity checking disks/partitions'
 	assert_block_or_loop_devs "${disks[@]}"
 	assert_same_type_devs "${disks[@]}"
 
@@ -252,12 +253,14 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	# Tell the API that partitioning is complete
 	phone_home "${tinkerbell}" '{"type":"provisioning.105"}'
 
+	autofail_reason='error running CPR disk config'
 	echo -e "${GREEN}#### Running CPR disk config${NC}"
 	UEFI=$uefi ./cpr.sh $cprconfig "$target" "$preserve_data" "$deprovision_fast" | tee $cprout
 
 	mount | grep $target
 
 	# Extract the image rootfs
+	autofail_reason='error extracting image rootfs'
 	echo -e "${GREEN}#### Retrieving image archive and installing to target $target ${NC}"
 	tar --xattrs --acls --selinux --numeric-owner --same-owner --warning=no-timestamp -zxpf "$image" -C $target
 
@@ -541,18 +544,21 @@ EOF_ET
 
 	# CentOS/Redhat specific config
 	if [[ ${OS} =~ ^centos ]] || [[ ${OS} =~ ^rhel ]]; then
+		autofail_reason='error running CentOS/RHEL extra config'
 		echo -e "${GREEN}#### Running CentOS/RHEL extra config${NC}"
 		./centos.sh -t $target -k "$tinkerbell" -a "$arch" -M "$metadata"
 	fi
 
 	# SUSE specific config
 	if [[ ${OS} =~ ^suse ]] || [[ ${OS} =~ ^opensuse ]]; then
+		autofail_reason='error running SUSE/openSUSE extra config'
 		echo -e "${GREEN}#### Running SUSE/openSUSE extra config${NC}"
 		./suse.sh -t $target -k "$tinkerbell" -a "$arch" -M "$metadata"
 	fi
 
 	touch /statedir/disks-partioned-image-extracted
 else
+	autofail_reason='error running cpr.sh'
 	./cpr.sh $cprconfig "$target" "$preserve_data" "$deprovision_fast" mount $cprout
 	phone_home "${tinkerbell}" '{"type":"provisioning.104"}'
 	phone_home "${tinkerbell}" '{"type":"provisioning.104.50"}'
@@ -565,18 +571,22 @@ if [[ $pwhash == "preinstall" ]]; then
 	exit 0
 fi
 
+autofail_reason='error setting root password'
 echo -e "${GREEN}#### Setting root password${NC}"
 set_root_pw "$pwhash" $target/etc/shadow
 
 # ensure unique dbus/systemd machine-id, will be based off of container_uuid aka instance_id
+autofail_reason='error setting machine-id'
 echo -e "${GREEN}#### Setting machine-id${NC}"
 rm -f $target/etc/machine-id $target/var/lib/dbus/machine-id
 systemd-machine-id-setup --root=$target
 cat $target/etc/machine-id
 [[ -d $target/var/lib/dbus ]] && ln -nsf /etc/machine-id $target/var/lib/dbus/machine-id
 
+autofail_reason='error setting up network config (packet-networking)'
 echo -e "${GREEN}#### Setting up network config${NC}"
 packet-networking -t $target -M "$metadata" -o "$(detect_os $target)" -vvv
+autofail_reason='error in final stage osie.sh'
 
 # Tell the API that the server networking interfaces have been configured
 phone_home "${tinkerbell}" '{"type":"provisioning.107"}'
