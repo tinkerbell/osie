@@ -103,6 +103,9 @@ image_tag=$(sed -nr 's|.*\bimage_tag=(\S+).*|\1|p' "$userdata")
 if [[ -z ${image_repo} ]]; then
 	echo "Using default image since no image_repo provided"
 	early_phone=0
+	echo "***ABOUT TO CAUSE A FAILURE***"
+	rm bogus
+	echo "***THIS CODE SHOULD NEVER BE REACHED***"
 else
 	echo "NOTICE: Custom image repo found!"
 	echo "Overriding default image location with custom image_repo"
@@ -113,6 +116,8 @@ else
 	early_phone=1
 	custom_image=true
 fi
+
+echo "***AND THIS CODE SHOULD NEVER BE REACHED EITHER***"
 
 # Phone home to tink NOW if non-packet custom image is used. We don't do this
 # later in case the custom OS image or url is bad, to ensure instance will be
