@@ -112,6 +112,12 @@ RUN cd /tmp/osie && \
     cd && \
     rm -r /tmp/osie
 
+# IPMICFG
+COPY lfs/ipmicfg /tmp/osie/
+RUN cd /tmp/osie && \
+    install -m 755 /tmp/osie/ipmicfg /usr/bin/ipmicfg && \
+    rm -rf /tmp/osie
+
 # URL=http://www.mellanox.com/downloads/firmware/mlxup
 # VERSION=4.6.0
 COPY lfs/mlxup-* /tmp/osie/
