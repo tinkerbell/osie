@@ -205,7 +205,7 @@ done
 sed -i "s/PACKET_ROOT_UUID/$rootuuid/g" $target/boot/grub/grub.cfg
 sed -i "s/PACKET_BOOT_UUID/$bootuuid/g" $target/boot/grub/grub.cfg
 
-set_root_pw "$pwhash" $target/etc/shadow
+set_pw "root" "$pwhash" $target/etc/shadow
 
 echo -e "${GREEN}#### Setting up network config${NC}"
 # tinkerbell provides DNS servers to OSIE via dhcp and udhcpc writes out

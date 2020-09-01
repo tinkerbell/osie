@@ -616,13 +616,13 @@ function bash_aa_to_json() {
 	echo -n "${_json}"
 }
 
-function set_root_pw() {
+function set_pw() {
 	# TODO
 	# FIXME: make sure we don't log pwhash whenever osie logging to kibana happens
 	# TODO
-	echo -e "${GREEN}#### Setting rootpw${NC}"
-	sed -i "s|^root:[^:]*|root:$1|" "$2"
-	grep '^root' "$2"
+	echo -e "${GREEN}#### Setting password${NC}"
+	sed -i "s|^$1:[^:]*|$1:$2|" "$3"
+	grep "^$1" "$3"
 }
 
 function vmlinuz_version() {
