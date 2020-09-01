@@ -3,6 +3,7 @@ clone:
   git:
     image: quay.io/packet/drone-git
     tags: true
+    pull: true
 
 pipeline:
   build_osie_test_env_image:
