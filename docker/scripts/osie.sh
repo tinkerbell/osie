@@ -60,8 +60,10 @@ autofail_reason='error first stage osie.sh'
 function autofail() {
 	# Passthrough for when the main script exits normally
 	# shellcheck disable=SC2181
-	(($? == 0)) && exit
+	retval=$?
+	((retval == 0)) && exit
 
+	echo "*** AUTOFAIL() invoked after last command exit status was [$retval] ***"
 	print_stack_trace
 	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"${autofail_reason}"'"}'
 }
