@@ -28,6 +28,8 @@ function rainbow() {
 }
 
 function print_stack_trace() {
+	set +x
+
 	echo -e "Bash Stacktrace:\n"
 
 	for ((i = 0; i < ${#FUNCNAME[@]}; i++)); do
