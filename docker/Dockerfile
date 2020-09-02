@@ -118,6 +118,24 @@ RUN cd /tmp/osie && \
     install -m 755 /tmp/osie/ipmicfg /usr/bin/ipmicfg && \
     rm -rf /tmp/osie
 
+# RACADM
+COPY dchipm.ini /tmp/osie/
+RUN cd /tmp/osie && \
+    if [ $(uname -m) != 'aarch64' ]; then \
+      apt-get update && apt-get install -y alien && \
+      rpm --import http://linux.dell.com/repo/pgp_pubkeys/0x1285491434D8786F.asc && \
+      wget \
+        https://dl.dell.com/FOLDER05920767M/1/DellEMC-iDRACTools-Web-LX-9.4.0-3732_A00.tar.gz \
+        http://linux.dell.com/repo/community/openmanage/940/bionic/pool/main/s/srvadmin-omilcore/srvadmin-omilcore_9.4.0_amd64.deb && \
+      tar -xvf DellEMC-iDRACTools-Web-LX-9.4.0-3732_A00.tar.gz && \
+      alien -i iDRACTools/racadm/RHEL8/x86_64/*.rpm && \
+      dpkg -i *.deb && \
+      apt-get purge -y alien && \
+      apt-get autoremove -y && \
+      cp dchipm.ini /opt/dell/srvadmin/etc/srvadmin-hapi/ini/ ; \
+    fi && \
+    rm -rf /tmp/osie
+
 # URL=http://www.mellanox.com/downloads/firmware/mlxup
 # VERSION=4.6.0
 COPY lfs/mlxup-* /tmp/osie/
