@@ -103,6 +103,7 @@ while True:
     state = j["state"]
     i = j.get("instance", {"state": ""})
     log.info("context updated", state=state, instance_state=i.get("state", ""))
+    print(json.dumps(j, indent=2))
 
     handler = handlers.handler(state)
     if handler:
