@@ -114,9 +114,6 @@ class Handler:
         statedir = self.host_state_dir
         tinkerbell = self.tinkerbell
 
-        print("DEBUG: cacher metadata:")
-        print(json.dumps(j, indent=2))
-
         hardware_id = j["id"]
         instance = j.get("instance")
         if not instance:
