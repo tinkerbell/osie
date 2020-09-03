@@ -27,6 +27,16 @@ function rainbow() {
 	echo -e "$NC:NC"
 }
 
+# user-friendly display of OSIE errors
+function print_error_summary() {
+	set +x
+	local reason=$1
+
+	echo -e "\n************ OSIE ERROR SUMMARY ************"
+	echo -e "Reason: ${reason}"
+	echo -e "********************************************\n"
+}
+
 function print_stack_trace() {
 	set +x
 
