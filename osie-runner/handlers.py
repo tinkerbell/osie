@@ -61,6 +61,10 @@ class Handler:
 
         hardware_id = j["id"]
 
+        if j.get("instance"):
+            log.error("handling preinstall, but an instance exists")
+            return
+
         args = ("-M", "/statedir/metadata")
         metadata = cacher_to_metadata(j, tinkerbell)
         write_statefile(self.statedir + "metadata", json.dumps(metadata))
