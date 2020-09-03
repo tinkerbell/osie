@@ -37,26 +37,6 @@ function print_error_summary() {
 	echo -e "********************************************\n"
 }
 
-function print_stack_trace() {
-	set +x
-
-	echo -e "Bash Stacktrace:\n"
-
-	for ((i = 0; i < ${#FUNCNAME[@]}; i++)); do
-		if [[ "${FUNCNAME[i]}" == print_stack_trace ]]; then
-			# skip displaying this function in the stack trace
-			continue
-		fi
-		if ((i > 0)); then
-			line="${BASH_LINENO[$((i - 1))]}"
-		else
-			line="${LINENO}"
-		fi
-		printf ' at %s (file "%s" line %d)\n' "${FUNCNAME[i]}" \
-			"${BASH_SOURCE[i]}" "${line}"
-	done
-}
-
 # syntax: phone_home 1.2.3.4 '{"this": "data"}'
 function phone_home() {
 	local tink_host=$1

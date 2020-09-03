@@ -62,7 +62,6 @@ function autofail() {
 	# shellcheck disable=SC2181
 	(($? == 0)) && exit
 
-	print_stack_trace
 	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"${autofail_reason}"'"}'
 	print_error_summary "${autofail_reason}"
 }
