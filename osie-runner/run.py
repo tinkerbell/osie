@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import copy
 import itertools
 import json
 import logging
@@ -76,6 +77,15 @@ def connect_hegel(facility):
             pass
 
 
+def sanitize_cacher_data(j):
+    j = copy.deepcopy(j)
+    try:
+        j["instance"]["userdata"] = "~~ OMITTED ~~"
+    except Exception as e:
+        pass
+    return j
+
+
 with open("/proc/cmdline", "r") as cmdline:
     cmdline_content = cmdline.read()
     tinkerbell = parse.urlparse(util.value_from_kopt(cmdline_content, "tinkerbell"))
@@ -103,7 +113,7 @@ while True:
     state = j["state"]
     i = j.get("instance", {"state": ""})
     log.info("context updated", state=state, instance_state=i.get("state", ""))
-    print(json.dumps(j, indent=2))
+    print(json.dumps(sanitize_cacher_data(j), indent=2))
 
     handler = handlers.handler(state)
     if handler:
