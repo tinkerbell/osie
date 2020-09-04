@@ -27,24 +27,14 @@ function rainbow() {
 	echo -e "$NC:NC"
 }
 
-function print_stack_trace() {
+# user-friendly display of OSIE errors
+function print_error_summary() {
 	set +x
+	local reason=$1
 
-	echo -e "Bash Stacktrace:\n"
-
-	for ((i = 0; i < ${#FUNCNAME[@]}; i++)); do
-		if [[ "${FUNCNAME[i]}" == print_stack_trace ]]; then
-			# skip displaying this function in the stack trace
-			continue
-		fi
-		if ((i > 0)); then
-			line="${BASH_LINENO[$((i - 1))]}"
-		else
-			line="${LINENO}"
-		fi
-		printf ' at %s (file "%s" line %d)\n' "${FUNCNAME[i]}" \
-			"${BASH_SOURCE[i]}" "${line}"
-	done
+	echo -e "\n************ OSIE ERROR SUMMARY ************"
+	echo -e "Reason: ${reason}"
+	echo -e "********************************************\n"
 }
 
 # syntax: phone_home 1.2.3.4 '{"this": "data"}'
