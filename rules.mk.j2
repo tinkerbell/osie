@@ -8,6 +8,10 @@ x86s := x86_64
 arms := 2a2 aarch64 amp hua qcom tx2
 parches := $(sort $(arms) $(x86s))
 
+gitversion=$(shell git rev-parse HEAD)
+gitbranch=$(shell git symbolic-ref --short HEAD)
+dronebuild=$(shell echo $${DRONE_BUILD:-none})
+
 target_checksum = $(word 4,$(subst -, ,$(1)))
 build_path = $(word 3,$(1))/$(word 2,$(1))-vanilla-$(word 1,$(1))
 target_to_path = $(call build_path,$(subst -, ,$(1)))
@@ -206,7 +210,7 @@ build/osie-x86_64.tar.gz:  SED=
 build/osie-%.tar.gz: docker/Dockerfile ${osiesrcs}
 	$(E) "DOCKER   $@"
 	$(Q) sed '${SED}' $< > $<.$*
-	$(Q) docker build -t osie:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
+	$(Q) docker build --build-arg GITVERSION=${gitversion} --build-arg GITBRANCH=${gitbranch} --build-arg DRONEBUILD=${dronebuild} -t osie:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
 	$(Q) docker save osie:$* > $@.tmp
 	$(Q) mv $@.tmp $@
 
@@ -218,7 +222,7 @@ build/osie-runner-x86_64.tar.gz:  SED=
 build/osie-runner-%.tar.gz: osie-runner/Dockerfile $(shell git ls-files osie-runner)
 	$(E) "DOCKER   $@"
 	$(Q) sed '${SED}' $< > $<.$*
-	$(Q) docker build -t osie-runner:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
+	$(Q) docker build --build-arg GITVERSION=${gitversion} --build-arg GITBRANCH=${gitbranch} --build-arg DRONEBUILD=${dronebuild} -t osie-runner:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
 	$(Q) docker save osie-runner:$* > $@.tmp
 	$(Q) mv $@.tmp $@
 

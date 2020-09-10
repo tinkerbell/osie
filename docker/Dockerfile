@@ -6,6 +6,14 @@ LABEL Description="Ubuntu baremetal installation image" Vendor="Packet.net" Vers
 VOLUME /statedir
 ENTRYPOINT ["/entrypoint.sh"]
 
+ARG GITVERSION
+ARG GITBRANCH
+ARG DRONEBUILD
+
+ENV OSIE_VERSION ${GITVERSION}
+ENV OSIE_BRANCH ${GITBRANCH}
+ENV DRONE_BUILD ${DRONEBUILD}
+
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 
