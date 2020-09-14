@@ -14,7 +14,6 @@ id=$(curl --connect-timeout 60 "$tinkerbell:50061/metadata" | jq -r .id)
 log_driver=$(sed -nr 's|.*\blog_driver=(\S+).*|\1|p' /proc/cmdline)
 log_opt_tag=$(sed -nr 's|.*\blog_opt_tag=(\S+).*|\1|p' /proc/cmdline)
 log_opt_server_address=$(sed -nr 's|.*\blog_opt_server_address=(\S+).*|\1|p' /proc/cmdline)
-log_opt_server_address_type=$(sed -nr 's|.*\blog_opt_server_address_type=(\S+).*|\1|p' /proc/cmdline)
 
 # Create workflow motd
 cat <<'EOF'
@@ -76,7 +75,6 @@ docker run --privileged -t --name "tink-worker" \
 	-e "REGISTRY_USERNAME=$registry_username" \
 	-e "REGISTRY_PASSWORD=$registry_password" \
 	-e "LOG_DRIVER=$log_driver" \
-	-e "LOG_OPT_SERVER_ADDRESS_TYPE=$log_opt_server_address_type" \
 	-e "LOG_OPT_SERVER_ADDRESS=$log_opt_server_address" \
 	-e "LOG_OPT_TAG=$log_opt_tag" \
 	-v /worker:/worker \
@@ -84,6 +82,6 @@ docker run --privileged -t --name "tink-worker" \
 	-t \
 	--net host \
 	--log-driver "$log_driver" \
-	--log-opt "$log_opt_server_address_type"="$log_opt_server_address" \
-	--log-opt tag="$log_opt_tag" \
+	--log-opt "$log_driver-address=$log_opt_server_address" \
+	--log-opt "tag=$log_opt_tag" \
 	"$docker_registry/tink-worker:latest"
