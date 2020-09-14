@@ -32,9 +32,20 @@ apt-get install -y libcurl4-openssl-dev
 apt-get source git
 (
 	cd git*
+	# Change the libcurl4-gnutls-dev dep to libcurl4-openssl-dev
 	sed -i debian/control \
 		-e 's/libcurl4-gnutls-dev/libcurl4-openssl-dev/' \
 		-e '/TEST\s*=\s*test/d' ./debian/rules
+	# Strip out all git-xyz packages from the control file to speed up builds
+	sed -i debian/control \
+		-e '/^Package: git-man/,$d' ./debian/control
+	# Remove git-man from git's Depends (fragile, based on current control file)
+	sed -i debian/control \
+		-e '/git-man/d' ./debian/control
+	# Remove the trailing comma, now that this Depends is one line
+	sed -i debian/control \
+		-e 's/^\(Depends:.*liberror-perl\),$/\1/' ./debian/control
+
 	debv=$(sed 's|.*-\([0-9]\+\).*|\1|' debian/changelog | head -n1)
 	debv=$((debv + 1))
 	sed "s|-.*|-${debv}packethost1) osie; urgency=medium|" debian/changelog |
@@ -42,6 +53,7 @@ apt-get source git
 	cat >>debian/changelog.tmp <<-EOF
 		
 		  * rebuild with openssl instead of gnutls
+		  * remove subpackages and Depends on git-man in debian/control file
 		
 		 -- OSIE Builder <osie-builder@localhost>  $(date +'%a, %d %b %Y %T %z')
 		
