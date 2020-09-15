@@ -654,7 +654,11 @@ function is_reachable() {
 		echo "host is an ipv6 address, thats not supported" >&2 && exit 1
 	fi
 
-	ping -c1 -W1 "$host" &>/dev/null
+	# Explicitly return 1 if the ping check fails in order to prevent triggering
+	# the autofail() trap
+	ping -c1 -W1 "$host" &>/dev/null || return 1
+
+	return 0
 }
 
 function reacquire_dhcp() {
