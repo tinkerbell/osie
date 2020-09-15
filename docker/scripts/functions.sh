@@ -34,6 +34,8 @@ function print_error_summary() {
 
 	echo -e "\n************ OSIE ERROR SUMMARY ************"
 	echo -e "Reason: ${reason}"
+	echo -e "OSIE Version: ${OSIE_VERSION} (${OSIE_BRANCH})"
+	echo -e "Drone Build: ${DRONE_BUILD}"
 	echo -e "********************************************\n"
 }
 

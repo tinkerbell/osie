@@ -80,6 +80,8 @@ mirror=${mirror:-http://mirror.$facility.packet.net}
 ## Tell the API we're connected to the magic install system
 phone_home "${tinkerbell}" '{"type":"provisioning.104"}'
 
+echo -e "${GREEN}### OSIE Version ${OSIE_VERSION} (${OSIE_BRANCH})${NC}"
+
 ## Pre-prov check
 echo -e "${GREEN}#### Starting pre-provisioning checks...${NC}"
 

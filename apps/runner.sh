@@ -60,6 +60,7 @@ ______          _        _                _
 \_|  \__,_|\___|_|\_\___|\__(_)_| |_|\___|\__|
 ===============================================
 ##          Task Runner Environment          ##
+## OSIE Version: ${OSIE_VERSION} (${OSIE_BRANCH})
 EOF
 
 facility=$(sed -nr 's|.*\bfacility=(\S+).*|\1|p' /proc/cmdline)
