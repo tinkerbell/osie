@@ -727,6 +727,7 @@ ip_choose_if() {
 	sleep 1
 
 	for x in /sys/class/net/eth*; do
+		[ -e "$x/carrier" ] && grep -q 1 "$x/carrier" && echo "${x##*/}" && return
 		[ -e "$x" ] && grep -q 1 "$x" && echo "${x##*/}" && return
 	done
 
