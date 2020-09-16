@@ -32,11 +32,10 @@ RUN apt-get update -y && \
     apt-get -qy clean && \
     rm -rf /var/lib/apt/lists/* /tmp/osie
 
-# build openssl'd git, done here so we can keep it cached as long as possible
-COPY build-git-openssl.sh /tmp/osie/
+# install custom git package built with openssl instead of gnutls
+COPY lfs/git_2.28.0-1packethost1*.deb /tmp/osie/
 RUN apt-get update -y && \
-    /tmp/osie/build-git-openssl.sh && \
-    dpkg --unpack /tmp/osie/git_*.deb && \
+    dpkg --unpack /tmp/osie/git_2.28.0-1packethost1_$(uname -m).deb && \
     apt-get install -f -y --no-install-recommends && \
     apt-get -y autoremove && \
     apt-get -y clean && \

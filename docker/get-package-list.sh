@@ -16,7 +16,6 @@ packages=(
 	ethtool
 	file
 	gdisk
-	git
 	grub-efi-$grub_efi_arch-bin
 	grub2-common
 	hdparm

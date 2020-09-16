@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
+#
+# Run this script on x86 and aarch Ubuntu 16.04 hosts to generate binary git
+# packages built with openssl instead of gnutls. Then copy the main git deb
+# files into the docker/lfs directory of this repo, and rename them to end
+# with 'x86_64.deb' or 'aarch64.deb'.
 
 set -euxo nounset
 
-d=$(mktemp -d)
-cd "$d"
 apt-get install -y software-properties-common
 # The version of git that comes with Xenial (2.7.4) doesn't support shallow
 # clones from our github-mirror server, so use the latest officially supported
@@ -36,13 +39,13 @@ apt-get source git
 	sed -i debian/control \
 		-e 's/libcurl4-gnutls-dev/libcurl4-openssl-dev/' \
 		-e '/TEST\s*=\s*test/d' ./debian/rules
-	# Strip out all git-xyz packages from the control file to speed up builds
+	# Strip out all git-xyz subpackages from the control file to speed up builds
 	sed -i debian/control \
 		-e '/^Package: git-man/,$d' ./debian/control
-	# Remove git-man from git's Depends (fragile, based on current control file)
+	# Remove git-man from git's Depends section
 	sed -i debian/control \
 		-e '/git-man/d' ./debian/control
-	# Remove the trailing comma, now that this Depends is one line
+	# Now git's Depends section is one line, so strip off the trailing comma
 	sed -i debian/control \
 		-e 's/^\(Depends:.*liberror-perl\),$/\1/' ./debian/control
 
@@ -53,7 +56,8 @@ apt-get source git
 	cat >>debian/changelog.tmp <<-EOF
 		
 		  * rebuild with openssl instead of gnutls
-		  * remove subpackages and Depends on git-man in debian/control file
+		  * remove subpackages from debian/control, only build the main git package
+		  * remove the Depends on git-man from the git main git package
 		
 		 -- OSIE Builder <osie-builder@localhost>  $(date +'%a, %d %b %Y %T %z')
 		
@@ -64,8 +68,3 @@ apt-get source git
 
 	dpkg-buildpackage -rfakeroot -b -j"$(nproc)"
 )
-mv ./*.deb /tmp/osie
-apt-get purge -y devscripts equivs libcurl4-openssl-dev software-properties-common
-apt-get autoremove -y
-cd
-rm -rf "$d"
