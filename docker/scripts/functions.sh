@@ -656,7 +656,9 @@ function is_reachable() {
 
 	# Explicitly return 1 if the ping check fails in order to prevent triggering
 	# the autofail() trap
-	ping -c1 -W1 "$host" &>/dev/null || return 1
+	echo "About to run ping test"
+	ping -c1 -W1 "$host" || return 1
+	echo "Ping test OK"
 
 	return 0
 }
