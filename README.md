@@ -7,7 +7,7 @@ OSIE is the Operating System Installation Environment.
 It consists of an Alpine Linux based netboot image which fetches a prebuilt Ubuntu 16.04 container that does the actual installation.
 All of the above is built from this repository using `GNU Make`.
 
-This repository is [Maintained](https://github.com/packethost/standards/blob/master/maintained-statement.md) meaning that this software is supported by Packet and its community - available to use in production environments.
+This repository is [Maintained](https://github.com/packethost/standards/blob/master/maintained-statement.md) meaning that this software is supported by Tinkerbell and its community - available to use in production environments.
 
 ## Building OSIE
 
