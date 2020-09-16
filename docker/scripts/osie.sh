@@ -176,7 +176,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 
 		githost="github-mirror.packet.net"
 		# Prefer our local github-mirror, falling back to github.com
-		if ! (ensure_reachable github-mirror.packet.net && github_mirror_check); then
+		if ! github_mirror_check; then
 			echo -e "${YELLOW}###### github-mirror health check failed, falling back to using github.com${NC}"
 			githost="github.com"
 		fi
@@ -194,8 +194,6 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 		fi
 
 		gituri="${image_repo}"
-
-		ensure_reachable "$gituri"
 	fi
 	# Silence verbose notice about deatched HEAD state
 	git config --global advice.detachedHead false
