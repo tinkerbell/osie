@@ -663,6 +663,7 @@ function is_reachable() {
 
 function reacquire_dhcp() {
 	dhclient -1 "$1"
+	sleep 30
 }
 
 function ensure_reachable() {
