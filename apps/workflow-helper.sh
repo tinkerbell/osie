@@ -68,7 +68,7 @@ rm -f /sbin/mdev
 mkdir /worker
 
 logging_configuration=""
-if [ "$centralized_logging" = "True" ]; then
+if [ "$centralized_logging" = "enable" ]; then
 	logging_configuration="--log-driver $log_driver \
   	                     --log-opt $log_driver-address=$log_opt_server_address \
   	                     --log-opt tag=$log_opt_tag "
