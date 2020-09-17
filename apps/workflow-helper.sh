@@ -68,8 +68,8 @@ rm -f /sbin/mdev
 mkdir /worker
 
 logging_configuration=""
-if [ $centralized_logging = "True" ]; then
-  logging_configuration="--log-driver $log_driver \
+if [ "$centralized_logging" = "True" ]; then
+	logging_configuration="--log-driver $log_driver \
   	                     --log-opt $log_driver-address=$log_opt_server_address \
   	                     --log-opt tag=$log_opt_tag "
 fi
@@ -82,6 +82,7 @@ docker run --privileged -t --name "tink-worker" \
 	-e "TINKERBELL_CERT_URL=$grpc_cert_url" \
 	-e "REGISTRY_USERNAME=$registry_username" \
 	-e "REGISTRY_PASSWORD=$registry_password" \
+	-e "CENTRALIZED_LOGGING=$centralized_logging" \
 	-e "LOG_DRIVER=$log_driver" \
 	-e "LOG_OPT_SERVER_ADDRESS=$log_opt_server_address" \
 	-e "LOG_OPT_TAG=$log_opt_tag" \
@@ -89,5 +90,5 @@ docker run --privileged -t --name "tink-worker" \
 	-v /var/run/docker.sock:/var/run/docker.sock \
 	-t \
 	--net host \
-	$logging_configuration \
+	"$logging_configuration" \
 	"$docker_registry/tink-worker:latest"
