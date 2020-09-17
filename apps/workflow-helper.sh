@@ -11,6 +11,7 @@ registry_password=$(sed -nr 's|.*\bregistry_password=(\S+).*|\1|p' /proc/cmdline
 tinkerbell=$(sed -nr 's|.*\btinkerbell=(\S+).*|\1|p' /proc/cmdline)
 worker_id=$(sed -nr 's|.*\bworker_id=(\S+).*|\1|p' /proc/cmdline)
 id=$(curl --connect-timeout 60 "$tinkerbell:50061/metadata" | jq -r .id)
+centralized_logging=$(sed -nr 's|.*\bcentralized_logging=(\S+).*|\1|p' /proc/cmdline)
 log_driver=$(sed -nr 's|.*\blog_driver=(\S+).*|\1|p' /proc/cmdline)
 log_opt_tag=$(sed -nr 's|.*\blog_opt_tag=(\S+).*|\1|p' /proc/cmdline)
 log_opt_server_address=$(sed -nr 's|.*\blog_opt_server_address=(\S+).*|\1|p' /proc/cmdline)
@@ -66,6 +67,13 @@ rm -f /sbin/mdev
 
 mkdir /worker
 
+logging_configuration=""
+if [ $centralized_logging = "True" ]; then
+  logging_configuration="--log-driver $log_driver \
+  	                     --log-opt $log_driver-address=$log_opt_server_address \
+  	                     --log-opt tag=$log_opt_tag "
+fi
+
 docker run --privileged -t --name "tink-worker" \
 	-e "container_uuid=$id" \
 	-e "WORKER_ID=$worker_id" \
@@ -81,7 +89,5 @@ docker run --privileged -t --name "tink-worker" \
 	-v /var/run/docker.sock:/var/run/docker.sock \
 	-t \
 	--net host \
-	--log-driver "$log_driver" \
-	--log-opt "$log_driver-address=$log_opt_server_address" \
-	--log-opt "tag=$log_opt_tag" \
+	$logging_configuration \
 	"$docker_registry/tink-worker:latest"
