@@ -55,6 +55,12 @@ if [[ $state == 'osie.internal.check-env' ]]; then
 	exit 0
 fi
 
+verbose_logging=$(sed -nr 's|.*\bverbose_logging=(\S+).*|\1|p' "$userdata")
+if [[ "${verbose_logging}" == true ]]; then
+	echo -e "${GREEN}#### Enabling Verbose OSIE Logging${NC}"
+	set -o xtrace
+fi
+
 # On errors, run autofail() before exiting
 autofail_reason='error first stage osie.sh'
 function autofail() {
