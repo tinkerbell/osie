@@ -61,16 +61,16 @@ T := null
 endif
 
 .PHONY: all deploy package package-apps package-grubs test test-aarch6 test-x86_64 v
-all: build/$v/osie-aarch64.tar.gz build/$v/osie-x86_64.tar.gz
-test: test-aarch64 test-x86_64
+all: build/$v/osie-x86_64.tar.gz
+test: test-x86_64
 v:
 	@echo $v
 
 packaged-apps := $(subst apps/,build/$v/,${apps})
 packaged-grubs := $(addprefix build/$v/,$(subst -,/,${grubs}))
 packaged-osie-runners := build/$v/osie-runner-x86_64.tar.gz
-packaged-osies := build/$v/osie-aarch64.tar.gz build/$v/osie-x86_64.tar.gz
-packaged-repos := build/$v/repo-aarch64 build/$v/repo-x86_64
+packaged-osies := build/$v/osie-x86_64.tar.gz
+packaged-repos := build/$v/repo-x86_64
 packages := ${packaged-apps} ${packaged-grubs} ${packaged-osie-runners} ${packaged-osies} ${packaged-repos}
 
 .PHONY:{% for platform in platforms.keys() %} package-{{platform}}
@@ -205,7 +205,6 @@ build/$v-rootfs-%: build/initramfs-%
 ifneq ($(CI),drone)
 build/osie-aarch64.tar.gz: /proc/sys/fs/binfmt_misc/qemu-aarch64
 endif
-build/osie-aarch64.tar.gz: SED=/FROM/ s|.*|FROM multiarch/ubuntu-debootstrap:arm64-xenial|
 build/osie-x86_64.tar.gz:  SED=
 build/osie-%.tar.gz: docker/Dockerfile ${osiesrcs}
 	$(E) "DOCKER   $@"
