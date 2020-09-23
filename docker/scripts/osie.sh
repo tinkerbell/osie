@@ -62,14 +62,14 @@ if [[ "${verbose_logging}" == true ]]; then
 fi
 
 # On errors, run autofail() before exiting
-autofail_reason='error first stage osie.sh'
+set_autofail_stage "OSIE startup"
 function autofail() {
 	# Passthrough for when the main script exits normally
 	# shellcheck disable=SC2181
 	(($? == 0)) && exit
 
-	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"${autofail_reason}"'"}'
-	print_error_summary "${autofail_reason}"
+	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"${autofail_stage}"'"}'
+	print_error_summary "${autofail_stage}"
 }
 trap autofail EXIT
 
@@ -91,7 +91,7 @@ echo -e "${GREEN}### OSIE Version ${OSIE_VERSION} (${OSIE_BRANCH})${NC}"
 ## Pre-prov check
 echo -e "${GREEN}#### Starting pre-provisioning checks...${NC}"
 
-autofail_reason='no block devices detected for install'
+set_autofail_stage "install drive detection"
 echo "Number of drives found: ${#disks[*]}"
 if ((${#disks[*]} != 0)); then
 	echo "Disk candidate check successful"
@@ -104,7 +104,7 @@ else
 fi
 
 custom_image=false
-autofail_reason='error during custom image check'
+set_autofail_stage "custom image check"
 echo -e "${GREEN}#### Checking userdata for custom image...${NC}"
 image_repo=$(sed -nr 's|.*\bimage_repo=(\S+).*|\1|p' "$userdata")
 image_tag=$(sed -nr 's|.*\bimage_tag=(\S+).*|\1|p' "$userdata")
@@ -127,7 +127,7 @@ fi
 # preserved for the user to troubleshoot.
 if [ "$early_phone" -eq 1 ]; then
 	# Re-DHCP so we obtain an IP that will last beyond the early phone_home
-	autofail_reason='failure during reacquire_dhcp (early_phone)'
+	set_autofail_stage "reacquire_dhcp (early_phone)"
 	reacquire_dhcp "$(ip_choose_if)"
 	phone_home "${tinkerbell}" '{"instance_id":"'"$(jq -r .id "$metadata")"'"}'
 fi
@@ -135,7 +135,7 @@ fi
 target="/mnt/target"
 cprconfig=/tmp/config.cpr
 cprout=/statedir/cpr.json
-autofail_reason='error during custom cpr_url check'
+set_autofail_stage "custom cpr_url check"
 echo -e "${GREEN}#### Checking userdata for custom cpr_url...${NC}"
 cpr_url=$(sed -nr 's|.*\bcpr_url=(\S+).*|\1|p' "$userdata")
 if [[ -z ${cpr_url} ]]; then
@@ -159,7 +159,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	## Fetch install assets via git
 	assetdir=/tmp/assets
 	mkdir $assetdir
-	autofail_reason='error during OS image fetch'
+	set_autofail_stage "OS image fetch"
 	echo -e "${GREEN}#### Fetching image (and more) via git ${NC}"
 
 	# config hosts entry so git-lfs assets from github and our github-mirror are
@@ -239,7 +239,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	jq . $cprconfig
 
 	# make sure the disks are ok to use
-	autofail_reason='error sanity checking disks/partitions'
+	set_autofail_stage "sanity check of disks/partitions"
 	assert_block_or_loop_devs "${disks[@]}"
 	assert_same_type_devs "${disks[@]}"
 
@@ -259,14 +259,14 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	# Tell the API that partitioning is complete
 	phone_home "${tinkerbell}" '{"type":"provisioning.105"}'
 
-	autofail_reason='error running CPR disk config'
+	set_autofail_stage "CPR disk config"
 	echo -e "${GREEN}#### Running CPR disk config${NC}"
 	UEFI=$uefi ./cpr.sh $cprconfig "$target" "$preserve_data" "$deprovision_fast" | tee $cprout
 
 	mount | grep $target
 
 	# Extract the image rootfs
-	autofail_reason='error extracting image rootfs'
+	set_autofail_stage "extraction of image rootfs"
 	echo -e "${GREEN}#### Retrieving image archive and installing to target $target ${NC}"
 	tar --xattrs --acls --selinux --numeric-owner --same-owner --warning=no-timestamp -zxpf "$image" -C $target
 
@@ -286,7 +286,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	fi
 
 	# ensure unique dbus/systemd machine-id
-	autofail_reason='error setting machine-id'
+	set_autofail_stage "machine-id setup"
 	echo -e "${GREEN}#### Setting machine-id${NC}"
 	rm -f $target/etc/machine-id $target/var/lib/dbus/machine-id
 	systemd-machine-id-setup --root=$target
@@ -294,7 +294,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	[[ -d $target/var/lib/dbus ]] && ln -nsf /etc/machine-id $target/var/lib/dbus/machine-id
 
 	# Install kernel and initrd
-	autofail_reason='error installing kernel/modules/initrd to target'
+	set_autofail_stage "install of kernel/modules/initrd to target"
 	echo -e "${GREEN}#### Copying kernel, modules, and initrd to target $target ${NC}"
 	tar --warning=no-timestamp -zxf "$kernel" -C $target/boot
 	kversion=$(vmlinuz_version $target/boot/vmlinuz)
@@ -319,7 +319,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	cp "$target/boot/$initrdname" /statedir/initrd
 
 	# Install grub
-	autofail_reason='error installing grub'
+	set_autofail_stage "install of grub"
 	echo -e "${GREEN}#### Installing GRUB2${NC}"
 
 	wget "$grub" -O /tmp/grub.template
@@ -344,12 +344,12 @@ EOF
 	rm -rf $target/etc/init/*.override
 
 	if [[ $custom_image == false ]]; then
-		autofail_reason='error setting up package repos'
+		set_autofail_stage "package repo setup"
 		echo -e "${GREEN}#### Setting up package repos${NC}"
 		./repos.sh -a "$arch" -t $target -f "$facility" -M "$metadata"
 	fi
 
-	autofail_reason='error configuring cloud-init'
+	set_autofail_stage "cloud-init configuration"
 	echo -e "${GREEN}#### Configuring cloud-init for Packet${NC}"
 	if [ -f $target/etc/cloud/cloud.cfg ]; then
 		case ${OS} in
@@ -442,7 +442,7 @@ EOF
 		sed -i 's/Waiting up to 60/Waiting up to 10/g' $target/etc/init/failsafe.conf
 	fi
 
-	autofail_reason='error running misc post-install tasks'
+	set_autofail_stage "misc post-install tasks"
 	echo -e "${GREEN}#### Run misc post-install tasks${NC}"
 	install -m755 -o root -g root /home/packet/packet-block-storage-* $target/usr/bin
 	if [ -f $target/usr/sbin/policy-rc.d ]; then
@@ -550,21 +550,21 @@ EOF_ET
 
 	# CentOS/Redhat specific config
 	if [[ ${OS} =~ ^centos ]] || [[ ${OS} =~ ^rhel ]]; then
-		autofail_reason='error running CentOS/RHEL extra config'
+		set_autofail_stage "CentOS/RHEL extra config"
 		echo -e "${GREEN}#### Running CentOS/RHEL extra config${NC}"
 		./centos.sh -t $target -k "$tinkerbell" -a "$arch" -M "$metadata"
 	fi
 
 	# SUSE specific config
 	if [[ ${OS} =~ ^suse ]] || [[ ${OS} =~ ^opensuse ]]; then
-		autofail_reason='error running SUSE/openSUSE extra config'
+		set_autofail_stage "SUSE/openSUSE extra config"
 		echo -e "${GREEN}#### Running SUSE/openSUSE extra config${NC}"
 		./suse.sh -t $target -k "$tinkerbell" -a "$arch" -M "$metadata"
 	fi
 
 	touch /statedir/disks-partioned-image-extracted
 else
-	autofail_reason='error running cpr.sh'
+	set_autofail_stage "cpr.sh"
 	./cpr.sh $cprconfig "$target" "$preserve_data" "$deprovision_fast" mount $cprout
 	phone_home "${tinkerbell}" '{"type":"provisioning.104"}'
 	phone_home "${tinkerbell}" '{"type":"provisioning.104.50"}'
@@ -577,7 +577,7 @@ if [[ $pwhash == "preinstall" ]]; then
 	exit 0
 fi
 
-autofail_reason='error setting root password'
+set_autofail_stage "root password setup"
 echo -e "${GREEN}#### Setting password${NC}"
 pwuser="root"
 if [[ ${OS} =~ vmware_nsx_3_0_0 ]]; then
@@ -586,17 +586,17 @@ fi
 set_pw "$pwuser" "$pwhash" $target/etc/shadow
 
 # ensure unique dbus/systemd machine-id, will be based off of container_uuid aka instance_id
-autofail_reason='error setting machine-id'
+set_autofail_stage "machine-id setup (second version)"
 echo -e "${GREEN}#### Setting machine-id${NC}"
 rm -f $target/etc/machine-id $target/var/lib/dbus/machine-id
 systemd-machine-id-setup --root=$target
 cat $target/etc/machine-id
 [[ -d $target/var/lib/dbus ]] && ln -nsf /etc/machine-id $target/var/lib/dbus/machine-id
 
-autofail_reason='error setting up network config (packet-networking)'
+set_autofail_stage "network config (packet-networking)"
 echo -e "${GREEN}#### Setting up network config${NC}"
 packet-networking -t $target -M "$metadata" -o "$(detect_os $target)" -vvv
-autofail_reason='error in final stage osie.sh'
+set_autofail_stage "OSIE final stage"
 
 # Tell the API that the server networking interfaces have been configured
 phone_home "${tinkerbell}" '{"type":"provisioning.107"}'

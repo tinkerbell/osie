@@ -30,13 +30,21 @@ function rainbow() {
 # user-friendly display of OSIE errors
 function print_error_summary() {
 	set +x
-	local reason=$1
+	local stage=$1
 
 	echo -e "\n************ OSIE ERROR SUMMARY ************"
-	echo -e "Reason: ${reason}"
+	echo -e "Reason: Error during ${stage}"
 	echo -e "OSIE Version: ${OSIE_VERSION} (${OSIE_BRANCH})"
 	echo -e "Drone Build: ${DRONE_BUILD}"
 	echo -e "********************************************\n"
+}
+
+function set_autofail_stage() {
+	local stage=$1
+
+	# shellcheck disable=SC2034
+	autofail_stage="Error during $stage"
+	echo "${stage}" >/statedir/autofail_stage
 }
 
 # syntax: phone_home 1.2.3.4 '{"this": "data"}'
