@@ -96,6 +96,9 @@ deploy: package
 	$(E) "UPLOAD   s3/tinkerbell-oss/osie-uploads/$v.tar.gz"
 	$(Q) mc cp build/$v.tar.gz s3/${s3Bucket}/osie-uploads/$v.tar.gz
 	$(Q) if [[ $${DRONE_BUILD_EVENT:-} == "push" ]] && [[ $${DRONE_BRANCH:-} == "master" ]]; then mc cp s3/tinkerbell-oss/osie-uploads/$v.tar.gz s3/tinkerbell-oss/osie-uploads/latest.tar.gz; fi
+	$(E) "UPLOAD   s3/tinkerbell-oss/osie-uploads/$v.tar.gz.sha512sum"
+	$(Q) mc cp build/$v.tar.gz.sha512sum s3/${s3Bucket}/osie-uploads/$v.tar.gz.sha512sum
+	$(Q) if [[ $${DRONE_BUILD_EVENT:-} == "push" ]] && [[ $${DRONE_BRANCH:-} == "master" ]]; then mc cp s3/tinkerbell-oss/osie-uploads/$v.tar.gz.sha512sum s3/tinkerbell-oss/osie-uploads/latest.tar.gz.sha512sum; fi
 	$(Q) echo "deploy this build from the deploy-osie repo with the following command:"
 	$(Q) echo -n "./deploy update $v -m \"$$"
 	$(Q) echo -n "(sed -n '/^## \[/,$$ {/\S/!q; p}' CHANGELOG.md)\" "
