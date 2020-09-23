@@ -106,7 +106,6 @@ deploy: package
 	$(Q) echo -n "$$(sed 's|.*= ||' build/$v.tar.gz.sha512sum)"
 	$(Q) echo
 
-
 upload-test: ${packages}
 	$(E) "UPLOAD   s3/tinkerbell-oss/osie-uploads/osie-testing/$v/"
 	$(Q) mc cp --recursive build/$v/ s3/tinkerbell-oss/osie-uploads/osie-testing/$v/ || ( \
