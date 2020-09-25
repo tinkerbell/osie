@@ -204,13 +204,16 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	# Silence verbose notice about deatched HEAD state
 	git config --global advice.detachedHead false
 
+	echo -e "${YELLOW}###### GIT DEBUGGING: git config:${NC}"
+	git config -l
+
 	git -C $assetdir init
 	echo -e "${GREEN}#### Adding git remote uri: ${gituri}${NC}"
-	git -C $assetdir remote add origin "${gituri}"
+	GIT_TRACE=1 git -C $assetdir remote add origin "${gituri}"
 	echo -e "${GREEN}#### Performing a shallow git fetch for: ${image_tag}${NC}"
-	git -C $assetdir fetch --depth 1 origin "${image_tag}"
+	GIT_TRACE=1 git -C $assetdir fetch --depth 1 origin "${image_tag}"
 	echo -e "${GREEN}###### Performing a checkout of FETCH_HEAD${NC}"
-	git -C $assetdir checkout FETCH_HEAD
+	GIT_TRACE=1 git -C $assetdir checkout FETCH_HEAD
 
 	# Tell the API that the OS image has been retrieved
 	phone_home "${tinkerbell}" '{"type":"provisioning.104.50"}'
