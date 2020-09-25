@@ -692,12 +692,12 @@ function github_mirror_check() {
 	local timeout=20 # seconds
 	local lfs_testing_uri="https://github-mirror.packet.net/packethost/lfs-testing.git"
 	local lfs_testing_branch="remotes/origin/images-tiny"
-	if ! timeout --preserve-status $timeout git clone -q $lfs_testing_uri; then
+	if ! GIT_TRACE=1 timeout --preserve-status $timeout git clone -q $lfs_testing_uri; then
 		echo -e "${YELLOW}###### Timeout when cloning the lfs-testing repo${NC}"
 		echo -e "${YELLOW}###### Reacquiring dhcp for publicly routable ip...${NC}"
 		reacquire_dhcp "$(ip_choose_if)"
 		echo -e "${YELLOW}###### Re-checking the health of github-mirror.packet.net...${NC}"
-		if ! timeout --preserve-status $timeout git clone -q $lfs_testing_uri; then
+		if ! GIT_TRACE=1 timeout --preserve-status $timeout git clone -q $lfs_testing_uri; then
 			echo -e "${YELLOW}###### Timeout when cloning the lfs-testing repo${NC}"
 			return 1
 		fi
