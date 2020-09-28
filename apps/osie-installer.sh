@@ -4,6 +4,17 @@
 
 reason='unknown'
 fail() {
+	if [ "$reason" = "docker exited with an error (osie-installer)" ]; then
+		# If OSIE exited with a non-zero return value, its autofail() trap function
+		# would have reported the failure reason. A failure from docker here is then
+		# assumed to be a hang or timeout failure. Report the last stage reached
+		# before the timeout occurred.
+		if [ -f "${statedir}/autofail_stage" ]; then
+			stage=$(cat "${statedir}/autofail_stage")
+			reason="Timed out during ${stage}"
+		fi
+	fi
+
 	curl -H 'Content-Type: application/json' \
 		-d '{"type":"failure", "reason":"'"$reason"'"}' \
 		"$phone_home_url"
@@ -183,8 +194,15 @@ other_consoles=$(
 
 [ -z "$syslog_host" ] && syslog_host="$tinkerbell"
 
-reason='docker exited with an error'
-docker run --privileged -ti \
+container_timeout=1200 # seconds (20 minutes)
+timeout_cmd="timeout -s SIGKILL $container_timeout"
+if [ "$arch" = "aarch64" ]; then
+	# aarch64 is still using an older alpine, which has different syntax for timeout
+	timeout_cmd="timeout -t $container_timeout -s SIGKILL"
+fi
+
+reason='docker exited with an error (osie-installer)'
+$timeout_cmd docker run --privileged -ti \
 	-h "${hardware_id}" \
 	-e "container_uuid=$id" \
 	-e "RLOGHOST=$syslog_host" \
