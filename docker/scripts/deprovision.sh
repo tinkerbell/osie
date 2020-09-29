@@ -49,7 +49,20 @@ tinkerbell=$(echo "$tinkerbell" | sed 's|\(http://[^/]\+\).*|\1|')
 # location, we should not trample it
 BASEURL=${BASEURL:-http://install.$facility.packet.net/misc}
 
+# On errors, run autofail() before exiting
+set_autofail_stage "OSIE deprov startup"
+function autofail() {
+	# Passthrough for when the main script exits normally
+	# shellcheck disable=SC2181
+	(($? == 0)) && exit
+
+	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"${autofail_stage}"'"}'
+	print_error_summary "${autofail_stage}"
+}
+trap autofail EXIT
+
 # Pre-deprov check
+set_autofail_stage "drive count and storage size detection"
 echo "Number of drives found: ${#disks[*]}"
 if ! assert_num_disks "$class" "${#disks[@]}"; then
 	echo "critical: unexpected number of block devices! Missing drives?"
@@ -69,6 +82,7 @@ assert_block_or_loop_devs "${disks[@]}"
 assert_same_type_devs "${disks[@]}"
 
 # UEFI mismatch check - ensure desired boot mode
+set_autofail_stage "verifying expected UEFI mode"
 [ -d /sys/firmware/efi ] && boot_mode=UEFI || boot_mode=BIOS
 
 if [[ $efi_status == null ]]; then
@@ -90,6 +104,7 @@ if [[ $preserve_data == false ]]; then
 	echo "Not preserving data."
 
 	# Look for active MD arrays
+	set_autofail_stage "checking for RAID arrays"
 	# shellcheck disable=SC2207
 	mdarrays=($(awk '/md/ {print $4}' /proc/partitions))
 	if ((${#mdarrays[*]} != 0)); then
@@ -105,6 +120,7 @@ if [[ $preserve_data == false ]]; then
 	fi
 
 	# Reset nvme namespaces
+	set_autofail_stage "resetting NVMe namespaces"
 	# shellcheck disable=SC2207
 	nvme_drives=($(find /dev -regex ".*/nvme[0-9]+" | sort -h))
 	echo "Found ${#nvme_drives[@]} nvme drives"
@@ -157,6 +173,7 @@ if [[ $preserve_data == false ]]; then
 	fi
 
 	# LSI MegaRAID and Dell PERC series 9
+	set_autofail_stage "checking/resetting MegaRAID/PERC RAID controllers"
 	# do not do grep -q, it doesn't play well with pipefail when lots of pci devices exist
 	if lspci -nn | grep -v 'SAS3008' | grep LSI >/dev/null && [[ $arch == x86_64 ]]; then
 		if perccli64 show | grep -E 'PERCH710PMini|PERCH730P|PERCH740PMini' >/dev/null; then
@@ -171,6 +188,7 @@ if [[ $preserve_data == false ]]; then
 	fi
 
 	# Marvell (Dell) BOSS-S1
+	set_autofail_stage "checking/resetting Marvell RAID controllers"
 	if lspci -nn | grep '88SE9230' | grep Marvell >/dev/null && [[ $arch == x86_64 ]]; then
 		if [[ $class == n2.xlarge.x86 ]]; then
 			echo "Skipping RAID destroy for this $class hardware..."
@@ -187,6 +205,7 @@ else
 fi
 
 if [[ $deprovision_fast == false ]] && [[ $preserve_data == false ]]; then
+	set_autofail_stage "wiping disks"
 	echo "Wiping disks"
 	# Wipe the filesystem and clear block on each block device
 	for bd in "${disks[@]}"; do
@@ -220,6 +239,7 @@ baremetal_2a2 | baremetal_2a4 | baremetal_hua)
 	echo "skipping hardware update for oddball aarch64s"
 	;;
 *)
+	set_autofail_stage "running packet-hardware inventory"
 	packet-hardware inventory --verbose --tinkerbell "${tinkerbell}/hardware-components"
 	;;
 esac
@@ -232,6 +252,7 @@ if [[ -n "${ECLYPSIUM_TOKEN:-}" ]]; then
 			echo "skipping eclypsium on unsuppported plan"
 			;;
 		*)
+			set_autofail_stage "running eclypsium"
 			https_proxy="http://eclypsium-proxy-${facility}.packet.net:8888/" /usr/bin/EclypsiumApp \
 				-s1 prod-0918.eclypsium.net "${ECLYPSIUM_TOKEN}" \
 				-disable-progress-bar \
@@ -251,6 +272,7 @@ phone_home "${tinkerbell}" '{"instance_id": "'"$id"'"}'
 etimer=$(date +%s)
 echo -e "${BYELLOW}Clean time: $((etimer - stimer))${NC}"
 
+set_autofail_stage "OSIE deprov final stage"
 cat >/statedir/cleanup.sh <<EOF
 #!/bin/sh
 poweroff
