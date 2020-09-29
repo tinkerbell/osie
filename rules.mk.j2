@@ -208,7 +208,7 @@ build/$v-rootfs-%: build/initramfs-%
 ifneq ($(CI),drone)
 build/osie-aarch64.tar.gz: /proc/sys/fs/binfmt_misc/qemu-aarch64
 endif
-build/osie-aarch64.tar.gz: SED=/FROM/ s|.*|FROM multiarch/ubuntu-debootstrap:arm64-xenial|
+build/osie-aarch64.tar.gz: SED=/FROM/ s|.*|FROM multiarch/ubuntu-debootstrap:arm64-xenial AS needs-squashing|
 build/osie-x86_64.tar.gz:  SED=
 build/osie-%.tar.gz: docker/Dockerfile ${osiesrcs}
 	$(E) "DOCKER   $@"
@@ -220,7 +220,7 @@ build/osie-%.tar.gz: docker/Dockerfile ${osiesrcs}
 ifneq ($(CI),drone)
 build/osie-runner-aarch64.tar.gz: /proc/sys/fs/binfmt_misc/qemu-aarch64
 endif
-build/osie-runner-aarch64.tar.gz: SED=/FROM/ s|.*|FROM multiarch/alpine:arm64-v3.7|
+build/osie-runner-aarch64.tar.gz: SED=/FROM/ s|.*|FROM multiarch/alpine:arm64-v3.7 AS needs-squashing|
 build/osie-runner-x86_64.tar.gz:  SED=
 build/osie-runner-%.tar.gz: osie-runner/Dockerfile $(shell git ls-files osie-runner)
 	$(E) "DOCKER   $@"
@@ -262,7 +262,7 @@ build/osie-alpine-initramfs-builder-aarch64: /proc/sys/fs/binfmt_misc/qemu-aarch
 endif
 build/osie-alpine-initramfs-builder-aarch64: installer/alpine/Dockerfile installer/alpine/build.sh installer/alpine/eclypsiumdriver-alpine-* installer/alpine/qemu-aarch64-static
 	$(E) "IMAGE $@"
-	$(Q) sed '/^FROM alpine/ s| .*| arm64v8/alpine:3.6\nCOPY qemu-aarch64-static /usr/bin|' installer/alpine/Dockerfile >installer/alpine/Dockerfile.aarch64
+	$(Q) sed '/^FROM alpine/ s| .*| arm64v8/alpine:3.6 AS needs-squashing\nCOPY qemu-aarch64-static /usr/bin|' installer/alpine/Dockerfile >installer/alpine/Dockerfile.aarch64
 	$(Q) docker build -f installer/alpine/Dockerfile.aarch64 -t $@ installer/alpine/ 2>&1 | tee $@.log >/dev/$T
 	$(Q) touch $@
 

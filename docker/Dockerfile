@@ -1,4 +1,4 @@
-FROM ubuntu:xenial
+FROM ubuntu:xenial AS needs-squashing
 
 MAINTAINER David Laube <dlaube@packet.net>
 LABEL Description="Ubuntu baremetal installation image" Vendor="Packet.net" Version="1.0"
@@ -183,4 +183,8 @@ RUN apt-get -y update && \
     apt-get -y dist-upgrade && \
     apt-get -y autoremove && \
     apt-get -y clean && \
-    rm -rf /var/lib/apt/lists/* /home/packet/requirements.txt
+    rm -rf /tmp/* /var/lib/apt/lists/* /home/packet/requirements.txt
+
+FROM scratch
+COPY --from=needs-squashing / /
+

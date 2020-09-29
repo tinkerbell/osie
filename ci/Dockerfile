@@ -1,4 +1,4 @@
-FROM alpine:3.12
+FROM alpine:3.12 AS needs-squashing
 
 RUN apk add --no-cache --no-progress --update --upgrade \
         bash \
@@ -72,3 +72,14 @@ RUN curl -L https://github.com/git-lfs/git-lfs/releases/download/v2.5.1/git-lfs-
     git-lfs install
 
 COPY tls/ /tls/
+
+RUN rm -rf /tmp/* $HOME/.cache
+
+RUN rm -vfr \
+    /tmp/* \
+    /var/tmp/* \
+    /var/lib/apt/lists/*
+
+FROM scratch
+COPY --from=needs-squashing / /
+

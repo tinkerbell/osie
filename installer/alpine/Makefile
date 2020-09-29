@@ -21,7 +21,7 @@ assets-aarch64 assets-x86_64:
 
 osie-alpine-initramfs-builder-aarch64: Dockerfile build.sh qemu-aarch64-static /proc/sys/fs/binfmt_misc/qemu-aarch64
 	$(E) "IMAGE $@"
-	$(Q) sed '/^FROM alpine/ s| .*| arm64v8/alpine:3.6|' Dockerfile > Dockerfile.aarch64
+	$(Q) sed '/^FROM alpine/ s| .*| arm64v8/alpine:3.6 AS needs-squashing|' Dockerfile > Dockerfile.aarch64
 	$(Q) docker build -f Dockerfile.aarch64 -t $@ . 1>$o 2>$e
 	$(Q) touch $@
 

@@ -1,4 +1,4 @@
-FROM alpine:3.12
+FROM alpine:3.12 AS needs-squashing
 
 ENTRYPOINT [ "/build.sh" ]
 VOLUME /assets
@@ -118,3 +118,6 @@ RUN true && \
     truncate -s0 /etc/apk/cache/installed
 
 COPY build.sh /build.sh
+
+FROM scratch
+COPY --from=needs-squashing / /
