@@ -39,14 +39,6 @@ v := osie-$v
 # ensure build/$v always exists without having to add as an explicit dependency
 $(shell mkdir -p build/$v)
 
-# ensure always exists without having to add as an explicit dependency
-$(shell echo GET install-docker-buildx.sh)
-$(shell wget https://raw.githubusercontent.com/MaxPeal/docker-scripts/master/install-docker-buildx.sh -O install-docker-buildx.sh)
-$(shell chmod 755 install-docker-buildx.sh)
-$(shell echo RUN install-docker-buildx.sh)
-$(shell install-docker-buildx.sh)
-
-
 apps := $(shell git ls-files apps/)
 cprs := $(shell git ls-files ci/cpr/)
 grubs := $(shell git ls-files grub/)
