@@ -116,6 +116,15 @@ upload-test: ${packages}
 		exit 1; \
 	)
 
+build/install-docker-buildx.sh:
+	$(E) "GET   install-docker-buildx.sh"
+	$(Q) wget https://raw.githubusercontent.com/MaxPeal/docker-scripts/master/install-docker-buildx.sh -O install-docker-buildx.sh
+	$(Q) chmod 755 install-docker-buildx.sh
+
+build/run-install-docker-buildx.sh:
+	$(E) "RUN   install-docker-buildx.sh"
+	$(Q) install-docker-buildx.sh
+
 build/$v.tar.gz: ${packages}
 	$(E) "TAR.GZ   $@"
 	$(Q) cd build && \
