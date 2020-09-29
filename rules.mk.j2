@@ -39,15 +39,6 @@ v := osie-$v
 # ensure build/$v always exists without having to add as an explicit dependency
 $(shell mkdir -p build/$v)
 
-# enable docker experimental features
-$(shell docker version)
-$(shell mkdir -p ~/.docker)
-$(shell echo '{\n    "experimental": enabled\n}' | tee -a ~/.docker/config.json; )
-$(shell echo '{\n    "experimental": true\n}' | sudo tee -a /etc/docker/daemon.json; )
-$(shell sudo service docker restart)
-$(shell docker version)
-
-
 apps := $(shell git ls-files apps/)
 cprs := $(shell git ls-files ci/cpr/)
 grubs := $(shell git ls-files grub/)
