@@ -1,4 +1,4 @@
-FROM alpine:3.12 AS needs-squashing
+FROM alpine:3.12
 
 RUN apk add --no-cache --no-progress --update --upgrade \
         bash \
@@ -80,6 +80,4 @@ RUN rm -vfr \
     /var/tmp/* \
     /var/lib/apt/lists/*
 
-FROM scratch
-COPY --from=needs-squashing / /
 
