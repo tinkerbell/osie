@@ -39,6 +39,15 @@ v := osie-$v
 # ensure build/$v always exists without having to add as an explicit dependency
 $(shell mkdir -p build/$v)
 
+# ensure always exists without having to add as an explicit dependency
+#build/run-install-docker-buildx.sh:
+        $(E) "GET   install-docker-buildx.sh"
+        $(Q) wget https://raw.githubusercontent.com/MaxPeal/docker-scripts/master/install-docker-buildx.sh -O install-docker-buildx.sh
+        $(Q) chmod 755 install-docker-buildx.sh
+        $(E) "RUN   install-docker-buildx.sh"
+        $(Q) install-docker-buildx.sh
+
+
 apps := $(shell git ls-files apps/)
 cprs := $(shell git ls-files ci/cpr/)
 grubs := $(shell git ls-files grub/)
@@ -115,13 +124,6 @@ upload-test: ${packages}
 		mc session clear $$sesion; \
 		exit 1; \
 	)
-
-build/run-install-docker-buildx.sh:
-	$(E) "GET   install-docker-buildx.sh"
-	$(Q) wget https://raw.githubusercontent.com/MaxPeal/docker-scripts/master/install-docker-buildx.sh -O install-docker-buildx.sh
-	$(Q) chmod 755 install-docker-buildx.sh
-	$(E) "RUN   install-docker-buildx.sh"
-	$(Q) install-docker-buildx.sh
 
 build/$v.tar.gz: ${packages}
 	$(E) "TAR.GZ   $@"
