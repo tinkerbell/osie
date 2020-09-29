@@ -63,7 +63,8 @@ RUN curl -fL https://github.com/mvdan/sh/releases/download/v2.3.0/shfmt_v2.3.0_l
     chmod +x /bin/shfmt
 
 RUN pip3 install click j2cli packet-python==1.38.2 && \
-    pip3 install coverage
+    pip3 install coverage && \
+    pip3 install docker-squash
 
 RUN curl -L https://github.com/git-lfs/git-lfs/releases/download/v2.5.1/git-lfs-linux-amd64-v2.5.1.tar.gz >/tmp/git-lfs.tar.gz && \
     echo '9565fa9c2442c3982567a3498c9352cda88e0f6a982648054de0440e273749e7  /tmp/git-lfs.tar.gz' | sha256sum -c && \
