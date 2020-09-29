@@ -1,6 +1,13 @@
 SHELL := bash
 .SHELLFLAGS := -o pipefail -c
 
+#+buildx-sh
+buildx-sh:
+	curl -L raw.githubusercontent.com/MaxPeal/docker-scripts/master/install-docker-buildx.sh -o install-docker-buildx.sh
+	chmod 755 install-docker-buildx.sh
+	./install-docker-buildx.sh
+
+
 .SUFFIXES:
 MAKEFLAGS +=  --no-builtin-rules
 
