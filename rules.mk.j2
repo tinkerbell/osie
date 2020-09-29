@@ -39,6 +39,15 @@ v := osie-$v
 # ensure build/$v always exists without having to add as an explicit dependency
 $(shell mkdir -p build/$v)
 
+# enable docker experimental features
+$(shell docker version)
+$(shell mkdir -p ~/.docker)
+$(shell echo '{\n    "experimental": enabled\n}' | tee -a ~/.docker/config.json; )
+$(shell echo '{\n    "experimental": true\n}' | sudo tee -a /etc/docker/daemon.json; )
+$(shell sudo service docker restart)
+$(shell docker version)
+
+
 apps := $(shell git ls-files apps/)
 cprs := $(shell git ls-files ci/cpr/)
 grubs := $(shell git ls-files grub/)
@@ -174,7 +183,7 @@ build/$v/test-initramfs-%/test-initramfs: build/$v/initramfs-% installer/alpine/
 		mv initramfs.cpio.gz $(@F)
 
 build/osie-test-env: ci/Dockerfile
-	docker export DOCKER_CLI_EXPERIMENTAL=enabled && build --squash -t osie-test-env ci 2>&1 | tee $@.log >/dev/$T
+	docker build --squash -t osie-test-env ci 2>&1 | tee $@.log >/dev/$T
 	touch $@
 
 {% for arch in platforms.values() | unique | sort -%}
@@ -213,7 +222,7 @@ build/osie-x86_64.tar.gz:  SED=
 build/osie-%.tar.gz: docker/Dockerfile ${osiesrcs}
 	$(E) "DOCKER   $@"
 	$(Q) sed '${SED}' $< > $<.$*
-	$(Q) export DOCKER_CLI_EXPERIMENTAL=enabled && docker build --squash --build-arg GITVERSION=${gitversion} --build-arg GITBRANCH=${gitbranch} --build-arg DRONEBUILD=${dronebuild} -t osie:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
+	$(Q) docker build --squash --build-arg GITVERSION=${gitversion} --build-arg GITBRANCH=${gitbranch} --build-arg DRONEBUILD=${dronebuild} -t osie:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
 	$(Q) docker save osie:$* > $@.tmp
 	$(Q) mv $@.tmp $@
 
@@ -225,7 +234,7 @@ build/osie-runner-x86_64.tar.gz:  SED=
 build/osie-runner-%.tar.gz: osie-runner/Dockerfile $(shell git ls-files osie-runner)
 	$(E) "DOCKER   $@"
 	$(Q) sed '${SED}' $< > $<.$*
-	$(Q) export DOCKER_CLI_EXPERIMENTAL=enabled && docker build --squash --build-arg GITVERSION=${gitversion} --build-arg GITBRANCH=${gitbranch} --build-arg DRONEBUILD=${dronebuild} -t osie-runner:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
+	$(Q) docker build --squash --build-arg GITVERSION=${gitversion} --build-arg GITBRANCH=${gitbranch} --build-arg DRONEBUILD=${dronebuild} -t osie-runner:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
 	$(Q) docker save osie-runner:$* > $@.tmp
 	$(Q) mv $@.tmp $@
 
@@ -263,13 +272,13 @@ endif
 build/osie-alpine-initramfs-builder-aarch64: installer/alpine/Dockerfile installer/alpine/build.sh installer/alpine/eclypsiumdriver-alpine-* installer/alpine/qemu-aarch64-static
 	$(E) "IMAGE $@"
 	$(Q) sed '/^FROM alpine/ s| .*| arm64v8/alpine:3.6\nCOPY qemu-aarch64-static /usr/bin|' installer/alpine/Dockerfile >installer/alpine/Dockerfile.aarch64
-	$(Q) export DOCKER_CLI_EXPERIMENTAL=enabled && docker build --squash -f installer/alpine/Dockerfile.aarch64 -t $@ installer/alpine/ 2>&1 | tee $@.log >/dev/$T
+	$(Q) docker build --squash -f installer/alpine/Dockerfile.aarch64 -t $@ installer/alpine/ 2>&1 | tee $@.log >/dev/$T
 	$(Q) touch $@
 
 assets-x86_64: installer/alpine/assets-x86_64/initramfs installer/alpine/assets-x86_64/modloop installer/alpine/assets-x86_64/vmlinuz
 build/osie-alpine-initramfs-builder-x86_64:  installer/alpine/Dockerfile installer/alpine/build.sh installer/alpine/eclypsiumdriver-alpine-*
 	$(E) "IMAGE $@"
-	$(Q) export DOCKER_CLI_EXPERIMENTAL=enabled && docker build --squash -f installer/alpine/Dockerfile -t $@ installer/alpine/ 2>&1 | tee $@.log >/dev/$T
+	$(Q) docker build --squash -f installer/alpine/Dockerfile -t $@ installer/alpine/ 2>&1 | tee $@.log >/dev/$T
 	$(Q) touch $@
 installer/alpine/assets-x86_64/initramfs installer/alpine/assets-x86_64/modloop installer/alpine/assets-x86_64/vmlinuz: build/osie-alpine-initramfs-builder-x86_64
 	$(E) "BUILD $@"
