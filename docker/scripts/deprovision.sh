@@ -103,6 +103,9 @@ stimer=$(date +%s)
 if [[ $preserve_data == false ]]; then
 	echo "Not preserving data."
 
+	set_autofail_stage "testing new deprov autofail feature"
+	rm /bogus
+
 	# Look for active MD arrays
 	set_autofail_stage "checking for RAID arrays"
 	# shellcheck disable=SC2207
