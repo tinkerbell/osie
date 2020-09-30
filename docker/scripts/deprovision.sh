@@ -104,7 +104,7 @@ if [[ $preserve_data == false ]]; then
 	echo "Not preserving data."
 
 	set_autofail_stage "testing new deprov autofail feature"
-	rm /bogus
+	sleep 2400
 
 	# Look for active MD arrays
 	set_autofail_stage "checking for RAID arrays"
