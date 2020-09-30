@@ -51,13 +51,13 @@ pipeline:
       - cd osie-runner
       - pytest -vv --cov=./
 
-  build_aarch64:
-    group: ci1
-    image: osie-test-env
-    commands:
-      - make V=1 T=1 build/osie-aarch64.tar.gz
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+  # build_aarch64:
+  #   group: ci1
+  #   image: osie-test-env
+  #   commands:
+  #     - make V=1 T=1 build/osie-aarch64.tar.gz
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
 
   build_x86_64:
     group: ci1
@@ -131,12 +131,12 @@ pipeline:
       - source: public_aws_secret_access_key
         target: aws_secret_access_key
 
-  test_aarch64_vm:
-    group: test
-    image: osie-test-env
-    privileged: true
-    commands:
-      - OSES=ubuntu_16_04 make V=1 T=1 UEFI=true test-aarch64
+  # test_aarch64_vm:
+  #   group: test
+  #   image: osie-test-env
+  #   privileged: true
+  #   commands:
+  #     - OSES=ubuntu_16_04 make V=1 T=1 UEFI=true test-aarch64
 
   test_x86_64_vm:
     group: test
