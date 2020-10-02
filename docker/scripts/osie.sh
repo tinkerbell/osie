@@ -444,7 +444,7 @@ EOF
 
 	set_autofail_stage "misc post-install tasks"
 	echo -e "${GREEN}#### Run misc post-install tasks${NC}"
-	install -m755 -o root -g root /home/packet/packet-block-storage-* $target/usr/bin
+	install -m755 -o root -g root /home/packet/metal-block-storage-* $target/usr/bin
 	if [ -f $target/usr/sbin/policy-rc.d ]; then
 		echo "Removing policy-rc.d from target OS."
 		rm -f $target/usr/sbin/policy-rc.d
