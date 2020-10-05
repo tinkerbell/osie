@@ -171,8 +171,8 @@ RUN useradd packet -d /home/packet -m -U && \
     chown -R packet:packet /home/packet
 WORKDIR /home/packet
 
-ADD https://raw.githubusercontent.com/packethost/packet-block-storage/master/packet-block-storage-attach \
-    https://raw.githubusercontent.com/packethost/packet-block-storage/master/packet-block-storage-detach \
+ADD https://raw.githubusercontent.com/packethost/metal-block-storage/master/metal-block-storage-attach \
+    https://raw.githubusercontent.com/packethost/metal-block-storage/master/metal-block-storage-detach \
     /home/packet/
 
 COPY entrypoint.sh /entrypoint.sh
