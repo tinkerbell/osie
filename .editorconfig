@@ -1,0 +1,5 @@
+[*.sh]
+indent_style = tab
+
+[*.py]
+indent_style = space

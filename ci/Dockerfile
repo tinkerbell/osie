@@ -1,4 +1,3 @@
-# vim: set expandtab shiftwidth=4 softtabstop=4:
 FROM alpine:3.12
 
 RUN apk add --no-cache --no-progress --update --upgrade \

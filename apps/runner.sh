@@ -61,6 +61,7 @@ cat <<'EOF' >/etc/motd
            `--'                                   
 ===============================================
 ##          Task Runner Environment          ##
+## OSIE Version: ${OSIE_VERSION} (${OSIE_BRANCH})
 EOF
 
 facility=$(sed -nr 's|.*\bfacility=(\S+).*|\1|p' /proc/cmdline)
@@ -126,7 +127,7 @@ other_consoles=$(
 [ -z "$syslog_host" ] && syslog_host="$tinkerbell"
 
 while true; do
-	reason='docker exited with an error'
+	reason='docker exited with an error (osie-runner)'
 	docker run -ti \
 		-e "RLOGHOST=$syslog_host" \
 		-e "PACKET_BASE_URL=$packet_base_url" \

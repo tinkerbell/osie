@@ -6,6 +6,14 @@ LABEL Description="Ubuntu baremetal installation image" Vendor="Packet.net" Vers
 VOLUME /statedir
 ENTRYPOINT ["/entrypoint.sh"]
 
+ARG GITVERSION
+ARG GITBRANCH
+ARG DRONEBUILD
+
+ENV OSIE_VERSION ${GITVERSION}
+ENV OSIE_BRANCH ${GITBRANCH}
+ENV DRONE_BUILD ${DRONEBUILD}
+
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 
@@ -74,7 +82,7 @@ RUN apt-get update -y && \
     apt-get -qy clean && \
     rm -rf /var/lib/apt/lists/* /tmp/osie/
 
-ARG PACKET_HARDWARE_COMMIT=4702a57d31a86c12ae6b016a88edcc15ee64a42d
+ARG PACKET_HARDWARE_COMMIT=413cdf9392a7c962081403d942666152afd1d843
 ARG PACKET_NETWORKING_COMMIT=dd13b2a94daace22ecd97f053b878dbfcf20cb80
 
 RUN curl https://bootstrap.pypa.io/get-pip.py | python3 && \
@@ -112,6 +120,30 @@ RUN cd /tmp/osie && \
     cd && \
     rm -r /tmp/osie
 
+# IPMICFG
+COPY lfs/ipmicfg /tmp/osie/
+RUN cd /tmp/osie && \
+    install -m 755 /tmp/osie/ipmicfg /usr/bin/ipmicfg && \
+    rm -rf /tmp/osie
+
+# RACADM
+COPY dchipm.ini /tmp/osie/
+RUN cd /tmp/osie && \
+    if [ $(uname -m) != 'aarch64' ]; then \
+      apt-get update && apt-get install -y alien && \
+      rpm --import http://linux.dell.com/repo/pgp_pubkeys/0x1285491434D8786F.asc && \
+      wget \
+        https://dl.dell.com/FOLDER05920767M/1/DellEMC-iDRACTools-Web-LX-9.4.0-3732_A00.tar.gz \
+        http://linux.dell.com/repo/community/openmanage/940/bionic/pool/main/s/srvadmin-omilcore/srvadmin-omilcore_9.4.0_amd64.deb && \
+      tar -xvf DellEMC-iDRACTools-Web-LX-9.4.0-3732_A00.tar.gz && \
+      alien -i iDRACTools/racadm/RHEL8/x86_64/*.rpm && \
+      dpkg -i *.deb && \
+      apt-get purge -y alien && \
+      apt-get autoremove -y && \
+      cp dchipm.ini /opt/dell/srvadmin/etc/srvadmin-hapi/ini/ ; \
+    fi && \
+    rm -rf /tmp/osie
+
 # URL=http://www.mellanox.com/downloads/firmware/mlxup
 # VERSION=4.6.0
 COPY lfs/mlxup-* /tmp/osie/
@@ -139,8 +171,8 @@ RUN useradd packet -d /home/packet -m -U && \
     chown -R packet:packet /home/packet
 WORKDIR /home/packet
 
-ADD https://raw.githubusercontent.com/packethost/packet-block-storage/master/packet-block-storage-attach \
-    https://raw.githubusercontent.com/packethost/packet-block-storage/master/packet-block-storage-detach \
+ADD https://raw.githubusercontent.com/packethost/metal-block-storage/master/metal-block-storage-attach \
+    https://raw.githubusercontent.com/packethost/metal-block-storage/master/metal-block-storage-detach \
     /home/packet/
 
 COPY entrypoint.sh /entrypoint.sh

@@ -34,6 +34,7 @@ build_initramfs() {
 	kver=$(basename /lib/modules/*)
 	mkinitfs -l "$kver"
 	mkinitfs -o /assets/initramfs "$kver"
+	chmod a+r /assets/initramfs
 }
 
 build_modloop() {

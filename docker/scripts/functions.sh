@@ -27,6 +27,26 @@ function rainbow() {
 	echo -e "$NC:NC"
 }
 
+# user-friendly display of OSIE errors
+function print_error_summary() {
+	set +x
+	local stage=$1
+
+	echo -e "\n************ OSIE ERROR SUMMARY ************"
+	echo -e "Reason: Error during ${stage}"
+	echo -e "OSIE Version: ${OSIE_VERSION} (${OSIE_BRANCH})"
+	echo -e "Drone Build: ${DRONE_BUILD}"
+	echo -e "********************************************\n"
+}
+
+function set_autofail_stage() {
+	local stage=$1
+
+	# shellcheck disable=SC2034
+	autofail_stage="Error during $stage"
+	echo "${stage}" >/statedir/autofail_stage
+}
+
 # syntax: phone_home 1.2.3.4 '{"this": "data"}'
 function phone_home() {
 	local tink_host=$1
@@ -598,13 +618,13 @@ function bash_aa_to_json() {
 	echo -n "${_json}"
 }
 
-function set_root_pw() {
+function set_pw() {
 	# TODO
 	# FIXME: make sure we don't log pwhash whenever osie logging to kibana happens
 	# TODO
-	echo -e "${GREEN}#### Setting rootpw${NC}"
-	sed -i "s|^root:[^:]*|root:$1|" "$2"
-	grep '^root' "$2"
+	echo -e "${GREEN}#### Setting password${NC}"
+	sed -i "s|^$1:[^:]*|$1:$2|" "$3"
+	grep "^$1" "$3"
 }
 
 function vmlinuz_version() {
@@ -674,7 +694,14 @@ function github_mirror_check() {
 	local lfs_testing_branch="remotes/origin/images-tiny"
 	if ! timeout --preserve-status $timeout git clone -q $lfs_testing_uri; then
 		echo -e "${YELLOW}###### Timeout when cloning the lfs-testing repo${NC}"
-		return 1
+		echo -e "${YELLOW}###### Reacquiring dhcp for publicly routable ip...${NC}"
+		reacquire_dhcp "$(ip_choose_if)"
+		echo -e "${YELLOW}###### Re-checking the health of github-mirror.packet.net...${NC}"
+		if ! timeout --preserve-status $timeout git clone -q $lfs_testing_uri; then
+			echo -e "${YELLOW}###### Timeout when cloning the lfs-testing repo${NC}"
+			return 1
+		fi
+		echo -e "${GREEN}###### Second clone attempt of lfs-testing successful${NC}"
 	fi
 	cd lfs-testing
 	if ! timeout --preserve-status $timeout git checkout -q $lfs_testing_branch; then
@@ -715,6 +742,7 @@ ip_choose_if() {
 	sleep 1
 
 	for x in /sys/class/net/eth*; do
+		[ -e "$x/carrier" ] && grep -q 1 "$x/carrier" && echo "${x##*/}" && return
 		[ -e "$x" ] && grep -q 1 "$x" && echo "${x##*/}" && return
 	done
 

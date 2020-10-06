@@ -4,6 +4,14 @@ ENTRYPOINT ["/entrypoint.sh"]
 CMD ["python3", "run.py"]
 VOLUME /statedir
 
+ARG GITVERSION
+ARG GITBRANCH
+ARG DRONEBUILD
+
+ENV OSIE_VERSION ${GITVERSION}
+ENV OSIE_BRANCH ${GITBRANCH}
+ENV DRONE_BUILD ${DRONEBUILD}
+
 WORKDIR /tmp
 RUN apk add --update --upgrade --no-cache bash docker jq libstdc++ python3
 COPY requirements.txt .

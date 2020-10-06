@@ -3,6 +3,7 @@ clone:
   git:
     image: quay.io/packet/drone-git
     tags: true
+    pull: true
 
 pipeline:
   build_osie_test_env_image:
@@ -28,7 +29,7 @@ pipeline:
 
   shellcheck:
     group: ci1
-    image: koalaman/shellcheck-alpine
+    image: koalaman/shellcheck-alpine:stable
     commands:
       - shellcheck apps/*.sh ci/*.sh
       - cd docker/scripts
