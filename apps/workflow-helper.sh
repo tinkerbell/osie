@@ -62,9 +62,13 @@ rm -f /sbin/mdev
 
 mkdir /worker
 
+# tink-worker has been updated to use ID rather than WORKER_ID
+# TODO: remove setting WORKER_ID when we no longer want to support backwards compatibility
+# with the older tink-worker
 docker run --privileged -t --name "tink-worker" \
 	-e "container_uuid=$id" \
 	-e "WORKER_ID=$worker_id" \
+	-e "ID=$worker_id" \
 	-e "DOCKER_REGISTRY=$docker_registry" \
 	-e "TINKERBELL_GRPC_AUTHORITY=$grpc_authority" \
 	-e "TINKERBELL_CERT_URL=$grpc_cert_url" \
