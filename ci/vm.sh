@@ -354,7 +354,8 @@ do_test() {
 		-e 's|\./cleanup.sh.*|poweroff|' \
 		osie-installer.sh runner.sh
 
-	run_vm "packet_action=install packet_bootdev_mac=${macs[0]} slug=$slug:$tag pwhash=$(echo 5up | mkpasswd) plan=$class"
+	#run_vm "packet_action=install packet_bootdev_mac=${macs[0]} slug=$slug:$tag pwhash=$(echo 5up | mkpasswd) plan=$class"
+	run_vm "packet_action=discover packet_bootdev_mac=${macs[0]} slug=$slug:$tag pwhash=$(echo 5up | mkpasswd) plan=$class"
 	grep -r 'provisioning.109' uploads
 	diff -u <(jq -cS . <<<'{"type":"provisioning.109"}') <(jq -cS . "$(grep -rl 'provisioning.109' uploads)")
 }
