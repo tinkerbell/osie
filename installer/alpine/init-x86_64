@@ -377,6 +377,7 @@ ebegin "Verifying required kernel cmdline arguments"
 [ -z $KOPT_facility ] && eend 1 "missing required argument: facility"
 [ -z $KOPT_packet_action ] && eend 1 "missing required argument: packet_action"
 case $KOPT_packet_action in
+discover) packet_action=discover ;;
 install) packet_action=osie-installer ;;
 rescue) packet_action=rescue-helper ;;
 workflow) packet_action=workflow-helper ;;
