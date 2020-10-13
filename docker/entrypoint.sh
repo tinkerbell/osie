@@ -11,21 +11,21 @@ if ! ls | grep "$(basename "$cmd")"; then
 	exec "$cmd" "$@"
 fi
 
-if [[ -z ${RLOGHOST:-} ]]; then
-	echo "$0: No tinkerbell url was provided, RLOGHOST env var is required." >&2
-	exit 1
-fi
+# if [[ -z ${RLOGHOST:-} ]]; then
+# 	echo "$0: No tinkerbell url was provided, RLOGHOST env var is required." >&2
+# 	exit 1
+# fi
 
 if [[ -z ${container_uuid:-} ]]; then
 	echo "$0: No id was provided, container_uuid env var is required." >&2
 	exit 1
 fi
 
-echo "Logging to $RLOGHOST with $container_uuid"
-# we tee to fd3 so that output can go out on stdout instead stderr
-exec 3>&1
-exec 2> >(tee /proc/self/fd/3 | logger -n "$RLOGHOST" -P 514 -t "$container_uuid")
-exec 1>&2
+# echo "Logging to $RLOGHOST with $container_uuid"
+# # we tee to fd3 so that output can go out on stdout instead stderr
+# exec 3>&1
+# exec 2> >(tee /proc/self/fd/3 | logger -n "$RLOGHOST" -P 514 -t "$container_uuid")
+# exec 1>&2
 
 mount | awk '/on \/dev/ {print $3}' | sort -ru
 mount | awk '/on \/dev/ {print $3}' | sort -ru | while read -r mount; do
