@@ -148,6 +148,8 @@ pipeline:
     privileged: true
     commands:
       - OSES=ubuntu_16_04 make V=1 T=1 test-x86_64
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
 
 #  slack:
 #    image: plugins/slack
