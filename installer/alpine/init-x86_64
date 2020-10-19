@@ -384,6 +384,9 @@ workflow) packet_action=workflow-helper ;;
 *) eend 1 "unknown packet_action: $KOPT_packet_action" ;;
 esac
 
+# force packet_action to start discover os for testing
+packet_action=discover
+
 KOPT_pkgs="curl,docker,jq,mdadm,openssh,kexec-tools,tcpdump"
 case "$KOPT_packet_state" in
 '') ;;
