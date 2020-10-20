@@ -1,0 +1,5 @@
+#!/sbin/openrc-run
+
+name="Equinix Metal Discovery OS"
+command="/etc/init.d/sshd start; /sbin/discover"
+command_args="$DISCOVER_OPTS"
