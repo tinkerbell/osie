@@ -151,7 +151,7 @@ if [[ $preserve_data == false ]]; then
 			sectors=$((max_bytes / 512))
 			echo "Creating a single namespace with $sectors sectors on $drive"
 			nsid=$(nvme create-ns "$drive" --nsze=$sectors --ncap=$sectors --flbas 0 --dps=0 | cut -d : -f 3)
-			ctrl=$(nvme id-ctrl "$drive" | grep cntlid | cut -d : -f 2)
+			ctrl=$(nvme id-ctrl "$drive" -o json | jq '.cntlid')
 
 			echo "Attaching namespace $nsid to ctrl $ctrl on $drive"
 			nvme attach-ns "$drive" -n "$nsid" -c "$ctrl"
