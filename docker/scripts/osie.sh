@@ -619,6 +619,8 @@ ubuntu_20_04:t1.small.x86) reboot=true ;;
 ubuntu_16_04:c3.medium.x86) reboot=true ;;
 ubuntu_16_04:t3.small.x86) reboot=true ;;
 *:c2.medium.x86) reboot=true ;;
+*:f3.large.x86) reboot=true ;;
+*:f3.medium.x86) reboot=true ;;
 esac
 
 if ${reboot:-false}; then
