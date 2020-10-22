@@ -144,6 +144,14 @@ RUN cd /tmp/osie && \
     fi && \
     rm -rf /tmp/osie
 
+# SuperMicro SUM
+COPY lfs/sum_2.4.0_Linux_x86_64_20191206.tar.gz /tmp/osie/
+RUN if [ $(uname -m) = 'x86_64' ]; then \
+      mkdir -p /opt/supermicro && \
+        tar -zxvf /tmp/osie/sum_2.4.0_Linux_x86_64_20191206.tar.gz -C /opt/supermicro && \
+        ln -s /opt/supermicro/sum_2.4.0_Linux_x86_64 /opt/supermicro/sum; \
+    fi ;
+
 # URL=http://www.mellanox.com/downloads/firmware/mlxup
 # VERSION=4.6.0
 COPY lfs/mlxup-* /tmp/osie/
