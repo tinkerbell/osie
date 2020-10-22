@@ -68,11 +68,10 @@ v:
 
 packaged-apps := $(subst apps/,build/$v/,${apps})
 packaged-grubs := $(addprefix build/$v/,$(subst -,/,${grubs}))
-packaged-discover-metals := build/$v/discover-metal-x86_64.tar.gz
 packaged-osie-runners := build/$v/osie-runner-x86_64.tar.gz
 packaged-osies := build/$v/osie-aarch64.tar.gz build/$v/osie-x86_64.tar.gz
 packaged-repos := build/$v/repo-aarch64 build/$v/repo-x86_64
-packages := ${packaged-apps} ${packaged-grubs} ${packaged-discover-metals} ${packaged-osie-runners} ${packaged-osies} ${packaged-repos}
+packages := ${packaged-apps} ${packaged-grubs} ${packaged-osie-runners} ${packaged-osies} ${packaged-repos}
 
 .PHONY:{% for platform in platforms.keys() %} package-{{platform}}
 {%- endfor %}
@@ -138,7 +137,7 @@ build/$v/%.sh: apps/%.sh
 	$(E) "INSTALL  $@"
 	$(Q) install -D -m644 $< $@
 
-build/$v/%.tar.gz: build/%.tar.gz
+build/$v/osie-%: build/osie-%
 	$(E) "INSTALL  $@"
 	$(Q) install -D -m644 $< $@
 
@@ -205,12 +204,6 @@ build/$v-rootfs-%: build/initramfs-%
 	$(Q) rm -rf $@
 	$(Q) mkdir $@
 	$(Q) bsdtar -xf $< -C $@
-
-build/discover-metal-x86_64.tar.gz:
-	$(E) "DOCKER   $@"
-	$(Q) docker pull quay.io/packet/discover-metal 2>&1 | tee $@.log >/dev/$T
-	$(Q) docker save quay.io/packet/discover-metal:latest > $@.tmp
-	$(Q) mv $@.tmp $@
 
 ifneq ($(CI),drone)
 build/osie-aarch64.tar.gz: /proc/sys/fs/binfmt_misc/qemu-aarch64

@@ -107,8 +107,6 @@ pipeline:
       - mc config host add s3 'https://s3.amazonaws.com' "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" --api s3v4
       - set +v -x
       - make deploy
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
     when:
       event:
         - push
@@ -124,8 +122,6 @@ pipeline:
       - mc config host add s3 'https://s3.amazonaws.com' "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" --api s3v4
       - set +v -x
       - make deploy
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
     when:
       event:
         - pull_request
