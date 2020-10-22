@@ -51,6 +51,14 @@ pipeline:
       - cd osie-runner
       - pytest -vv --cov=./
 
+  build_discover_metal:
+    group: ci1
+    image: osie-test-env
+    commands:
+      - make V=1 T=1 build/discover-metal-x86_64.tar.gz
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
   build_aarch64:
     group: ci1
     image: osie-test-env
@@ -107,8 +115,6 @@ pipeline:
       - mc config host add s3 'https://s3.amazonaws.com' "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" --api s3v4
       - set +v -x
       - make deploy
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
     when:
       event:
         - push
@@ -124,8 +130,6 @@ pipeline:
       - mc config host add s3 'https://s3.amazonaws.com' "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" --api s3v4
       - set +v -x
       - make deploy
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
     when:
       event:
         - pull_request
