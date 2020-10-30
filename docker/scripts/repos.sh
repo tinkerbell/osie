@@ -76,6 +76,7 @@ do_centos_7() {
 		enabled=1
 		gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 		priority=10
+		skip_if_unavailable=1
 		
 		#released updates
 		[packet-updates]
@@ -85,6 +86,7 @@ do_centos_7() {
 		enabled=1
 		gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 		priority=10
+		skip_if_unavailable=1
 		
 		[packet-extras]
 		name=CentOS-\$releasever - Extras
@@ -93,6 +95,7 @@ do_centos_7() {
 		enabled=1
 		gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 		priority=10
+		skip_if_unavailable=1
 	EOF_yum_repo
 
 	sed -i '/distroverpkg=centos-release/a exclude=microcode_ctl' "$TARGET/etc/yum.conf"
