@@ -120,6 +120,14 @@ RUN cd /tmp/osie && \
     cd && \
     rm -r /tmp/osie
 
+# SSA CLI
+RUN if [ $(uname -m) = 'x86_64' ]; then \
+      temp="$(mktemp)" && \
+      wget -O "$temp" 'https://downloads.linux.hpe.com/SDR/repo/mcp/pool/non-free/ssacli-4.17-6.0_amd64.deb' && \
+      dpkg -i "$temp" && \
+      rm -rf "$temp"; \
+    fi ;
+
 # IPMICFG
 COPY lfs/ipmicfg /tmp/osie/
 RUN cd /tmp/osie && \
