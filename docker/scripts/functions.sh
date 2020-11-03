@@ -519,6 +519,23 @@ function perc_reset() {
 	fi
 }
 
+function smartarray_reset() {
+	systemmfg=$(dmidecode -s system-manufacturer | head -1)
+	echo "Adaptec hardware RAID device is present on system mfg: $systemmfg"
+
+	slots=$(ssacli ctrl all show detail | awk '/^   Slot: / {print $2}')
+
+	echo "Adaptec smart storage array, clearing logical drives"
+	for slot in $slots; do
+		if ssacli controller slot="$slot" logicaldrive all show status >/dev/null; then
+			echo "Clearing logical drives for slot $slot"
+			ssacli controller slot="$slot" logicaldrive all delete forced
+		else
+			echo "Controller slot $slot has no logical drives, skipping"
+		fi
+	done
+}
+
 # megaraid_reset uses MegaCli64 to reset the raid card to JBODs
 # usage: megaraid_reset disk...
 function megaraid_reset() {
