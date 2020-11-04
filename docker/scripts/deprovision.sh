@@ -200,6 +200,12 @@ if [[ $preserve_data == false ]]; then
 			[[ -z ${DISKS:-} ]] && disks=($(lsblk -dno name -e1,7,11 | sed 's|^|/dev/|' | sort))
 		fi
 	fi
+
+	# Adaptec Smart Storage (HPE)
+	set_autofail_stage "checking/resetting Adaptec Smart Storage RAID logical drives"
+	if lspci -nn | grep 'Adaptec Smart Storage PQI' >/dev/null && [[ $arch == x86_64 ]]; then
+		smartarray_reset
+	fi
 else
 	echo "Skipped array reset due to preserve_data: true"
 fi
