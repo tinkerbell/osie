@@ -98,6 +98,45 @@ function posttink() {
 	tink "POST" "${tink_host}" "${endpoint}" "${post_data}"
 }
 
+function print_bios_version_info() {
+	local bios_vendor=unknown
+	local bios_version=unknown
+	# We attempt a bunch of commands in this function that can fail, so disable exit
+	# on errors temporarily.
+	set +e
+
+	echo "Detecting BIOS vendor and version"
+	echo "Checking for Dell BIOS"
+	# Check for Dell
+	dell_output=$(/opt/dell/srvadmin/bin/idracadm7 get BIOS.SysInformation 2>&1)
+	dell_not_found=$(echo "${dell_output}" | grep "ERROR: Unable to perform requested operation")
+	if [ -z "${dell_not_found}" ]; then
+		bios_vendor="Dell"
+
+		# Parse Dell version
+		bios_version=$(echo "${dell_output}" | awk -F "=" '/^#SystemBiosVersion/ {print $2}')
+	else
+		echo "Checking for Supermicro BIOS"
+		# Check for Supermicro
+		sum_output=$(/opt/supermicro/sum/sum -c GetDmiInfo)
+		sum_check=$(echo "${sum_output}" | grep "Required tool does not exist")
+		if [ -z "${sum_check}" ]; then
+			bios_vendor="Supermicro"
+
+			# Parse Supermicro version
+			bios_version=$(echo "${sum_output}" | grep --after-context 2 "^\[BIOS Information\]" | awk -F '"' '/^Version/ {print $2}')
+		fi
+	fi
+
+	echo "BIOS Detected: ${bios_vendor} ${bios_version}"
+	if [[ "${bios_vendor}" == "unknown" || "${bios_version}" == "unknown" ]]; then
+		echo "Debug: output from racadm was: ${dell_output}"
+		echo "Debug: output from sum was: ${sum_output}"
+	fi
+	# Resume exit on errors
+	set -e
+}
+
 function dns_resolvers() {
 	declare -ga resolvers
 
