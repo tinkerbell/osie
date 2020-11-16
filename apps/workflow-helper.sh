@@ -9,8 +9,8 @@ packet_base_url=$(sed -nr 's|.*\bpacket_base_url=(\S+).*|\1|p' /proc/cmdline)
 registry_username=$(sed -nr 's|.*\bregistry_username=(\S+).*|\1|p' /proc/cmdline)
 registry_password=$(sed -nr 's|.*\bregistry_password=(\S+).*|\1|p' /proc/cmdline)
 tinkerbell=$(sed -nr 's|.*\btinkerbell=(\S+).*|\1|p' /proc/cmdline)
+instance_id=$(sed -nr 's|.*\binstance_id=(\S+).*|\1|p' /proc/cmdline)
 worker_id=$(sed -nr 's|.*\bworker_id=(\S+).*|\1|p' /proc/cmdline)
-id=$(curl --connect-timeout 60 "$tinkerbell:50061/metadata" | jq -r .id)
 
 # Create workflow motd
 cat <<'EOF'
@@ -66,7 +66,7 @@ mkdir /worker
 # TODO: remove setting WORKER_ID when we no longer want to support backwards compatibility
 # with the older tink-worker
 docker run --privileged -t --name "tink-worker" \
-	-e "container_uuid=$id" \
+	-e "container_uuid=$instance_id" \
 	-e "WORKER_ID=$worker_id" \
 	-e "ID=$worker_id" \
 	-e "DOCKER_REGISTRY=$docker_registry" \
