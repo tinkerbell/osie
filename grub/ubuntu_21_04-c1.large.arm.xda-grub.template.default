@@ -1,0 +1,2 @@
+GRUB_CMDLINE_LINUX='console=ttyAMA0,115200n8 pcie_aspm=off pci=pcie_bus_perf crashkernel=auto LANG=en_US.UTF-8'
+GRUB_SERIAL_COMMAND='serial'

@@ -1,0 +1,2 @@
+GRUB_CMDLINE_LINUX='console=ttyAMA2,115200n8 earlycon=qdf2400_e44,0xff78ef1000 crashkernel=auto LANG=en_US.UTF-8'
+GRUB_SERIAL_COMMAND='serial'
