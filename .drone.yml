@@ -25,7 +25,7 @@ pipeline:
     image: nixos/nix:2.3.4
     commands:
       - export LANG=en_US.UTF-8
-      - nix-shell --run 'shfmt -d $(git ls-files "*.sh")'
+      - nix-shell --run 'shfmt -d $(shfmt -f . | grep -v shunit)'
 
   shellcheck:
     group: ci1
