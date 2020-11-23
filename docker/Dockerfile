@@ -191,8 +191,9 @@ RUN useradd packet -d /home/packet -m -U && \
     chown -R packet:packet /home/packet
 WORKDIR /home/packet
 
-ADD https://raw.githubusercontent.com/packethost/metal-block-storage/master/metal-block-storage-attach \
-    https://raw.githubusercontent.com/packethost/metal-block-storage/master/metal-block-storage-detach \
+ARG METAL_BLOCK_STORAGE_COMMIT=95972b5a45a2c1be43dcb9288c551bee77557489
+ADD https://raw.githubusercontent.com/packethost/metal-block-storage/$METAL_BLOCK_STORAGE_COMMIT/metal-block-storage-attach \
+    https://raw.githubusercontent.com/packethost/metal-block-storage/$METAL_BLOCK_STORAGE_COMMIT/metal-block-storage-detach \
     /home/packet/
 
 COPY entrypoint.sh /entrypoint.sh
