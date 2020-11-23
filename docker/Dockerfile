@@ -1,8 +1,5 @@
 FROM ubuntu:xenial
 
-MAINTAINER David Laube <dlaube@packet.net>
-LABEL Description="Ubuntu baremetal installation image" Vendor="Packet.net" Version="1.0"
-
 VOLUME /statedir
 ENTRYPOINT ["/entrypoint.sh"]
 
