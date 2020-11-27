@@ -14,6 +14,7 @@ build_initramfs() {
 
 	cat >/etc/mkinitfs/features.d/network.modules <<-EOF
 		kernel/drivers/net/ethernet
+		kernel/drivers/net/phy
 		kernel/net/packet/af_packet.ko
 	EOF
 
