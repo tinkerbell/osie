@@ -196,16 +196,6 @@ function lookup_bios_config_enforcement() {
 	echo "${status}"
 }
 
-function dns_resolvers() {
-	declare -ga resolvers
-
-	# shellcheck disable=SC2207
-	resolvers=($(awk '/^nameserver/ {print $2}' /etc/resolv.conf))
-	if [ ${#resolvers[@]} -eq 0 ]; then
-		resolvers=("147.75.207.207" "147.75.207.208")
-	fi
-}
-
 # usage: retrieve_current_bios_config $vendor
 # saves the current bios config to a file named current_bios.txt
 function retrieve_current_bios_config() {
@@ -215,6 +205,83 @@ function retrieve_current_bios_config() {
 		/opt/dell/srvadmin/bin/idracadm7 get -t json -f current_bios.txt >/dev/null
 	elif [[ "${vendor}" == "Supermicro" ]]; then
 		/opt/supermicro/sum/sum -c GetCurrentBiosCfg --file current_bios.txt >/dev/null
+	fi
+}
+
+# usage: normalize_dell_bios_config_file $config_filename
+# strips out irrelevant config sections to prevent meaningless diffs
+function normalize_dell_bios_config_file() {
+	local config_file=$1
+	local config_file_normalized="${config_file}.normalized"
+
+	if [[ ! -f "${config_file}" ]]; then
+		echo "Error: missing BIOS config file [${config_file}] to normalize"
+		return 1
+	fi
+
+	# Delete irrelevant sections from the JSON config to normalize for diff'ing
+	jq 'del(.SystemConfiguration.ServiceTag) |
+		  del(.SystemConfiguration.TimeStamp) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="BIOS.Setup.1-1").Attributes[] | select(.Name=="SetBootOrderEn")) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="BIOS.Setup.1-1").Attributes[] | select(.Name=="BiosBootSeq")) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="iDRAC.Embedded.1").Attributes[] | select(.Name=="NIC.1#DNSRacName")) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="System.Embedded.1").Attributes[] | select(.Name=="ServerOS.1#HostName")) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="iDRAC.Embedded.1").Attributes[] | select(.Name=="WebServer.1#CustomCipherString")) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="iDRAC.Embedded.1").Attributes[] | select(.Name=="WebServer.1#TitleBarOptionCustom"))' \
+		"${config_file}" >"${config_file_normalized}"
+}
+
+# usage: normalize_supermicro_bios_config_file $config_filename
+# strips out irrelevant config sections to prevent meaningless diffs
+function normalize_supermicro_bios_config_file() {
+	local config_file=$1
+	local config_file_normalized="${config_file}.normalized"
+
+	if [[ ! -f "${config_file}" ]]; then
+		echo "Error: missing BIOS config file [${config_file}] to normalize"
+		return 1
+	fi
+
+	cp "${config_file}" "${config_file_normalized}"
+
+	# File generation timestamp
+	sed --in-place '/File generated at/d' "${config_file_normalized}"
+	# ME firmware status
+	sed --in-place '/ME Firmware Status/d' "${config_file_normalized}"
+	# RAM Topology
+	sed --in-place '/P[1|2] DIMM[[:alpha:]][[:digit:]]/d' "${config_file_normalized}"
+	# Hard drive serial numbers
+	sed --in-place '/HDD Serial Number/d' "${config_file_normalized}"
+	# PXE boot wait time
+	sed --in-place '/PXE boot wait time/d' "${config_file_normalized}"
+	# Boot mode select
+	sed --in-place '/Option ValidIf.*Boot mode select/d' "${config_file_normalized}"
+	# Boot option ordering
+	sed --in-place '/Boot Option.*selectedOption/d' "${config_file_normalized}"
+	# TCG storage hardware
+	sed --in-place '/Menu name.*TOSHIBA.*order/d' "${config_file_normalized}"
+}
+
+# usage: compare_bios_config_files $config_file
+function compare_bios_config_files() {
+	local config_file=$1
+	local config_file_normalized="${config_file}.normalized"
+	local current_config="current_bios.txt"
+	local current_config_normalized="${current_config}.normalized"
+
+	if [[ ! -f "${config_file_normalized}" || ! -f "${current_config_normalized}" ]]; then
+		echo "Error: missing normalized BIOS config files to perform drift detection"
+		return 1
+	fi
+
+	diff "${config_file_normalized}" "${current_config_normalized}" >bios_config_drift.diff || true
+	if [[ ! -s bios_config_drift.diff ]]; then
+		echo "No BIOS config drift detected"
+	else
+		echo "Warning: BIOS config drift detected:"
+		echo ""
+		cat bios_config_drift.diff
+		echo ""
 	fi
 }
 
@@ -239,6 +306,28 @@ function validate_bios_config() {
 
 	# Save current BIOS config to a local file
 	retrieve_current_bios_config "${vendor}"
+
+	# Normalize the BIOS config files to eliminate meaningless diffs
+	if [[ "${vendor}" == "Dell" ]]; then
+		normalize_dell_bios_config_file "bios-configs-latest/${config_file}"
+		normalize_dell_bios_config_file "current_bios.txt"
+	elif [[ "${vendor}" == "Supermicro" ]]; then
+		normalize_supermicro_bios_config_file "bios-configs-latest/${config_file}"
+		normalize_supermicro_bios_config_file "current_bios.txt"
+	fi
+
+	# Compare config_file with local file, reporting drift if found
+	compare_bios_config_files "bios-configs-latest/${config_file}"
+}
+
+function dns_resolvers() {
+	declare -ga resolvers
+
+	# shellcheck disable=SC2207
+	resolvers=($(awk '/^nameserver/ {print $2}' /etc/resolv.conf))
+	if [ ${#resolvers[@]} -eq 0 ]; then
+		resolvers=("147.75.207.207" "147.75.207.208")
+	fi
 }
 
 function dns_redhat() {
