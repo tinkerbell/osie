@@ -43,7 +43,7 @@ function set_autofail_stage() {
 	local stage=$1
 
 	# shellcheck disable=SC2034
-	autofail_stage="Error during $stage"
+	autofail_stage="$stage"
 	echo "${stage}" >/statedir/autofail_stage
 }
 
