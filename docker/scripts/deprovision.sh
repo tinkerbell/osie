@@ -67,6 +67,9 @@ if [[ $arch == x86_64 ]]; then
 	bios_vendor=$(detect_bios_vendor)
 	bios_version=$(detect_bios_version "${bios_vendor}")
 	echo "BIOS detected: ${bios_vendor} ${bios_version}"
+
+	set_autofail_stage "downloading BIOS configs"
+	download_bios_configs
 fi
 
 # Storage detection

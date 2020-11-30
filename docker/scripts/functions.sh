@@ -148,6 +148,54 @@ function detect_bios_version() {
 	echo "${version}"
 }
 
+# Downloads our latest BIOS configurations
+function download_bios_configs() {
+	# downloads are pulled through our image cache
+	configure_image_cache_dns
+
+	echo "Downloading latest BIOS configurations"
+	curl --fail https://github-mirror.packet.net/downloads/bios-configs-latest.tar.gz --output bios-configs-latest.tar.gz
+	curl --fail https://github-mirror.packet.net/downloads/bios-configs-latest.tar.gz.sha256 --output bios-configs-latest.tar.gz.sha256
+
+	echo "Verifying BIOS configurations tarball"
+	sha256sum --check bios-configs-latest.tar.gz.sha256
+
+	echo "Extracting BIOS configurations tarball"
+	tar -zxf bios-configs-latest.tar.gz
+}
+
+# usage: lookup_bios_config $plan $vendor
+# returns a string of the bios configuration filename from the firmware repo
+function lookup_bios_config() {
+	local plan=$1
+	local vendor=$2
+	local configfile
+
+	# search through the bios config manifest to extract the config filename
+	if [[ ! -f "bios-configs-latest/manifest.txt" ]]; then
+		echo "Error: missing BIOS config manifest file"
+		return 1
+	fi
+	configfile=$(grep "^${plan} \+${vendor}" bios-configs-latest/manifest.txt | awk '{print $3}' || true)
+	echo "${configfile}"
+}
+
+# usage: lookup_bios_config_enforcement $plan $vendor
+# returns a string of the enforcement status for this BIOS config: ["enforce"|"testing"|""]
+function lookup_bios_config_enforcement() {
+	local plan=$1
+	local vendor=$2
+	local status
+
+	# search through the bios config manifest to extract the enforcement status for this config
+	if [[ ! -f "bios-configs-latest/manifest.txt" ]]; then
+		echo "Error: missing BIOS config manifest file"
+		return 1
+	fi
+	status=$(grep "^${plan} \+${vendor}" bios-configs-latest/manifest.txt | awk '{print $4}' || true)
+	echo "${status}"
+}
+
 function dns_resolvers() {
 	declare -ga resolvers
 
