@@ -206,6 +206,41 @@ function dns_resolvers() {
 	fi
 }
 
+# usage: retrieve_current_bios_config $vendor
+# saves the current bios config to a file named current_bios.txt
+function retrieve_current_bios_config() {
+	local vendor=$1
+
+	if [[ "${vendor}" == "Dell" ]]; then
+		/opt/dell/srvadmin/bin/idracadm7 get -t json -f current_bios.txt >/dev/null
+	elif [[ "${vendor}" == "Supermicro" ]]; then
+		/opt/supermicro/sum/sum -c GetCurrentBiosCfg --file current_bios.txt >/dev/null
+	fi
+}
+
+# usage: validate_bios_config $vendor $plan
+function validate_bios_config() {
+	local vendor=$1
+	local plan=$2
+	local config_file
+
+	# Check for a BIOS config for this plan
+	config_file=$(lookup_bios_config "${plan}" "${vendor}")
+
+	if [[ -z "$config_file" ]]; then
+		echo "Unable to find a bios config file for ${plan} (${vendor}) in the manifest, skipping BIOS validation"
+		return
+	fi
+
+	if [[ ! -f "bios-configs-latest/${config_file}" ]]; then
+		echo "A config file named [${config_file}] does not exist in BIOS configs tarball, skipping BIOS validation"
+		return
+	fi
+
+	# Save current BIOS config to a local file
+	retrieve_current_bios_config "${vendor}"
+}
+
 function dns_redhat() {
 	local filename=$1
 	shift
