@@ -98,6 +98,23 @@ function posttink() {
 	tink "POST" "${tink_host}" "${endpoint}" "${post_data}"
 }
 
+# configures /etc/hosts so that git and git-lfs assets from GitHub and our local
+# mirror are pulled through our image cache (IPN).
+function configure_image_cache_dns() {
+	images_ip=$(getent hosts images.packet.net | awk '{print $1}')
+	cp -a /etc/hosts /etc/hosts.new
+	{
+		echo "$images_ip        github.com"
+		echo "$images_ip        github-cloud.s3.amazonaws.com"
+		echo "$images_ip        github-mirror.packet.net"
+	} >>/etc/hosts.new
+	# Note: using mv here fails (415 Unsupported Media Type) because docker sets
+	# this up as a bind mount and we can't replace it.
+	cp -f /etc/hosts.new /etc/hosts
+	echo -n "LFS pulls via github-cloud will now resolve to image cache:"
+	getent hosts github-cloud.s3.amazonaws.com | awk '{print $1}'
+}
+
 # returns a string of the BIOS vendor: "dell", "supermicro", or "unknown"
 function detect_bios_vendor() {
 	local vendor=unknown
