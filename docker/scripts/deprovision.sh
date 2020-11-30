@@ -61,7 +61,15 @@ function autofail() {
 }
 trap autofail EXIT
 
-# Pre-deprov check
+# Check BIOS config and update if drift is detected
+if [[ $arch == x86_64 ]]; then
+	set_autofail_stage "detecting BIOS information"
+	bios_vendor=$(detect_bios_vendor)
+	bios_version=$(detect_bios_version "${bios_vendor}")
+	echo "BIOS detected: ${bios_vendor} ${bios_version}"
+fi
+
+# Storage detection
 set_autofail_stage "drive count and storage size detection"
 echo "Number of drives found: ${#disks[*]}"
 if ! assert_num_disks "$class" "${#disks[@]}"; then

@@ -98,6 +98,39 @@ function posttink() {
 	tink "POST" "${tink_host}" "${endpoint}" "${post_data}"
 }
 
+# returns a string of the BIOS vendor: "dell", "supermicro", or "unknown"
+function detect_bios_vendor() {
+	local vendor=unknown
+
+	# Check for Dell
+	if /opt/dell/srvadmin/bin/idracadm7 get BIOS.SysInformation &>/dev/null; then
+		vendor="Dell"
+	else
+		# Check for Supermicro
+		if /opt/supermicro/sum/sum -c GetDmiInfo >/dev/null; then
+			vendor="Supermicro"
+		fi
+	fi
+
+	echo "${vendor}"
+}
+
+# usage: detect_bios_version $vendor
+# returns a string of the BIOS version or "unknown" if it can't be determined.
+function detect_bios_version() {
+	local vendor=$1
+	local version=unknown
+
+	if [[ "${vendor}" == "Dell" ]]; then
+		version=$(/opt/dell/srvadmin/bin/idracadm7 get BIOS.SysInformation 2>&1 | awk -F "=" '/^#SystemBiosVersion/ {print $2}')
+	fi
+	if [[ "${vendor}" == "Supermicro" ]]; then
+		version=$(/opt/supermicro/sum/sum -c GetDmiInfo | grep --after-context 2 "^\[BIOS Information\]" | awk -F '"' '/^Version/ {print $2}')
+	fi
+
+	echo "${version}"
+}
+
 function dns_resolvers() {
 	declare -ga resolvers
 
