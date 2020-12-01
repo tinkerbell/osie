@@ -43,7 +43,7 @@ function set_autofail_stage() {
 	local stage=$1
 
 	# shellcheck disable=SC2034
-	autofail_stage="Error during $stage"
+	autofail_stage="$stage"
 	echo "${stage}" >/statedir/autofail_stage
 }
 
@@ -96,6 +96,228 @@ function posttink() {
 	local tink_host=$1 endpoint=$2 post_data=$3
 
 	tink "POST" "${tink_host}" "${endpoint}" "${post_data}"
+}
+
+# configures /etc/hosts so that git and git-lfs assets from GitHub and our local
+# mirror are pulled through our image cache (IPN).
+function configure_image_cache_dns() {
+	images_ip=$(getent hosts images.packet.net | awk '{print $1}')
+	cp -a /etc/hosts /etc/hosts.new
+	{
+		echo "$images_ip        github.com"
+		echo "$images_ip        github-cloud.s3.amazonaws.com"
+		echo "$images_ip        github-mirror.packet.net"
+	} >>/etc/hosts.new
+	# Note: using mv here fails (415 Unsupported Media Type) because docker sets
+	# this up as a bind mount and we can't replace it.
+	cp -f /etc/hosts.new /etc/hosts
+	echo -n "LFS pulls via github-cloud will now resolve to image cache:"
+	getent hosts github-cloud.s3.amazonaws.com | awk '{print $1}'
+}
+
+# returns a string of the BIOS vendor: "dell", "supermicro", or "unknown"
+function detect_bios_vendor() {
+	local vendor=unknown
+
+	# Check for Dell
+	if /opt/dell/srvadmin/bin/idracadm7 get BIOS.SysInformation &>/dev/null; then
+		vendor="Dell"
+	else
+		# Check for Supermicro
+		if /opt/supermicro/sum/sum -c GetDmiInfo >/dev/null; then
+			vendor="Supermicro"
+		fi
+	fi
+
+	echo "${vendor}"
+}
+
+# usage: detect_bios_version $vendor
+# returns a string of the BIOS version or "unknown" if it can't be determined.
+function detect_bios_version() {
+	local vendor=$1
+	local version=unknown
+
+	if [[ "${vendor}" == "Dell" ]]; then
+		version=$(/opt/dell/srvadmin/bin/idracadm7 get BIOS.SysInformation 2>&1 | awk -F "=" '/^#SystemBiosVersion/ {print $2}')
+	fi
+	if [[ "${vendor}" == "Supermicro" ]]; then
+		version=$(/opt/supermicro/sum/sum -c GetDmiInfo | grep --after-context 2 "^\[BIOS Information\]" | awk -F '"' '/^Version/ {print $2}')
+	fi
+
+	echo "${version}"
+}
+
+# Downloads our latest BIOS configurations
+function download_bios_configs() {
+	# downloads are pulled through our image cache
+	configure_image_cache_dns
+
+	echo "Downloading latest BIOS configurations"
+	curl --fail https://github-mirror.packet.net/downloads/bios-configs-latest.tar.gz --output bios-configs-latest.tar.gz
+	curl --fail https://github-mirror.packet.net/downloads/bios-configs-latest.tar.gz.sha256 --output bios-configs-latest.tar.gz.sha256
+
+	echo "Verifying BIOS configurations tarball"
+	sha256sum --check bios-configs-latest.tar.gz.sha256
+
+	echo "Extracting BIOS configurations tarball"
+	tar -zxf bios-configs-latest.tar.gz
+}
+
+# usage: lookup_bios_config $plan $vendor
+# returns a string of the bios configuration filename from the firmware repo
+function lookup_bios_config() {
+	local plan=$1
+	local vendor=$2
+	local configfile
+
+	# search through the bios config manifest to extract the config filename
+	if [[ ! -f "bios-configs-latest/manifest.txt" ]]; then
+		echo "Error: missing BIOS config manifest file"
+		return 1
+	fi
+	configfile=$(grep "^${plan} \+${vendor}" bios-configs-latest/manifest.txt | awk '{print $3}' || true)
+	echo "${configfile}"
+}
+
+# usage: lookup_bios_config_enforcement $plan $vendor
+# returns a string of the enforcement status for this BIOS config: ["enforce"|"testing"|""]
+function lookup_bios_config_enforcement() {
+	local plan=$1
+	local vendor=$2
+	local status
+
+	# search through the bios config manifest to extract the enforcement status for this config
+	if [[ ! -f "bios-configs-latest/manifest.txt" ]]; then
+		echo "Error: missing BIOS config manifest file"
+		return 1
+	fi
+	status=$(grep "^${plan} \+${vendor}" bios-configs-latest/manifest.txt | awk '{print $4}' || true)
+	echo "${status}"
+}
+
+# usage: retrieve_current_bios_config $vendor
+# saves the current bios config to a file named current_bios.txt
+function retrieve_current_bios_config() {
+	local vendor=$1
+
+	if [[ "${vendor}" == "Dell" ]]; then
+		/opt/dell/srvadmin/bin/idracadm7 get -t json -f current_bios.txt >/dev/null
+	elif [[ "${vendor}" == "Supermicro" ]]; then
+		/opt/supermicro/sum/sum -c GetCurrentBiosCfg --file current_bios.txt >/dev/null
+	fi
+}
+
+# usage: normalize_dell_bios_config_file $config_filename
+# strips out irrelevant config sections to prevent meaningless diffs
+function normalize_dell_bios_config_file() {
+	local config_file=$1
+	local config_file_normalized="${config_file}.normalized"
+
+	if [[ ! -f "${config_file}" ]]; then
+		echo "Error: missing BIOS config file [${config_file}] to normalize"
+		return 1
+	fi
+
+	# Delete irrelevant sections from the JSON config to normalize for diff'ing
+	jq 'del(.SystemConfiguration.ServiceTag) |
+		  del(.SystemConfiguration.TimeStamp) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="BIOS.Setup.1-1").Attributes[] | select(.Name=="SetBootOrderEn")) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="BIOS.Setup.1-1").Attributes[] | select(.Name=="BiosBootSeq")) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="iDRAC.Embedded.1").Attributes[] | select(.Name=="NIC.1#DNSRacName")) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="System.Embedded.1").Attributes[] | select(.Name=="ServerOS.1#HostName")) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="iDRAC.Embedded.1").Attributes[] | select(.Name=="WebServer.1#CustomCipherString")) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="iDRAC.Embedded.1").Attributes[] | select(.Name=="WebServer.1#TitleBarOptionCustom"))' \
+		"${config_file}" >"${config_file_normalized}"
+}
+
+# usage: normalize_supermicro_bios_config_file $config_filename
+# strips out irrelevant config sections to prevent meaningless diffs
+function normalize_supermicro_bios_config_file() {
+	local config_file=$1
+	local config_file_normalized="${config_file}.normalized"
+
+	if [[ ! -f "${config_file}" ]]; then
+		echo "Error: missing BIOS config file [${config_file}] to normalize"
+		return 1
+	fi
+
+	cp "${config_file}" "${config_file_normalized}"
+
+	# File generation timestamp
+	sed --in-place '/File generated at/d' "${config_file_normalized}"
+	# ME firmware status
+	sed --in-place '/ME Firmware Status/d' "${config_file_normalized}"
+	# RAM Topology
+	sed --in-place '/P[1|2] DIMM[[:alpha:]][[:digit:]]/d' "${config_file_normalized}"
+	# Hard drive serial numbers
+	sed --in-place '/HDD Serial Number/d' "${config_file_normalized}"
+	# PXE boot wait time
+	sed --in-place '/PXE boot wait time/d' "${config_file_normalized}"
+	# Boot mode select
+	sed --in-place '/Option ValidIf.*Boot mode select/d' "${config_file_normalized}"
+	# Boot option ordering
+	sed --in-place '/Boot Option.*selectedOption/d' "${config_file_normalized}"
+	# TCG storage hardware
+	sed --in-place '/Menu name.*TOSHIBA.*order/d' "${config_file_normalized}"
+}
+
+# usage: compare_bios_config_files $config_file
+function compare_bios_config_files() {
+	local config_file=$1
+	local config_file_normalized="${config_file}.normalized"
+	local current_config="current_bios.txt"
+	local current_config_normalized="${current_config}.normalized"
+
+	if [[ ! -f "${config_file_normalized}" || ! -f "${current_config_normalized}" ]]; then
+		echo "Error: missing normalized BIOS config files to perform drift detection"
+		return 1
+	fi
+
+	diff "${config_file_normalized}" "${current_config_normalized}" >bios_config_drift.diff || true
+	if [[ ! -s bios_config_drift.diff ]]; then
+		echo "No BIOS config drift detected"
+	else
+		echo "Warning: BIOS config drift detected:"
+		echo ""
+		cat bios_config_drift.diff
+		echo ""
+	fi
+}
+
+# usage: validate_bios_config $vendor $plan
+function validate_bios_config() {
+	local vendor=$1
+	local plan=$2
+	local config_file
+
+	# Check for a BIOS config for this plan
+	config_file=$(lookup_bios_config "${plan}" "${vendor}")
+
+	if [[ -z "$config_file" ]]; then
+		echo "Unable to find a bios config file for ${plan} (${vendor}) in the manifest, skipping BIOS validation"
+		return
+	fi
+
+	if [[ ! -f "bios-configs-latest/${config_file}" ]]; then
+		echo "A config file named [${config_file}] does not exist in BIOS configs tarball, skipping BIOS validation"
+		return
+	fi
+
+	# Save current BIOS config to a local file
+	retrieve_current_bios_config "${vendor}"
+
+	# Normalize the BIOS config files to eliminate meaningless diffs
+	if [[ "${vendor}" == "Dell" ]]; then
+		normalize_dell_bios_config_file "bios-configs-latest/${config_file}"
+		normalize_dell_bios_config_file "current_bios.txt"
+	elif [[ "${vendor}" == "Supermicro" ]]; then
+		normalize_supermicro_bios_config_file "bios-configs-latest/${config_file}"
+		normalize_supermicro_bios_config_file "current_bios.txt"
+	fi
+
+	# Compare config_file with local file, reporting drift if found
+	compare_bios_config_files "bios-configs-latest/${config_file}"
 }
 
 function dns_resolvers() {

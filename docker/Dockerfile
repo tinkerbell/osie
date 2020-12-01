@@ -42,6 +42,13 @@ RUN apt-get update -y && \
     apt-get -y clean && \
     rm -rf /var/lib/apt/lists/* /tmp/osie
 
+# gron - grep for JSON
+COPY lfs/gron-0.6.0-amd64 /tmp/osie/
+RUN if [ $(uname -m) = 'x86_64' ]; then \
+        mv /tmp/osie/gron-0.6.0-amd64 /usr/bin/gron; \
+    fi && \
+    rm -rf /tmp/osie 
+
 # build lshw, done here so we can keep it cached as long as possible
 COPY build-lshw.sh /tmp/osie/
 RUN apt-get update -y && \
