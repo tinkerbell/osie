@@ -82,7 +82,7 @@ RUN apt-get update -y && \
     apt-get -qy clean && \
     rm -rf /var/lib/apt/lists/* /tmp/osie/
 
-ARG PACKET_HARDWARE_COMMIT=413cdf9392a7c962081403d942666152afd1d843
+ARG PACKET_HARDWARE_COMMIT=bc24777799308f6e884fb9bfdaac398b5f39083f
 ARG PACKET_NETWORKING_COMMIT=dd13b2a94daace22ecd97f053b878dbfcf20cb80
 
 RUN curl https://bootstrap.pypa.io/get-pip.py | python3 && \
