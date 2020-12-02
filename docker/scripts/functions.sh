@@ -291,6 +291,25 @@ function compare_bios_config_files() {
 	fi
 }
 
+# usage: apply_bios_config $vendor $config_file
+function apply_bios_config() {
+	local vendor=$1
+	local config_file=$2
+
+	if [[ ! -f bios_config_drift.diff || -s bios_config_drift.diff ]]; then
+		echo "No BIOS config drift detected, not applying new config"
+		return 0
+	fi
+
+	if [[ "${vendor}" == "Dell" ]]; then
+		echo "Applying Dell BIOS configuration ${config_file}..."
+		/opt/dell/srvadmin/bin/idracadm7 set -b Forced -f "${config_file}" -t JSON
+	elif [[ "${vendor}" == "Supermicro" ]]; then
+		echo "Applying Supermicro BIOS configuration ${config_file}..."
+		/opt/supermicro/sum/sum -c ChangeBiosCfg --file "${config_file}"
+	fi
+}
+
 # usage: validate_bios_config $plan $vendor
 function validate_bios_config() {
 	local plan=$1
@@ -324,6 +343,9 @@ function validate_bios_config() {
 
 	# Compare config_file with local file, reporting drift if found
 	compare_bios_config_files "bios-configs-latest/${config_file}"
+
+	set_autofail_stage "applying BIOS config"
+	apply_bios_config "${vendor}" "bios-configs-latest/${config_file}"
 }
 
 function dns_resolvers() {
