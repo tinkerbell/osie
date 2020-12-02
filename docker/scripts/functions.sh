@@ -206,6 +206,12 @@ function retrieve_current_bios_config() {
 	elif [[ "${vendor}" == "Supermicro" ]]; then
 		/opt/supermicro/sum/sum -c GetCurrentBiosCfg --file current_bios.txt >/dev/null
 	fi
+
+	# Save a copy of the original BIOS config to /statedir in case we need to obtain
+	# it for troubleshooting issues.
+	if [[ -f current_bios.txt ]]; then
+		cp current_bios.txt /statedir/
+	fi
 }
 
 # usage: normalize_dell_bios_config_file $config_filename
