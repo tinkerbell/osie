@@ -285,10 +285,10 @@ function compare_bios_config_files() {
 	fi
 }
 
-# usage: validate_bios_config $vendor $plan
+# usage: validate_bios_config $plan $vendor
 function validate_bios_config() {
-	local vendor=$1
-	local plan=$2
+	local plan=$1
+	local vendor=$2
 	local config_file
 
 	# Check for a BIOS config for this plan

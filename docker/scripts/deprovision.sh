@@ -72,7 +72,7 @@ if [[ $arch == x86_64 ]]; then
 	download_bios_configs
 
 	set_autofail_stage "validating BIOS config"
-	validate_bios_config "${bios_vendor}" "${class}"
+	validate_bios_config "${class}" "${bios_vendor}"
 fi
 
 # Storage detection
