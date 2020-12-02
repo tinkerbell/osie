@@ -56,7 +56,7 @@ function autofail() {
 	# shellcheck disable=SC2181
 	(($? == 0)) && exit
 
-	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"${autofail_stage}"'"}'
+	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"Error during ${autofail_stage}"'"}'
 	print_error_summary "${autofail_stage}"
 }
 trap autofail EXIT
