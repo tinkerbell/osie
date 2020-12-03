@@ -206,6 +206,12 @@ function retrieve_current_bios_config() {
 	elif [[ "${vendor}" == "Supermicro" ]]; then
 		/opt/supermicro/sum/sum -c GetCurrentBiosCfg --file current_bios.txt >/dev/null
 	fi
+
+	# Save a copy of the original BIOS config to /statedir in case we need to obtain
+	# it for troubleshooting issues.
+	if [[ -f current_bios.txt ]]; then
+		cp current_bios.txt /statedir/
+	fi
 }
 
 # usage: normalize_dell_bios_config_file $config_filename
@@ -285,10 +291,29 @@ function compare_bios_config_files() {
 	fi
 }
 
-# usage: validate_bios_config $vendor $plan
-function validate_bios_config() {
+# usage: apply_bios_config $vendor $config_file
+function apply_bios_config() {
 	local vendor=$1
-	local plan=$2
+	local config_file=$2
+
+	if [[ ! -f bios_config_drift.diff || -s bios_config_drift.diff ]]; then
+		echo "No BIOS config drift detected, not applying new config"
+		return 0
+	fi
+
+	if [[ "${vendor}" == "Dell" ]]; then
+		echo "Applying Dell BIOS configuration ${config_file}..."
+		/opt/dell/srvadmin/bin/idracadm7 set -b Forced -f "${config_file}" -t JSON
+	elif [[ "${vendor}" == "Supermicro" ]]; then
+		echo "Applying Supermicro BIOS configuration ${config_file}..."
+		/opt/supermicro/sum/sum -c ChangeBiosCfg --file "${config_file}"
+	fi
+}
+
+# usage: validate_bios_config $plan $vendor
+function validate_bios_config() {
+	local plan=$1
+	local vendor=$2
 	local config_file
 
 	# Check for a BIOS config for this plan
@@ -318,6 +343,9 @@ function validate_bios_config() {
 
 	# Compare config_file with local file, reporting drift if found
 	compare_bios_config_files "bios-configs-latest/${config_file}"
+
+	set_autofail_stage "applying BIOS config"
+	apply_bios_config "${vendor}" "bios-configs-latest/${config_file}"
 }
 
 function dns_resolvers() {

@@ -56,7 +56,7 @@ function autofail() {
 	# shellcheck disable=SC2181
 	(($? == 0)) && exit
 
-	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"${autofail_stage}"'"}'
+	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"Error during ${autofail_stage}"'"}'
 	print_error_summary "${autofail_stage}"
 }
 trap autofail EXIT
@@ -72,7 +72,7 @@ if [[ $arch == x86_64 ]]; then
 	download_bios_configs
 
 	set_autofail_stage "validating BIOS config"
-	validate_bios_config "${bios_vendor}" "${class}"
+	validate_bios_config "${class}" "${bios_vendor}"
 fi
 
 # Storage detection
