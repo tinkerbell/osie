@@ -192,9 +192,8 @@ RUN useradd packet -d /home/packet -m -U && \
 WORKDIR /home/packet
 
 ARG METAL_BLOCK_STORAGE_COMMIT=95972b5a45a2c1be43dcb9288c551bee77557489
-ADD https://raw.githubusercontent.com/packethost/metal-block-storage/$METAL_BLOCK_STORAGE_COMMIT/metal-block-storage-attach \
-    https://raw.githubusercontent.com/packethost/metal-block-storage/$METAL_BLOCK_STORAGE_COMMIT/metal-block-storage-detach \
-    /home/packet/
+RUN curl --remote-name "https://raw.githubusercontent.com/packethost/metal-block-storage/$METAL_BLOCK_STORAGE_COMMIT/metal-block-storage-{attach,detach}" && \
+    chmod +x /home/packet/metal-block-storage*
 
 COPY entrypoint.sh /entrypoint.sh
 COPY scripts/ /home/packet/
