@@ -12,5 +12,5 @@ echo "${SMARTMONTOOLS_SHA512}  smartmontools.tar.gz" | sha512sum -c
 tar -zxvf smartmontools.tar.gz
 cd "$SMARTMONTOOLS_TARNAME"
 ./configure
-make
+make -j"$(nproc)"
 make install

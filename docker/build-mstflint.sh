@@ -12,7 +12,7 @@ echo "${MSTFLINT_SHA512}  mstflint.tar.gz" | sha512sum -c
 tar -zxvf mstflint.tar.gz
 cd "mstflint-$(echo $MSTFLINT_RELEASE | sed 's/v//' | sed 's/-1//')"
 ./configure
-make
+make -j"$(nproc)"
 make install
 apt-get purge -y zlib1g-dev libibmad-dev libssl-dev g++
 apt-get autoremove -y
