@@ -268,12 +268,13 @@ function normalize_supermicro_bios_config_file() {
 	sed --in-place '/Menu name.*TOSHIBA.*order/d' "${config_file_normalized}"
 }
 
-# usage: compare_bios_config_files $config_file
+# usage: compare_bios_config_files $config_file $plan
 function compare_bios_config_files() {
 	local config_file=$1
 	local config_file_normalized="${config_file}.normalized"
 	local current_config="current_bios.txt"
 	local current_config_normalized="${current_config}.normalized"
+	local plan=$2
 
 	if [[ ! -f "${config_file_normalized}" || ! -f "${current_config_normalized}" ]]; then
 		echo "Error: missing normalized BIOS config files to perform drift detection"
@@ -282,12 +283,12 @@ function compare_bios_config_files() {
 
 	diff "${config_file_normalized}" "${current_config_normalized}" >bios_config_drift.diff || true
 	if [[ ! -s bios_config_drift.diff ]]; then
-		echo "No BIOS config drift detected"
+		echo "No BIOS config drift detected (Based on plan: ${plan})"
 	else
-		echo "Warning: BIOS config drift detected:"
-		echo ""
+		echo "Warning: BIOS config drift detected (Based on plan: ${plan})"
+		echo "*** Begin BIOS config drift report ***"
 		cat bios_config_drift.diff
-		echo ""
+		echo "*** End BIOS config drift report ***"
 	fi
 }
 
@@ -342,7 +343,7 @@ function validate_bios_config() {
 	fi
 
 	# Compare config_file with local file, reporting drift if found
-	compare_bios_config_files "bios-configs-latest/${config_file}"
+	compare_bios_config_files "bios-configs-latest/${config_file}" "${plan}"
 
 	set_autofail_stage "applying BIOS config"
 	apply_bios_config "${vendor}" "bios-configs-latest/${config_file}"
