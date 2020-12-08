@@ -20,28 +20,11 @@ pipeline:
     commands:
       - ./installer/alpine/skip-building-alpine-files
 
-  shfmt:
+  ci-checks:
     group: ci1
     image: nixos/nix:2.3.4
     commands:
-      - export LANG=en_US.UTF-8
-      - nix-shell --run 'shfmt -d -s $(shfmt -f . | grep -v shunit)'
-
-  shellcheck:
-    group: ci1
-    image: koalaman/shellcheck-alpine:stable
-    commands:
-      - shellcheck apps/*.sh ci/*.sh
-      - cd docker/scripts
-      - shellcheck -x *.sh
-
-  py_fmt_and_lint:
-    group: ci1
-    image: nixos/nix:2.3.4
-    commands:
-      - export LANG=en_US.UTF-8
-      - nix-shell --run 'black -t py35 --check --diff --exclude docker/scripts/packet-networking .'
-      - nix-shell --run 'pylama --ignore=E203 docker $(ls osie-runner | grep -v hegel)'
+      - ./ci-checks.sh
 
   osie_runner_pytest:
     group: ci1
