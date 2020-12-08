@@ -146,7 +146,7 @@ Usage() {
 # Handles the enhanced args (i.e. --something)
 EnhancedGetopt() {
 	getopt -T >/dev/null 2>&1 # is getopt the enhanced one ?
-	if [ $? = 4 ]; then # Yes, advanced args ALLOWED
+	if [ $? = 4 ]; then       # Yes, advanced args ALLOWED
 		OPT=$(getopt -o acdhirsvp \
 			--long all,codename,description,help,id,release,short,version,program_version \
 			-n 'lsb_release' \
