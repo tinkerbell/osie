@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# shellcheck disable=SC1091
 source functions.sh && init
 set -o nounset
 
@@ -68,8 +69,8 @@ function autofail() {
 	# shellcheck disable=SC2181
 	(($? == 0)) && exit
 
-	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"Error during ${autofail_stage}"'"}'
-	print_error_summary "${autofail_stage}"
+	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"Error during ${autofail_stage:-unknown}"'"}'
+	print_error_summary "${autofail_stage:-unknown}"
 }
 trap autofail EXIT
 

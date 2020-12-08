@@ -10,7 +10,7 @@ SMARTMONTOOLS_BASEURL=https://github.com/smartmontools/smartmontools/releases/do
 curl -L "${SMARTMONTOOLS_BASEURL}/${SMARTMONTOOLS_RELEASE}/${SMARTMONTOOLS_TARNAME}.tar.gz" >smartmontools.tar.gz
 echo "${SMARTMONTOOLS_SHA512}  smartmontools.tar.gz" | sha512sum -c
 tar -zxvf smartmontools.tar.gz
-cd $(echo $SMARTMONTOOLS_TARNAME)
+cd "$SMARTMONTOOLS_TARNAME"
 ./configure
 make
 make install

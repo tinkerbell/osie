@@ -10,7 +10,7 @@ curl -L "${MSTFLINT_BASEURL}/v${MSTFLINT_RELEASE}/mstflint-${MSTFLINT_RELEASE}.t
 apt install -y zlib1g-dev libibmad-dev libssl-dev g++
 echo "${MSTFLINT_SHA512}  mstflint.tar.gz" | sha512sum -c
 tar -zxvf mstflint.tar.gz
-cd mstflint-$(echo $MSTFLINT_RELEASE | sed 's/v//' | sed 's/-1//')
+cd "mstflint-$(echo $MSTFLINT_RELEASE | sed 's/v//' | sed 's/-1//')"
 ./configure
 make
 make install

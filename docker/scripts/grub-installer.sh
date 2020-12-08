@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# shellcheck disable=SC1091
 source functions.sh && init
 
 USAGE="Usage: $0 -t /mnt/target -C /path/to/cprout.json
