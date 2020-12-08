@@ -138,10 +138,10 @@ function detect_bios_version() {
 	local vendor=$1
 	local version=unknown
 
-	if [[ "${vendor}" == "Dell" ]]; then
+	if [[ ${vendor} == "Dell" ]]; then
 		version=$(/opt/dell/srvadmin/bin/idracadm7 get BIOS.SysInformation 2>&1 | awk -F "=" '/^#SystemBiosVersion/ {print $2}')
 	fi
-	if [[ "${vendor}" == "Supermicro" ]]; then
+	if [[ ${vendor} == "Supermicro" ]]; then
 		version=$(/opt/supermicro/sum/sum -c GetDmiInfo | grep --after-context 2 "^\[BIOS Information\]" | awk -F '"' '/^Version/ {print $2}')
 	fi
 
@@ -201,9 +201,9 @@ function lookup_bios_config_enforcement() {
 function retrieve_current_bios_config() {
 	local vendor=$1
 
-	if [[ "${vendor}" == "Dell" ]]; then
+	if [[ ${vendor} == "Dell" ]]; then
 		/opt/dell/srvadmin/bin/idracadm7 get -t json -f current_bios.txt >/dev/null
-	elif [[ "${vendor}" == "Supermicro" ]]; then
+	elif [[ ${vendor} == "Supermicro" ]]; then
 		/opt/supermicro/sum/sum -c GetCurrentBiosCfg --file current_bios.txt >/dev/null
 	fi
 
@@ -220,7 +220,7 @@ function normalize_dell_bios_config_file() {
 	local config_file=$1
 	local config_file_normalized="${config_file}.normalized"
 
-	if [[ ! -f "${config_file}" ]]; then
+	if [[ ! -f ${config_file} ]]; then
 		echo "Error: missing BIOS config file [${config_file}] to normalize"
 		return 1
 	fi
@@ -243,7 +243,7 @@ function normalize_supermicro_bios_config_file() {
 	local config_file=$1
 	local config_file_normalized="${config_file}.normalized"
 
-	if [[ ! -f "${config_file}" ]]; then
+	if [[ ! -f ${config_file} ]]; then
 		echo "Error: missing BIOS config file [${config_file}] to normalize"
 		return 1
 	fi
@@ -276,7 +276,7 @@ function compare_bios_config_files() {
 	local current_config_normalized="${current_config}.normalized"
 	local plan=$2
 
-	if [[ ! -f "${config_file_normalized}" || ! -f "${current_config_normalized}" ]]; then
+	if [[ ! -f ${config_file_normalized} || ! -f ${current_config_normalized} ]]; then
 		echo "Error: missing normalized BIOS config files to perform drift detection"
 		return 1
 	fi
@@ -302,10 +302,10 @@ function apply_bios_config() {
 		return 0
 	fi
 
-	if [[ "${vendor}" == "Dell" ]]; then
+	if [[ ${vendor} == "Dell" ]]; then
 		echo "Applying Dell BIOS configuration ${config_file}..."
 		/opt/dell/srvadmin/bin/idracadm7 set -b Forced -f "${config_file}" -t JSON
-	elif [[ "${vendor}" == "Supermicro" ]]; then
+	elif [[ ${vendor} == "Supermicro" ]]; then
 		echo "Applying Supermicro BIOS configuration ${config_file}..."
 		/opt/supermicro/sum/sum -c ChangeBiosCfg --file "${config_file}"
 	fi
@@ -320,7 +320,7 @@ function validate_bios_config() {
 	# Check for a BIOS config for this plan
 	config_file=$(lookup_bios_config "${plan}" "${vendor}")
 
-	if [[ -z "$config_file" ]]; then
+	if [[ -z $config_file ]]; then
 		echo "Unable to find a bios config file for ${plan} (${vendor}) in the manifest, skipping BIOS validation"
 		return
 	fi
@@ -334,10 +334,10 @@ function validate_bios_config() {
 	retrieve_current_bios_config "${vendor}"
 
 	# Normalize the BIOS config files to eliminate meaningless diffs
-	if [[ "${vendor}" == "Dell" ]]; then
+	if [[ ${vendor} == "Dell" ]]; then
 		normalize_dell_bios_config_file "bios-configs-latest/${config_file}"
 		normalize_dell_bios_config_file "current_bios.txt"
-	elif [[ "${vendor}" == "Supermicro" ]]; then
+	elif [[ ${vendor} == "Supermicro" ]]; then
 		normalize_supermicro_bios_config_file "bios-configs-latest/${config_file}"
 		normalize_supermicro_bios_config_file "current_bios.txt"
 	fi
@@ -981,7 +981,7 @@ function github_mirror_check() {
 	cd .. && rm -rf lfs-testing
 
 	local valid_checksum="7b331c02e313c7599d5a90212e17e6d3cb729bd2e1c9b873c302a63c95a2f9bf"
-	if [[ "$checksum" != "$valid_checksum" ]]; then
+	if [[ $checksum != "$valid_checksum" ]]; then
 		echo -e "${YELLOW}###### Test git-lfs checkout from github-mirror had a bad checksum${NC}"
 		return 1
 	fi

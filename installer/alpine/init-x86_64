@@ -53,7 +53,7 @@ unpack_apkovl() {
 	while [ $count -lt 3 ]; do
 		openssl enc -d -$suffix -in "$ovl" | tar --numeric-owner \
 			-C "$dest" -zxv >$ovlfiles 2>/dev/null && return 0
-		count=$(($count + 1))
+		count=$((count + 1))
 	done
 	ovlfiles=
 	return 1
@@ -569,7 +569,7 @@ fi
 # locate boot media and mount it
 ebegin "Mounting boot media"
 nlplug-findfs $cryptopts -p /sbin/mdev ${KOPT_debug_init:+-d} \
-	${KOPT_usbdelay:+-t $(($KOPT_usbdelay * 1000))} \
+	${KOPT_usbdelay:+-t $((KOPT_usbdelay * 1000))} \
 	$repoopts -a /tmp/apkovls
 eend $?
 

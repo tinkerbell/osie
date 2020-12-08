@@ -56,7 +56,7 @@ if [[ $state == 'osie.internal.check-env' ]]; then
 fi
 
 verbose_logging=$(sed -nr 's|.*\bverbose_logging=(\S+).*|\1|p' "$userdata")
-if [[ "${verbose_logging}" == true ]]; then
+if [[ ${verbose_logging} == true ]]; then
 	echo -e "${GREEN}#### Enabling Verbose OSIE Logging${NC}"
 	set -o xtrace
 fi

@@ -265,7 +265,7 @@ baremetal_2a2 | baremetal_2a4 | baremetal_hua)
 esac
 
 # Run eclypsium
-if [[ -n "${ECLYPSIUM_TOKEN:-}" ]]; then
+if [[ -n ${ECLYPSIUM_TOKEN:-} ]]; then
 	if [[ $arch == x86_64 ]]; then
 		case "$class" in
 		disabled.plan.here)
