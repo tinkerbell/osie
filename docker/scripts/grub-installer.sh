@@ -55,7 +55,7 @@ echo -e "${BYELLOW}Detected cmdline: ${cmdline}${NC}"
 	# shellcheck disable=SC1090
 	# shellcheck disable=SC1091
 	source "$default_path"
-	GRUB_DISTRIBUTOR=$(detect_os "$target" | awk '{print $1}') envsubst <grub.default >"$target/etc/default/grub"
+	GRUB_DISTRIBUTOR=$(detect_os "$target" | awk '{print $1}') envsubst <"$default_path" >"$target/etc/default/grub"
 )
 
 is_uefi && uefi=true || uefi=false
