@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# shellcheck disable=SC1091
 source functions.sh && init
 
 #defaults
@@ -77,7 +78,7 @@ do_centos_7() {
 		gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 		priority=10
 		skip_if_unavailable=1
-		
+
 		#released updates
 		[packet-updates]
 		name=CentOS-\$releasever - Updates
@@ -87,7 +88,7 @@ do_centos_7() {
 		gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 		priority=10
 		skip_if_unavailable=1
-		
+
 		[packet-extras]
 		name=CentOS-\$releasever - Extras
 		baseurl=${mirror}/centos/\$releasever/extras/\$basearch/

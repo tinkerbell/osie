@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# shellcheck disable=SC1091
 source functions.sh && init
 set -o nounset
 
@@ -190,4 +191,4 @@ while read -r mnt; do
 	msg "$mnt"
 	mkdir -p "$mnt"
 	mount --fstab "$fstab" "$mnt"
-done < <(awk '/\/mnt\// {print $2}' $fstab | sort)
+done < <(grep "$target" $fstab | awk '{print $2}' | sort)

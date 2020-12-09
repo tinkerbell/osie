@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# shellcheck disable=SC1091
 source functions.sh && init
 set -o nounset
 
@@ -56,7 +57,7 @@ if [[ $state == 'osie.internal.check-env' ]]; then
 fi
 
 verbose_logging=$(sed -nr 's|.*\bverbose_logging=(\S+).*|\1|p' "$userdata")
-if [[ "${verbose_logging}" == true ]]; then
+if [[ ${verbose_logging} == true ]]; then
 	echo -e "${GREEN}#### Enabling Verbose OSIE Logging${NC}"
 	set -o xtrace
 fi
@@ -68,8 +69,8 @@ function autofail() {
 	# shellcheck disable=SC2181
 	(($? == 0)) && exit
 
-	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"Error during ${autofail_stage}"'"}'
-	print_error_summary "${autofail_stage}"
+	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"Error during ${autofail_stage:-unknown}"'"}'
+	print_error_summary "${autofail_stage:-unknown}"
 }
 trap autofail EXIT
 

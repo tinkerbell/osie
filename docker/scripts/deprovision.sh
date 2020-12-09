@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# shellcheck disable=SC1091
 source functions.sh && init
 set -o nounset
 
@@ -56,8 +57,8 @@ function autofail() {
 	# shellcheck disable=SC2181
 	(($? == 0)) && exit
 
-	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"Error during ${autofail_stage}"'"}'
-	print_error_summary "${autofail_stage}"
+	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"Error during ${autofail_stage:-unknown}"'"}'
+	print_error_summary "${autofail_stage:-unknown}"
 }
 trap autofail EXIT
 
@@ -265,7 +266,7 @@ baremetal_2a2 | baremetal_2a4 | baremetal_hua)
 esac
 
 # Run eclypsium
-if [[ -n "${ECLYPSIUM_TOKEN:-}" ]]; then
+if [[ -n ${ECLYPSIUM_TOKEN:-} ]]; then
 	if [[ $arch == x86_64 ]]; then
 		case "$class" in
 		disabled.plan.here)

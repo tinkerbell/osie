@@ -1,8 +1,5 @@
 FROM ubuntu:xenial
 
-MAINTAINER David Laube <dlaube@packet.net>
-LABEL Description="Ubuntu baremetal installation image" Vendor="Packet.net" Version="1.0"
-
 VOLUME /statedir
 ENTRYPOINT ["/entrypoint.sh"]
 
@@ -194,9 +191,9 @@ RUN useradd packet -d /home/packet -m -U && \
     chown -R packet:packet /home/packet
 WORKDIR /home/packet
 
-ADD https://raw.githubusercontent.com/packethost/metal-block-storage/master/metal-block-storage-attach \
-    https://raw.githubusercontent.com/packethost/metal-block-storage/master/metal-block-storage-detach \
-    /home/packet/
+ARG METAL_BLOCK_STORAGE_COMMIT=95972b5a45a2c1be43dcb9288c551bee77557489
+RUN curl --remote-name "https://raw.githubusercontent.com/packethost/metal-block-storage/$METAL_BLOCK_STORAGE_COMMIT/metal-block-storage-{attach,detach}" && \
+    chmod +x /home/packet/metal-block-storage*
 
 COPY entrypoint.sh /entrypoint.sh
 COPY scripts/ /home/packet/

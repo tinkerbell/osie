@@ -10,5 +10,5 @@ curl -L "${NVMECLI_BASEURL}/v${NVMECLI_RELEASE}.tar.gz" >nvme-cli.tar.gz
 echo "${NVMECLI_SHA512}  nvme-cli.tar.gz" | sha512sum -c
 tar -zxvf nvme-cli.tar.gz
 cd nvme-cli-${NVMECLI_RELEASE}
-make
+make -j"$(nproc)"
 make install-bin
