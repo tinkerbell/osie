@@ -203,10 +203,16 @@ function retrieve_current_bios_config() {
 
 	if [[ ${vendor} == "Dell" ]]; then
 		set_autofail_stage "running Dell's racadm to save current BIOS settings"
-		/opt/dell/srvadmin/bin/idracadm7 get -t json -f current_bios.txt >/dev/null
+		if ! /opt/dell/srvadmin/bin/idracadm7 get -t json -f current_bios.txt >/dev/null; then
+			echo "Warning: racadm command to save current BIOS config failed"
+			return 1
+		fi
 	elif [[ ${vendor} == "Supermicro" ]]; then
 		set_autofail_stage "running Supermicro's sum to save current BIOS settings"
-		/opt/supermicro/sum/sum -c GetCurrentBiosCfg --file current_bios.txt >/dev/null
+		if ! /opt/supermicro/sum/sum -c GetCurrentBiosCfg --file current_bios.txt >/dev/null; then
+			echo "Warning: sum command to save current BIOS config failed"
+			return 1
+		fi
 	fi
 
 	# Save a copy of the original BIOS config to /statedir in case we need to obtain
@@ -333,7 +339,10 @@ function validate_bios_config() {
 	fi
 
 	# Save current BIOS config to a local file
-	retrieve_current_bios_config "${vendor}"
+	if ! retrieve_current_bios_config "${vendor}"; then
+		echo "Unable to retrieve the current BIOS config, skipping BIOS validation"
+		return 0
+	fi
 
 	# Normalize the BIOS config files to eliminate meaningless diffs
 	if [[ ${vendor} == "Dell" ]]; then
