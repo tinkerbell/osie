@@ -71,3 +71,7 @@ If you need to install packages from a non-standard alpine repo, the URL will ne
 ```sh
 ALPINE_REPO="http://dl-cdn.alpinelinux.org/alpine/v3.7/main,http://dl-cdn.alpinelinux.org/alpine/v3.7/community,http://dl-cdn.alpinelinux.org/alpine/edge/testing"
 ```
+
+## Website
+
+For complete documentation, please visit the Tinkerbell project hosted at [tinkerbell.org](https://tinkerbell.org).
