@@ -47,9 +47,9 @@ RUN apk add --no-cache --no-progress --update --upgrade \
 
 RUN git clone -b v1.0.5 https://github.com/caddyserver/caddy /root/go/src/github.com/caddyserver/caddy && \
     git clone https://github.com/wmark/go.abs /root/go/src/plugin.hosting/go/abs && (cd /root/go/src/plugin.hosting/go/abs && git checkout 1ba06a13d0c0530cb12338dd83254ececc6e509f) && \
-    git clone -b v1.3.2 https://github.com/wmark/caddy.upload /root/go/src/blitznote.com/src/caddy.upload && \
-    cd /root/go/src/blitznote.com/src/caddy.upload && go get -v && \
-    cd /root/go/src/github.com/caddyserver/caddy/caddy && sed -i -e '/This is where other plugins/a \\t_ "blitznote.com/src/caddy.upload"' caddymain/run.go && \
+    git clone -b v1.4.0 https://github.com/wmark/http.upload /root/go/src/blitznote.com/src/http.upload && \
+    cd /root/go/src/blitznote.com/src/http.upload && go get -v && \
+    cd /root/go/src/github.com/caddyserver/caddy/caddy && sed -i -e '/This is where other plugins/a \\t_ "blitznote.com/src/http.upload"' caddymain/run.go && \
     CGO_ENABLED=0 go build -v -o /bin/caddy
 
 RUN mkdir $HOME/bin && \
