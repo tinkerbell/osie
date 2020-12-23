@@ -154,14 +154,26 @@ function download_bios_configs() {
 	configure_image_cache_dns
 
 	echo "Downloading latest BIOS configurations"
-	curl --fail https://github-mirror.packet.net/downloads/bios-configs-latest.tar.gz --output bios-configs-latest.tar.gz
-	curl --fail https://github-mirror.packet.net/downloads/bios-configs-latest.tar.gz.sha256 --output bios-configs-latest.tar.gz.sha256
+	if ! curl --fail https://github-mirror.packet.net/downloads/bios-configs-latest.tar.gz --output bios-configs-latest.tar.gz; then
+		echo "Error: Download of BIOS configs tarball failed"
+		return 1
+	fi
+	if ! curl --fail https://github-mirror.packet.net/downloads/bios-configs-latest.tar.gz.sha256 --output bios-configs-latest.tar.gz.sha256; then
+		echo "Error: Download of BIOS configs checksum file failed"
+		return 1
+	fi
 
 	echo "Verifying BIOS configurations tarball"
-	sha256sum --check bios-configs-latest.tar.gz.sha256
+	if ! sha256sum --check bios-configs-latest.tar.gz.sha256; then
+		echo "Error: Verifying checksum of BIOS configs tarball failed"
+		return 1
+	fi
 
 	echo "Extracting BIOS configurations tarball"
-	tar -zxf bios-configs-latest.tar.gz
+	if ! tar -zxf bios-configs-latest.tar.gz; then
+		echo "Error: Extracting BIOS configs tarball failed"
+		return 1
+	fi
 }
 
 # usage: lookup_bios_config $plan $vendor

@@ -70,10 +70,12 @@ if [[ $arch == x86_64 ]]; then
 	echo "BIOS detected: ${bios_vendor} ${bios_version}"
 
 	set_autofail_stage "downloading BIOS configs"
-	download_bios_configs
-
-	set_autofail_stage "validating BIOS config"
-	validate_bios_config "${class}" "${bios_vendor}"
+	if download_bios_configs; then
+		set_autofail_stage "validating BIOS config"
+		validate_bios_config "${class}" "${bios_vendor}"
+	else
+		echo "Skipping BIOS validation"
+	fi
 fi
 
 # Storage detection
