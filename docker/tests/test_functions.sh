@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
-cd "$(realpath "$(dirname "$0")")"
+cd "$(realpath "$(dirname "$0")")" || exit 1
 
 oneTimeSetUp() {
+	# shellcheck disable=SC1091
 	source ../scripts/functions.sh
 }
 
@@ -116,9 +117,10 @@ test_filter_bad_devs() {
 		dev=$((dev + 100))
 		baddevs=$(echo "$dev:0" | filter_bad_devs)
 		assertNotNull 'expected baddevs' "$baddevs"
-		[[ -n $baddevs ]] && assertEquals 'wrong baddev' $dev:0 $baddevs
+		[[ -n $baddevs ]] && assertEquals 'wrong baddev' $dev:0 "$baddevs"
 	done
 
 }
 
+# shellcheck disable=SC1091
 source ./shunit/shunit2

@@ -1,8 +1,8 @@
 #!/bin/sh
 
+# shellcheck disable=SC2039
 set -o errexit -o nounset -o pipefail -o xtrace
 
-# shellcheck disable=SC2039
 [[ $(uname -m) == aarch64 ]] && echo "aarch64 isn't _really_ tested/supported yet" && exit 1
 
 build_initramfs() {
@@ -46,7 +46,7 @@ build_modloop() {
 }
 
 build_vmlinuz() {
-	cp /boot/vmlinuz-$FLAVOR /assets/vmlinuz
+	cp "/boot/vmlinuz-$FLAVOR" /assets/vmlinuz
 }
 
 case $1 in

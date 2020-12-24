@@ -1,8 +1,5 @@
 FROM ubuntu:xenial
 
-MAINTAINER David Laube <dlaube@packet.net>
-LABEL Description="Ubuntu baremetal installation image" Vendor="Packet.net" Version="1.0"
-
 VOLUME /statedir
 ENTRYPOINT ["/entrypoint.sh"]
 
@@ -41,6 +38,13 @@ RUN apt-get update -y && \
     apt-get -y autoremove && \
     apt-get -y clean && \
     rm -rf /var/lib/apt/lists/* /tmp/osie
+
+# gron - grep for JSON
+COPY lfs/gron-0.6.0-amd64 /tmp/osie/
+RUN if [ $(uname -m) = 'x86_64' ]; then \
+        mv /tmp/osie/gron-0.6.0-amd64 /usr/bin/gron; \
+    fi && \
+    rm -rf /tmp/osie 
 
 # build lshw, done here so we can keep it cached as long as possible
 COPY build-lshw.sh /tmp/osie/
@@ -82,8 +86,8 @@ RUN apt-get update -y && \
     apt-get -qy clean && \
     rm -rf /var/lib/apt/lists/* /tmp/osie/
 
-ARG PACKET_HARDWARE_COMMIT=413cdf9392a7c962081403d942666152afd1d843
-ARG PACKET_NETWORKING_COMMIT=dd13b2a94daace22ecd97f053b878dbfcf20cb80
+ARG PACKET_HARDWARE_COMMIT=bc24777799308f6e884fb9bfdaac398b5f39083f
+ARG PACKET_NETWORKING_COMMIT=2c201b2da0563ca9363f78170663c0baa6054e32
 
 RUN curl https://bootstrap.pypa.io/get-pip.py | python3 && \
     pip3 install git+https://github.com/packethost/packet-hardware.git@${PACKET_HARDWARE_COMMIT} && \
@@ -187,9 +191,9 @@ RUN useradd packet -d /home/packet -m -U && \
     chown -R packet:packet /home/packet
 WORKDIR /home/packet
 
-ADD https://raw.githubusercontent.com/packethost/metal-block-storage/master/metal-block-storage-attach \
-    https://raw.githubusercontent.com/packethost/metal-block-storage/master/metal-block-storage-detach \
-    /home/packet/
+ARG METAL_BLOCK_STORAGE_COMMIT=95972b5a45a2c1be43dcb9288c551bee77557489
+RUN curl --remote-name "https://raw.githubusercontent.com/packethost/metal-block-storage/$METAL_BLOCK_STORAGE_COMMIT/metal-block-storage-{attach,detach}" && \
+    chmod +x /home/packet/metal-block-storage*
 
 COPY entrypoint.sh /entrypoint.sh
 COPY scripts/ /home/packet/

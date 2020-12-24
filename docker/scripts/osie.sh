@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# shellcheck disable=SC1091
 source functions.sh && init
 set -o nounset
 
@@ -56,7 +57,7 @@ if [[ $state == 'osie.internal.check-env' ]]; then
 fi
 
 verbose_logging=$(sed -nr 's|.*\bverbose_logging=(\S+).*|\1|p' "$userdata")
-if [[ "${verbose_logging}" == true ]]; then
+if [[ ${verbose_logging} == true ]]; then
 	echo -e "${GREEN}#### Enabling Verbose OSIE Logging${NC}"
 	set -o xtrace
 fi
@@ -68,8 +69,8 @@ function autofail() {
 	# shellcheck disable=SC2181
 	(($? == 0)) && exit
 
-	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"${autofail_stage}"'"}'
-	print_error_summary "${autofail_stage}"
+	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"Error during ${autofail_stage:-unknown}"'"}'
+	print_error_summary "${autofail_stage:-unknown}"
 }
 trap autofail EXIT
 
@@ -161,21 +162,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	mkdir $assetdir
 	set_autofail_stage "OS image fetch"
 	echo -e "${GREEN}#### Fetching image (and more) via git ${NC}"
-
-	# config hosts entry so git-lfs assets from github and our github-mirror are
-	# pulled through our image cache
-	images_ip=$(getent hosts images.packet.net | awk '{print $1}')
-	cp -a /etc/hosts /etc/hosts.new
-	{
-		echo "$images_ip        github-cloud.s3.amazonaws.com"
-		echo "$images_ip        github.com"
-		echo "$images_ip        github-mirror.packet.net"
-	} >>/etc/hosts.new
-	# Note: using mv here fails (415 Unsupported Media Type) because docker sets
-	# this up as a bind mount and we can't replace it.
-	cp -f /etc/hosts.new /etc/hosts
-	echo -n "LFS pulls via github-cloud will now resolve to image cache:"
-	getent hosts github-cloud.s3.amazonaws.com | awk '{print $1}'
+	configure_image_cache_dns
 
 	if [[ ${OS} =~ : && $custom_image == false ]]; then
 		image_tag=$(echo "$OS" | awk -F':' '{print $2}')

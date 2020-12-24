@@ -1,33 +1,15 @@
 let _pkgs = import <nixpkgs> { };
 in { pkgs ? import (_pkgs.fetchFromGitHub {
   owner = "NixOS";
-  repo = "nixpkgs-channels";
-  #branch@date: nixpkgs-unstable@2020-04-23
-  rev = "b95699970fb7d825fd4a710f5cfa3785a98435db";
-  sha256 = "0s9pjym3wi3ssp33cd2sj8fs9dlny5yhc7lhnj2lzadx8ianbf72";
+  repo = "nixpkgs";
+  #branch@date: nixpkgs-unstable@2020-11-04
+  rev = "dfea4e4951a3cee4d1807d8d4590189cf16f366b";
+  sha256 = "02j7f5l2p08144b2fb7pg6sbni5km5y72k3nk3i7irddx8j2s04i";
 }) { } }:
 
 with pkgs;
 
-let
-  shfmt = buildGoPackage rec {
-    pname = "shfmt";
-    version = "2.6.4";
-
-    src = fetchFromGitHub {
-      owner = "mvdan";
-      repo = "sh";
-      rev = "v${version}";
-      sha256 = "1jifac0fi0sz6wzdgvk6s9xwpkdng2hj63ldbaral8n2j9km17hh";
-    };
-
-    goPackagePath = "mvdan.cc/sh";
-    subPackages = [ "cmd/shfmt" ];
-    buildFlagsArray = [ "-ldflags=-s -w -X main.version=${version}" ];
-
-  };
-
-in mkShell {
+mkShell {
   buildInputs = [
     bash
     cpio

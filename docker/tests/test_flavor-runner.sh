@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
-cd "$(realpath "$(dirname "$0")")"
+cd "$(realpath "$(dirname "$0")")" || exit 1
 
 oneTimeSetUp() {
+	# shellcheck disable=SC1091
 	source ../scripts/flavor-runner.sh
 }
 
@@ -40,4 +41,5 @@ test_negatives() {
 	EOF
 }
 
+# shellcheck disable=SC1091
 source ./shunit/shunit2
