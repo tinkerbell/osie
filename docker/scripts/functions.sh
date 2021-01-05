@@ -202,9 +202,17 @@ function retrieve_current_bios_config() {
 	local vendor=$1
 
 	if [[ ${vendor} == "Dell" ]]; then
-		/opt/dell/srvadmin/bin/idracadm7 get -t json -f current_bios.txt >/dev/null
+		set_autofail_stage "running Dell's racadm to save current BIOS settings"
+		if ! /opt/dell/srvadmin/bin/idracadm7 get -t json -f current_bios.txt >/dev/null; then
+			echo "Warning: racadm command to save current BIOS config failed"
+			return 1
+		fi
 	elif [[ ${vendor} == "Supermicro" ]]; then
-		/opt/supermicro/sum/sum -c GetCurrentBiosCfg --file current_bios.txt >/dev/null
+		set_autofail_stage "running Supermicro's sum to save current BIOS settings"
+		if ! /opt/supermicro/sum/sum -c GetCurrentBiosCfg --file current_bios.txt >/dev/null; then
+			echo "Warning: sum command to save current BIOS config failed"
+			return 1
+		fi
 	fi
 
 	# Save a copy of the original BIOS config to /statedir in case we need to obtain
@@ -322,27 +330,33 @@ function validate_bios_config() {
 
 	if [[ -z $config_file ]]; then
 		echo "Unable to find a bios config file for ${plan} (${vendor}) in the manifest, skipping BIOS validation"
-		return
+		return 0
 	fi
 
 	if [[ ! -f "bios-configs-latest/${config_file}" ]]; then
 		echo "A config file named [${config_file}] does not exist in BIOS configs tarball, skipping BIOS validation"
-		return
+		return 0
 	fi
 
 	# Save current BIOS config to a local file
-	retrieve_current_bios_config "${vendor}"
+	if ! retrieve_current_bios_config "${vendor}"; then
+		echo "Unable to retrieve the current BIOS config, skipping BIOS validation"
+		return 0
+	fi
 
 	# Normalize the BIOS config files to eliminate meaningless diffs
 	if [[ ${vendor} == "Dell" ]]; then
+		set_autofail_stage "normalizing Dell BIOS configs for validation"
 		normalize_dell_bios_config_file "bios-configs-latest/${config_file}"
 		normalize_dell_bios_config_file "current_bios.txt"
 	elif [[ ${vendor} == "Supermicro" ]]; then
+		set_autofail_stage "normalizing Supermicro BIOS configs for validation"
 		normalize_supermicro_bios_config_file "bios-configs-latest/${config_file}"
 		normalize_supermicro_bios_config_file "current_bios.txt"
 	fi
 
 	# Compare config_file with local file, reporting drift if found
+	set_autofail_stage "comparing current BIOS config with expected values"
 	compare_bios_config_files "bios-configs-latest/${config_file}" "${plan}"
 
 	set_autofail_stage "applying BIOS config"

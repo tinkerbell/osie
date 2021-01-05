@@ -207,11 +207,11 @@ start_web() {
 	EOF
 
 	mkdir uploads
-	caddy -quiet &
+	proxy -quiet &
 }
 
 stop_web() {
-	killall caddy
+	killall proxy
 }
 
 start_log_rx() {
