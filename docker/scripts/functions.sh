@@ -324,6 +324,7 @@ function validate_bios_config() {
 	local plan=$1
 	local vendor=$2
 	local config_file
+	local enforcement_status
 
 	# Check for a BIOS config for this plan
 	config_file=$(lookup_bios_config "${plan}" "${vendor}")
@@ -359,8 +360,14 @@ function validate_bios_config() {
 	set_autofail_stage "comparing current BIOS config with expected values"
 	compare_bios_config_files "bios-configs-latest/${config_file}" "${plan}"
 
-	set_autofail_stage "applying BIOS config"
-	apply_bios_config "${vendor}" "bios-configs-latest/${config_file}"
+	enforcement_status=$(lookup_bios_config_enforcement "${plan}" "${vendor}")
+	if [[ $enforcement_status != "enforce" ]]; then
+		set_autofail_stage "applying BIOS config"
+		apply_bios_config "${vendor}" "bios-configs-latest/${config_file}"
+	else
+		echo "BIOS config enforcment status is ${enforcement_status} for plan ${plan}, not applying config"
+		return 0
+	fi
 }
 
 function dns_resolvers() {
