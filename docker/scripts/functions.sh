@@ -315,7 +315,7 @@ function apply_bios_config() {
 		/opt/dell/srvadmin/bin/idracadm7 set -b Forced -f "${config_file}" -t JSON
 	elif [[ ${vendor} == "Supermicro" ]]; then
 		echo "Applying Supermicro BIOS configuration ${config_file}..."
-		/opt/supermicro/sum/sum -c ChangeBiosCfg --file "${config_file}"
+		/opt/supermicro/sum/sum -c ChangeBiosCfg --skip_unknown --file "${config_file}"
 	fi
 }
 
