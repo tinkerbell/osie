@@ -154,8 +154,14 @@ function download_bios_configs() {
 	configure_image_cache_dns
 
 	echo "Downloading latest BIOS configurations"
-	curl --fail https://github-mirror.packet.net/downloads/bios-configs-latest.tar.gz --output bios-configs-latest.tar.gz
-	curl --fail https://github-mirror.packet.net/downloads/bios-configs-latest.tar.gz.sha256 --output bios-configs-latest.tar.gz.sha256
+	curl \
+		--fail \
+		--retry 3 \
+		https://github-mirror.packet.net/downloads/bios-configs-latest.tar.gz --output bios-configs-latest.tar.gz
+	curl \
+		--fail \
+		--retry 3 \
+		https://github-mirror.packet.net/downloads/bios-configs-latest.tar.gz.sha256 --output bios-configs-latest.tar.gz.sha256
 
 	echo "Verifying BIOS configurations tarball"
 	sha256sum --check bios-configs-latest.tar.gz.sha256
