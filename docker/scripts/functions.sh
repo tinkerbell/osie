@@ -154,8 +154,14 @@ function download_bios_configs() {
 	configure_image_cache_dns
 
 	echo "Downloading latest BIOS configurations"
-	curl --fail https://github-mirror.packet.net/downloads/bios-configs-latest.tar.gz --output bios-configs-latest.tar.gz
-	curl --fail https://github-mirror.packet.net/downloads/bios-configs-latest.tar.gz.sha256 --output bios-configs-latest.tar.gz.sha256
+	curl \
+		--fail \
+		--retry 3 \
+		https://github-mirror.packet.net/downloads/bios-configs-latest.tar.gz --output bios-configs-latest.tar.gz
+	curl \
+		--fail \
+		--retry 3 \
+		https://github-mirror.packet.net/downloads/bios-configs-latest.tar.gz.sha256 --output bios-configs-latest.tar.gz.sha256
 
 	echo "Verifying BIOS configurations tarball"
 	sha256sum --check bios-configs-latest.tar.gz.sha256
@@ -315,7 +321,7 @@ function apply_bios_config() {
 		/opt/dell/srvadmin/bin/idracadm7 set -b Forced -f "${config_file}" -t JSON
 	elif [[ ${vendor} == "Supermicro" ]]; then
 		echo "Applying Supermicro BIOS configuration ${config_file}..."
-		/opt/supermicro/sum/sum -c ChangeBiosCfg --file "${config_file}"
+		/opt/supermicro/sum/sum -c ChangeBiosCfg --skip_unknown --file "${config_file}"
 	fi
 }
 
@@ -324,6 +330,7 @@ function validate_bios_config() {
 	local plan=$1
 	local vendor=$2
 	local config_file
+	local enforcement_status
 
 	# Check for a BIOS config for this plan
 	config_file=$(lookup_bios_config "${plan}" "${vendor}")
@@ -359,8 +366,14 @@ function validate_bios_config() {
 	set_autofail_stage "comparing current BIOS config with expected values"
 	compare_bios_config_files "bios-configs-latest/${config_file}" "${plan}"
 
-	set_autofail_stage "applying BIOS config"
-	apply_bios_config "${vendor}" "bios-configs-latest/${config_file}"
+	enforcement_status=$(lookup_bios_config_enforcement "${plan}" "${vendor}")
+	if [[ $enforcement_status != "enforce" ]]; then
+		set_autofail_stage "applying BIOS config"
+		apply_bios_config "${vendor}" "bios-configs-latest/${config_file}"
+	else
+		echo "BIOS config enforcment status is ${enforcement_status} for plan ${plan}, not applying config"
+		return 0
+	fi
 }
 
 function dns_resolvers() {

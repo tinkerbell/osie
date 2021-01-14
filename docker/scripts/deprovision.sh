@@ -37,6 +37,7 @@ assert_all_args_consumed "$OPTIND" "$@"
 
 declare facility && set_from_metadata facility 'facility' <"$metadata"
 declare class && set_from_metadata class 'class' <"$metadata"
+declare reserved && set_from_metadata reserved 'reserved' <"$metadata"
 declare tinkerbell && set_from_metadata tinkerbell 'phone_home_url' <"$metadata"
 declare id && set_from_metadata id 'id' <"$metadata"
 declare preserve_data && set_from_metadata preserve_data 'preserve_data' false <"$metadata"
@@ -63,7 +64,7 @@ function autofail() {
 trap autofail EXIT
 
 # Check BIOS config and update if drift is detected
-if [[ $arch == x86_64 ]]; then
+if [[ $arch == x86_64 ]] && [[ $reserved != "true" ]]; then
 	set_autofail_stage "detecting BIOS information"
 	bios_vendor=$(detect_bios_vendor)
 	bios_version=$(detect_bios_version "${bios_vendor}")
