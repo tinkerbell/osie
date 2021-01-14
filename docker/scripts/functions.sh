@@ -76,11 +76,12 @@ function tink() {
 	local method=$1 tink_host=$2 endpoint=$3 post_data=$4
 
 	curl \
-		-f \
 		-vvvvv \
-		-X "${method}" \
-		-H "Content-Type: application/json" \
-		-d "${post_data}" \
+		--data "${post_data}" \
+		--fail \
+		--header "Content-Type: application/json" \
+		--request "${method}" \
+		--retry 3 \
 		"${tink_host}/${endpoint}"
 }
 
