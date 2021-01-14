@@ -81,6 +81,7 @@ function tink() {
 		--fail \
 		--header "Content-Type: application/json" \
 		--request "${method}" \
+		--retry 3 \
 		"${tink_host}/${endpoint}"
 }
 
