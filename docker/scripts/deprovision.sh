@@ -37,7 +37,7 @@ assert_all_args_consumed "$OPTIND" "$@"
 
 declare facility && set_from_metadata facility 'facility' <"$metadata"
 declare class && set_from_metadata class 'class' <"$metadata"
-declare reserved && set_from_metadata reserved 'reserved' <"$metadata"
+declare reserved && set_from_metadata reserved 'reserved' true <"$metadata"
 declare tinkerbell && set_from_metadata tinkerbell 'phone_home_url' <"$metadata"
 declare id && set_from_metadata id 'id' <"$metadata"
 declare preserve_data && set_from_metadata preserve_data 'preserve_data' false <"$metadata"
