@@ -317,7 +317,9 @@ function compare_bios_config_files() {
 		return 1
 	fi
 
-	diff "${config_file_normalized}" "${current_config_normalized}" >bios_config_drift.diff || true
+	diff --ignore-all-space --ignore-blank-lines "${config_file_normalized}" \
+		"${current_config_normalized}" >bios_config_drift.diff || true
+
 	if [[ ! -s bios_config_drift.diff ]]; then
 		echo "No BIOS config drift detected (Based on plan: ${plan})"
 	else
