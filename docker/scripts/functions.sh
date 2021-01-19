@@ -271,16 +271,37 @@ function normalize_supermicro_bios_config_file() {
 	sed --in-place '/ME Firmware Status/d' "${config_file_normalized}"
 	# RAM Topology
 	sed --in-place '/P[1|2] DIMM[[:alpha:]][[:digit:]]/d' "${config_file_normalized}"
-	# Hard drive serial numbers
+	# Manufacturer specific details
+	sed --in-place '/Manufacturer/d' "${config_file_normalized}"
+	# Menu names are often based on removable hardware details
+	sed --in-place '/Menu name/d' "${config_file_normalized}"
+	# Various versions
+	sed --in-place '/BIOS Version/d' "${config_file_normalized}"
+	sed --in-place '/Build Date/d' "${config_file_normalized}"
+	sed --in-place '/Microcode Revision/d' "${config_file_normalized}"
+	sed --in-place '/Memory RC Version/d' "${config_file_normalized}"
+	sed --in-place '/PCIe Code Version/d' "${config_file_normalized}"
+	sed --in-place '/Firmware Version/d' "${config_file_normalized}"
+	# Password-related
+	sed --in-place '/Password/d' "${config_file_normalized}"
+	# Hard drive model info, names and serial numbers
+	sed --in-place '/sSATA/d' "${config_file_normalized}"
+	sed --in-place '/HDD Name/d' "${config_file_normalized}"
 	sed --in-place '/HDD Serial Number/d' "${config_file_normalized}"
+	sed --in-place '/Micron/d' "${config_file_normalized}"
+	sed --in-place '/Toshiba/d' "${config_file_normalized}"
+	# Security erase estimated time
+	sed --in-place '/Estimated Time/d' "${config_file_normalized}"
+	# IBA GE Slots
+	sed --in-place '/IBA GE Slot/d' "${config_file_normalized}"
 	# PXE boot wait time
 	sed --in-place '/PXE boot wait time/d' "${config_file_normalized}"
+	# FlexBoot version differences
+	sed --in-place '/FlexBoot/d' "${config_file_normalized}"
 	# Boot mode select
 	sed --in-place '/Option ValidIf.*Boot mode select/d' "${config_file_normalized}"
 	# Boot option ordering
 	sed --in-place '/Boot Option.*selectedOption/d' "${config_file_normalized}"
-	# TCG storage hardware
-	sed --in-place '/Menu name.*TOSHIBA.*order/d' "${config_file_normalized}"
 }
 
 # usage: compare_bios_config_files $config_file $plan
