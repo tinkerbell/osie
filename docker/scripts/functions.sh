@@ -241,14 +241,16 @@ function normalize_dell_bios_config_file() {
 	fi
 
 	# Delete irrelevant sections from the JSON config to normalize for diff'ing
-	jq 'del(.SystemConfiguration.ServiceTag) |
-		  del(.SystemConfiguration.TimeStamp) |
+	jq 'del(.SystemConfiguration.Comments) |
+			del(.SystemConfiguration.ServiceTag) |
+			del(.SystemConfiguration.TimeStamp) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="NIC.Slot.3-1-1")) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="NIC.Slot.3-2-1")) |
 			del(.SystemConfiguration.Components[] | select(.FQDD=="BIOS.Setup.1-1").Attributes[] | select(.Name=="SetBootOrderEn")) |
 			del(.SystemConfiguration.Components[] | select(.FQDD=="BIOS.Setup.1-1").Attributes[] | select(.Name=="BiosBootSeq")) |
-			del(.SystemConfiguration.Components[] | select(.FQDD=="iDRAC.Embedded.1").Attributes[] | select(.Name=="NIC.1#DNSRacName")) |
-			del(.SystemConfiguration.Components[] | select(.FQDD=="System.Embedded.1").Attributes[] | select(.Name=="ServerOS.1#HostName")) |
-			del(.SystemConfiguration.Components[] | select(.FQDD=="iDRAC.Embedded.1").Attributes[] | select(.Name=="WebServer.1#CustomCipherString")) |
-			del(.SystemConfiguration.Components[] | select(.FQDD=="iDRAC.Embedded.1").Attributes[] | select(.Name=="WebServer.1#TitleBarOptionCustom"))' \
+			del(.SystemConfiguration.Components[] | select(.FQDD=="System.Embedded.1")) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="LifecycleController.Embedded.1")) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="iDRAC.Embedded.1"))' \
 		"${config_file}" >"${config_file_normalized}"
 }
 
