@@ -241,14 +241,16 @@ function normalize_dell_bios_config_file() {
 	fi
 
 	# Delete irrelevant sections from the JSON config to normalize for diff'ing
-	jq 'del(.SystemConfiguration.ServiceTag) |
-		  del(.SystemConfiguration.TimeStamp) |
+	jq 'del(.SystemConfiguration.Comments) |
+			del(.SystemConfiguration.ServiceTag) |
+			del(.SystemConfiguration.TimeStamp) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="NIC.Slot.3-1-1")) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="NIC.Slot.3-2-1")) |
 			del(.SystemConfiguration.Components[] | select(.FQDD=="BIOS.Setup.1-1").Attributes[] | select(.Name=="SetBootOrderEn")) |
 			del(.SystemConfiguration.Components[] | select(.FQDD=="BIOS.Setup.1-1").Attributes[] | select(.Name=="BiosBootSeq")) |
-			del(.SystemConfiguration.Components[] | select(.FQDD=="iDRAC.Embedded.1").Attributes[] | select(.Name=="NIC.1#DNSRacName")) |
-			del(.SystemConfiguration.Components[] | select(.FQDD=="System.Embedded.1").Attributes[] | select(.Name=="ServerOS.1#HostName")) |
-			del(.SystemConfiguration.Components[] | select(.FQDD=="iDRAC.Embedded.1").Attributes[] | select(.Name=="WebServer.1#CustomCipherString")) |
-			del(.SystemConfiguration.Components[] | select(.FQDD=="iDRAC.Embedded.1").Attributes[] | select(.Name=="WebServer.1#TitleBarOptionCustom"))' \
+			del(.SystemConfiguration.Components[] | select(.FQDD=="System.Embedded.1")) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="LifecycleController.Embedded.1")) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="iDRAC.Embedded.1"))' \
 		"${config_file}" >"${config_file_normalized}"
 }
 
@@ -271,16 +273,37 @@ function normalize_supermicro_bios_config_file() {
 	sed --in-place '/ME Firmware Status/d' "${config_file_normalized}"
 	# RAM Topology
 	sed --in-place '/P[1|2] DIMM[[:alpha:]][[:digit:]]/d' "${config_file_normalized}"
-	# Hard drive serial numbers
+	# Manufacturer specific details
+	sed --in-place '/Manufacturer/d' "${config_file_normalized}"
+	# Menu names are often based on removable hardware details
+	sed --in-place '/Menu name/d' "${config_file_normalized}"
+	# Various versions
+	sed --in-place '/BIOS Version/d' "${config_file_normalized}"
+	sed --in-place '/Build Date/d' "${config_file_normalized}"
+	sed --in-place '/Microcode Revision/d' "${config_file_normalized}"
+	sed --in-place '/Memory RC Version/d' "${config_file_normalized}"
+	sed --in-place '/PCIe Code Version/d' "${config_file_normalized}"
+	sed --in-place '/Firmware Version/d' "${config_file_normalized}"
+	# Password-related
+	sed --in-place '/Password/d' "${config_file_normalized}"
+	# Hard drive model info, names and serial numbers
+	sed --in-place '/sSATA/d' "${config_file_normalized}"
+	sed --in-place '/HDD Name/d' "${config_file_normalized}"
 	sed --in-place '/HDD Serial Number/d' "${config_file_normalized}"
+	sed --in-place '/Micron/d' "${config_file_normalized}"
+	sed --in-place '/Toshiba/d' "${config_file_normalized}"
+	# Security erase estimated time
+	sed --in-place '/Estimated Time/d' "${config_file_normalized}"
+	# IBA GE Slots
+	sed --in-place '/IBA GE Slot/d' "${config_file_normalized}"
 	# PXE boot wait time
 	sed --in-place '/PXE boot wait time/d' "${config_file_normalized}"
+	# FlexBoot version differences
+	sed --in-place '/FlexBoot/d' "${config_file_normalized}"
 	# Boot mode select
 	sed --in-place '/Option ValidIf.*Boot mode select/d' "${config_file_normalized}"
 	# Boot option ordering
 	sed --in-place '/Boot Option.*selectedOption/d' "${config_file_normalized}"
-	# TCG storage hardware
-	sed --in-place '/Menu name.*TOSHIBA.*order/d' "${config_file_normalized}"
 }
 
 # usage: compare_bios_config_files $config_file $plan
@@ -296,7 +319,9 @@ function compare_bios_config_files() {
 		return 1
 	fi
 
-	diff "${config_file_normalized}" "${current_config_normalized}" >bios_config_drift.diff || true
+	diff --ignore-all-space --ignore-blank-lines "${config_file_normalized}" \
+		"${current_config_normalized}" >bios_config_drift.diff || true
+
 	if [[ ! -s bios_config_drift.diff ]]; then
 		echo "No BIOS config drift detected (Based on plan: ${plan})"
 	else
