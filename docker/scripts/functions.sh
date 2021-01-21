@@ -393,7 +393,7 @@ function validate_bios_config() {
 	compare_bios_config_files "bios-configs-latest/${config_file}" "${plan}"
 
 	enforcement_status=$(lookup_bios_config_enforcement "${plan}" "${vendor}")
-	if [[ $enforcement_status != "enforce" ]]; then
+	if [[ $enforcement_status == "enforce" ]]; then
 		set_autofail_stage "applying BIOS config"
 		apply_bios_config "${vendor}" "bios-configs-latest/${config_file}"
 	else
