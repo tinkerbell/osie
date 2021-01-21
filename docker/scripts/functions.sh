@@ -337,7 +337,7 @@ function apply_bios_config() {
 	local vendor=$1
 	local config_file=$2
 
-	if [[ ! -f bios_config_drift.diff || -s bios_config_drift.diff ]]; then
+	if [[ ! -s bios_config_drift.diff ]]; then
 		echo "No BIOS config drift detected, not applying new config"
 		return 0
 	fi
