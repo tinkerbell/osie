@@ -2,6 +2,15 @@
 
 # shellcheck shell=dash
 
+cleanup() {
+	# shellcheck disable=SC2169
+	if [ -x "$statedir/cleanup.sh" ]; then
+		reason='running cleanup.sh'
+		cd "$statedir"
+		exec ./cleanup.sh
+	fi
+}
+
 reason='unknown'
 fail() {
 	if [ "$reason" = "docker exited with an error (osie-installer)" ]; then
@@ -11,6 +20,14 @@ fail() {
 		# before the timeout occurred.
 		if [ -f "${statedir}/autofail_stage" ]; then
 			stage=$(cat "${statedir}/autofail_stage")
+			# If SOL isn't working properly on deprovision, docker can hang even though
+			# the deprovision script has run to completion. Detect this by checking the
+			# autofail_stage value, which would indicate the deprovison completed. Don't
+			# report failure in that case, but just run the cleanup() function and exit.
+			if [ "$stage" = "deprovision completed" ]; then
+				cleanup
+				exit 0
+			fi
 			reason="Timed out during ${stage}"
 		fi
 	fi
@@ -221,10 +238,4 @@ $timeout_cmd docker run --privileged -ti \
 	tee $other_consoles
 )
 
-reason='cleanup.sh is not executable'
-# shellcheck disable=SC2169
-if [ -x "$statedir/cleanup.sh" ]; then
-	reason='cleanup.sh did not finish correctly'
-	cd "$statedir"
-	exec ./cleanup.sh
-fi
+cleanup

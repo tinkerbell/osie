@@ -294,9 +294,10 @@ phone_home "${tinkerbell}" '{"instance_id": "'"$id"'"}'
 etimer=$(date +%s)
 echo -e "${BYELLOW}Clean time: $((etimer - stimer))${NC}"
 
-set_autofail_stage "OSIE deprov final stage"
+set_autofail_stage "generating cleanup.sh script"
 cat >/statedir/cleanup.sh <<EOF
 #!/bin/sh
 poweroff
 EOF
 chmod +x /statedir/cleanup.sh
+set_autofail_stage "deprovision completed"
