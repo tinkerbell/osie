@@ -382,4 +382,4 @@ cat >/statedir/cleanup.sh <<EOF
 reboot
 EOF
 chmod +x /statedir/cleanup.sh
-set_autofail_stage "frOSIE completed, exiting to osie-installer"
+set_autofail_stage "completed"
