@@ -4,6 +4,9 @@
 
 reason='unknown'
 fail() {
+	code=$?
+	echo "last command returned exit_code=$code" >&2
+
 	if [ "$reason" = "docker exited with an error (osie-installer)" ]; then
 		# If OSIE exited with a non-zero return value, its autofail() trap function
 		# would have reported the failure reason. A failure from docker here is then
@@ -19,7 +22,7 @@ fail() {
 		-H 'Content-Type: application/json' \
 		-d @- \
 		"$phone_home_url" <<-EOF
-			{"type":"failure", "reason":"$reason"}
+			{"type":"failure", "reason":"$reason", "exit_code":"$code"}
 		EOF
 }
 
