@@ -15,9 +15,12 @@ fail() {
 		fi
 	fi
 
-	curl -H 'Content-Type: application/json' \
-		-d '{"type":"failure", "reason":"'"$reason"'"}' \
-		"$phone_home_url"
+	curl \
+		-H 'Content-Type: application/json' \
+		-d @- \
+		"$phone_home_url" <<-EOF
+			{"type":"failure", "reason":"$reason"}
+		EOF
 }
 
 # ensure_time fetches metadata via http and compares the time the server says it
