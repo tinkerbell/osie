@@ -195,7 +195,7 @@ other_consoles=$(
 
 [ -z "$syslog_host" ] && syslog_host="$tinkerbell"
 
-container_timeout=1200 # seconds (20 minutes)
+container_timeout=$((20 * 60)) # 20 minutes in seconds
 timeout_cmd="timeout -s SIGKILL $container_timeout"
 if [ "$arch" = "aarch64" ]; then
 	# aarch64 is still using an older alpine, which has different syntax for timeout
