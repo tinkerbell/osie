@@ -4,6 +4,9 @@
 
 reason='unknown'
 fail() {
+	code=$?
+	echo "last command returned exit_code=$code" >&2
+
 	if [ "$reason" = "docker exited with an error (osie-installer)" ]; then
 		# If OSIE exited with a non-zero return value, its autofail() trap function
 		# would have reported the failure reason. A failure from docker here is then
@@ -15,9 +18,12 @@ fail() {
 		fi
 	fi
 
-	curl -H 'Content-Type: application/json' \
-		-d '{"type":"failure", "reason":"'"$reason"'"}' \
-		"$phone_home_url"
+	curl \
+		-H 'Content-Type: application/json' \
+		-d @- \
+		"$phone_home_url" <<-EOF
+			{"type":"failure", "reason":"$reason", "exit_code":"$code"}
+		EOF
 }
 
 # ensure_time fetches metadata via http and compares the time the server says it
@@ -195,7 +201,7 @@ other_consoles=$(
 
 [ -z "$syslog_host" ] && syslog_host="$tinkerbell"
 
-container_timeout=1200 # seconds (20 minutes)
+container_timeout=$((20 * 60)) # 20 minutes in seconds
 timeout_cmd="timeout -s SIGKILL $container_timeout"
 if [ "$arch" = "aarch64" ]; then
 	# aarch64 is still using an older alpine, which has different syntax for timeout
