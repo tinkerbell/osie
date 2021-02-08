@@ -50,6 +50,18 @@ if [[ $state == 'osie.internal.check-env' ]]; then
 	exit 0
 fi
 
+# On errors, run autofail() before exiting
+set_autofail_stage "wOSIE startup"
+function autofail() {
+	# Passthrough for when the main script exits normally
+	# shellcheck disable=SC2181
+	(($? == 0)) && exit
+
+	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"Error during ${autofail_stage:-unknown}"'"}'
+	print_error_summary "${autofail_stage:-unknown}"
+}
+trap autofail EXIT
+
 OS=$os${tag:+:$tag}
 
 # if $BASEURL is not empty then the user specifically passed in the artifacts
@@ -64,6 +76,7 @@ fi
 
 ## Assemble configurables
 ##
+set_autofail_stage "assembling configurables"
 # Image rootfs
 image="$BASEURL/osie/images/$OS/latest-windows.tar.gz"
 if is_uefi; then
@@ -101,12 +114,14 @@ echo "Devices: ${disks[*]}"
 stimer=$(date +%s)
 
 # make sure the disks are ok to use
+set_autofail_stage "checking disk types"
 assert_block_or_loop_devs "${disks[@]}"
 assert_same_type_devs "${disks[@]}"
 
 ## Execute the callback to API
 phone_home "${tinkerbell}" '{"type":"provisioning.104"}'
 
+set_autofail_stage "checking disks for existing partitions"
 echo -e "${GREEN}Checking disks for existing partitions...${NC}"
 if fdisk -l "${disks[@]}" 2>/dev/null | grep Disklabel >/dev/null; then
 	echo -e "${RED}Critical: Found pre-exsting partitions on a disk. Aborting install...${NC}"
@@ -119,6 +134,7 @@ echo "Disk candidates are ready for partitioning."
 phone_home "${tinkerbell}" '{"type":"provisioning.105"}'
 
 # Write rootfs to disk
+set_autofail_stage "writing rootfs to disk"
 tmpfile=/tmp/image.tar.gz
 if should_stream "$image" ${tmpfile%/*}; then
 	echo -e "${GREEN}#### Retrieving and extracting image archive to first disk in one shot${NC}"
@@ -153,6 +169,8 @@ phone_home "${tinkerbell}" '{"type":"provisioning.108"}'
 # Inform the API about installation complete
 phone_home "${tinkerbell}" '{"type":"provisioning.109"}'
 echo "Done."
+
+set_autofail_stage "wOSIE final stage"
 ## End installation
 #
 etimer=$(date +%s)
@@ -163,3 +181,4 @@ cat >/statedir/cleanup.sh <<EOF
 reboot
 EOF
 chmod +x /statedir/cleanup.sh
+set_autofail_stage "wOSIE completed, exiting to osie-installer"
