@@ -8,9 +8,11 @@ grpc_cert_url=$(sed -nr 's|.*\bgrpc_cert_url=(\S+).*|\1|p' /proc/cmdline)
 packet_base_url=$(sed -nr 's|.*\bpacket_base_url=(\S+).*|\1|p' /proc/cmdline)
 registry_username=$(sed -nr 's|.*\bregistry_username=(\S+).*|\1|p' /proc/cmdline)
 registry_password=$(sed -nr 's|.*\bregistry_password=(\S+).*|\1|p' /proc/cmdline)
-tinkerbell=$(sed -nr 's|.*\btinkerbell=(\S+).*|\1|p' /proc/cmdline)
+syslog_host=$(sed -nr 's|.*\bsyslog_host=(\S+).*|\1|p' /proc/cmdline)
 worker_id=$(sed -nr 's|.*\bworker_id=(\S+).*|\1|p' /proc/cmdline)
-id=$(curl --connect-timeout 60 "$tinkerbell:50061/metadata" | jq -r .id)
+id=$(sed -nr 's|.*\binstance_id=(\S+).*|\1|p' /proc/cmdline)
+
+tink_worker_image="${docker_registry}/tinkerbell/tink-worker:sha-745c2d09"
 
 # Create workflow motd
 cat <<'EOF'
@@ -41,6 +43,16 @@ wget "$packet_base_url/ca.pem"
 # add registy certificate to docker daemon
 mkdir -p /etc/docker/ /etc/docker/certs.d/ "/etc/docker/certs.d/$docker_registry"
 cp ca.pem "/etc/docker/certs.d/$docker_registry/ca.crt"
+
+# configure docker daemon
+cat > /etc/docker/daemon.json <<- EOM
+{
+  "log-driver": "syslog",
+  "log-opts": {
+    "syslog-address": "udp://${syslog_host}:514"
+  }
+}
+EOM
 
 service docker start
 i=0
@@ -78,4 +90,4 @@ docker run --privileged -t --name "tink-worker" \
 	-v /var/run/docker.sock:/var/run/docker.sock \
 	-t \
 	--net host \
-	"$docker_registry/tink-worker:latest"
+	"${tink_worker_image}"
