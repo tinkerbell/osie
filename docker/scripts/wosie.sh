@@ -97,11 +97,10 @@ else
 	echo "NOTICE: Custom image url found!"
 	echo "Overriding default image location with custom image_url"
 	image="$image_url"
-
-	ensure_reachable "${image}"
 fi
 echo "Image: $image"
 
+set_autofail_stage "checking OS image url is accessible"
 if ! wget --spider "${image}"; then
 	echo "$0: Image URL unavailable: $image" >&2
 	exit 1
