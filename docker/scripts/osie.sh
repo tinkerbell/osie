@@ -104,6 +104,7 @@ else
 	exit 1
 fi
 
+early_phone=false
 custom_image=false
 set_autofail_stage "custom image check"
 echo -e "${GREEN}#### Checking userdata for custom image...${NC}"
@@ -111,7 +112,6 @@ image_repo=$(sed -nr 's|.*\bimage_repo=(\S+).*|\1|p' "$userdata")
 image_tag=$(sed -nr 's|.*\bimage_tag=(\S+).*|\1|p' "$userdata")
 if [[ -z ${image_repo} ]]; then
 	echo "Using default image since no image_repo provided"
-	early_phone=0
 else
 	echo "NOTICE: Custom image repo found!"
 	echo "Overriding default image location with custom image_repo"
@@ -119,14 +119,14 @@ else
 		echo "ERROR: custom image_repo passed but no custom image_tag provided"
 		exit 1
 	fi
-	early_phone=1
+	early_phone=true
 	custom_image=true
 fi
 
 # Phone home to tink NOW if non-packet custom image is used. We don't do this
 # later in case the custom OS image or url is bad, to ensure instance will be
 # preserved for the user to troubleshoot.
-if [ "$early_phone" -eq 1 ]; then
+if $early_phone; then
 	# Re-DHCP so we obtain an IP that will last beyond the early phone_home
 	set_autofail_stage "reacquire_dhcp (early_phone)"
 	reacquire_dhcp "$(ip_choose_if)"
