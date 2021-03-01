@@ -89,6 +89,7 @@ GREEN='\033[0;32m'
 BYELLOW='\033[0;33;5;7m'
 NC='\033[0m' # No Color
 
+early_phone=false
 echo -e "${GREEN}#### Checking userdata for custom image_url...${NC}"
 image_url=$(sed -nr 's|.*\bimage_url=(\S+).*|\1|p' "$userdata")
 if [[ -z ${image_url} ]]; then
@@ -96,9 +97,19 @@ if [[ -z ${image_url} ]]; then
 else
 	echo "NOTICE: Custom image url found!"
 	echo "Overriding default image location with custom image_url"
+	early_phone=true
 	image="$image_url"
 fi
 echo "Image: $image"
+
+# Phone home to tink NOW if non-packet custom image is used.
+# We don't do this later in case the custom OS image or url is bad, to ensure instance will be preserved for the user to troubleshoot.
+if $early_phone; then
+	# Re-DHCP so we obtain an IP that will last beyond the early phone_home
+	set_autofail_stage "reacquire_dhcp (early_phone)"
+	reacquire_dhcp "$(ip_choose_if)"
+	phone_home "${tinkerbell}" '{"instance_id":"'"$(jq -r .id "$metadata")"'"}'
+fi
 
 set_autofail_stage "checking OS image url is accessible"
 if ! wget --spider "${image}"; then
