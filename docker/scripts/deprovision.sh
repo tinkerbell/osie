@@ -163,8 +163,15 @@ if [[ $preserve_data == false ]]; then
 				done
 			fi
 
-			# flbas 0 uses 512 byte sector sizes
-			sectors=$((max_bytes / 512))
+			nvmemodel=$(nvme id-ctrl "$drive" -o json | jq -r '.mn')
+			if [[ $nvmemodel == 'INTEL SSDPE2KX040T8' ]]; then
+				# Set specific block size depending on physical BD
+				sectors=$((max_bytes / 4096))
+			else
+				# default flbas 0 uses 512 byte sector sizes
+				sectors=$((max_bytes / 512))
+			fi
+
 			echo "Creating a single namespace with $sectors sectors on $drive"
 			nsid=$(nvme create-ns "$drive" --nsze=$sectors --ncap=$sectors --flbas 0 --dps=0 | cut -d : -f 3)
 			ctrl=$(nvme id-ctrl "$drive" -o json | jq '.cntlid')
