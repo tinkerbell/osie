@@ -163,7 +163,7 @@ if [[ $preserve_data == false ]]; then
 				done
 			fi
 
-			nvmemodel=$(nvme id-ctrl "$drive" -o json | jq -r '.mn')
+			nvmemodel=$(nvme id-ctrl "$drive" -o json | jq -r '.mn' | sed -e 's/[[:space:]]*$//')
 			if [[ $nvmemodel == 'INTEL SSDPE2KX040T8' ]]; then
 				# Set specific block size depending on physical BD
 				sectors=$((max_bytes / 4096))
