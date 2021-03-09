@@ -45,13 +45,13 @@ mkdir -p /etc/docker/ /etc/docker/certs.d/ "/etc/docker/certs.d/$docker_registry
 cp ca.pem "/etc/docker/certs.d/$docker_registry/ca.crt"
 
 # configure docker daemon
-cat > /etc/docker/daemon.json <<- EOM
-{
-  "log-driver": "syslog",
-  "log-opts": {
-    "syslog-address": "udp://${syslog_host}:514"
-  }
-}
+cat >/etc/docker/daemon.json <<-EOM
+	{
+	  "log-driver": "syslog",
+	  "log-opts": {
+	    "syslog-address": "udp://${syslog_host}:514"
+	  }
+	}
 EOM
 
 service docker start
