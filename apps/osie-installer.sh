@@ -2,6 +2,15 @@
 
 # shellcheck shell=dash
 
+cleanup() {
+	# shellcheck disable=SC2169
+	if [ -x "$statedir/cleanup.sh" ]; then
+		reason='running cleanup.sh'
+		cd "$statedir"
+		exec ./cleanup.sh
+	fi
+}
+
 reason='unknown'
 fail() {
 	code=$?
@@ -14,6 +23,13 @@ fail() {
 		# before the timeout occurred.
 		if [ -f "${statedir}/autofail_stage" ]; then
 			stage=$(cat "${statedir}/autofail_stage")
+			# If SOL isn't working properly docker can return an error even though the script has run to completion.
+			# Detect this by checking the autofail_stage value, which would indicate the completion.
+			# Don't report failure in this case, but just run the cleanup() function and exit.
+			if [ x"$stage" = x"completed" ]; then
+				cleanup
+				exit 0
+			fi
 			reason="Timed out during ${stage}"
 		fi
 	fi
@@ -227,10 +243,4 @@ $timeout_cmd docker run --privileged -ti \
 	tee $other_consoles
 )
 
-reason='cleanup.sh is not executable'
-# shellcheck disable=SC2169
-if [ -x "$statedir/cleanup.sh" ]; then
-	reason='cleanup.sh did not finish correctly'
-	cd "$statedir"
-	exec ./cleanup.sh
-fi
+cleanup

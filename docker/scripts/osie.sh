@@ -621,3 +621,4 @@ EOF
 fi
 
 chmod +x /statedir/cleanup.sh
+set_autofail_stage "completed"
