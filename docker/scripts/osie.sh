@@ -217,6 +217,11 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	# Grub config
 	grub="$BASEURL/grub/${OS//_(arm|image)//}/$class/grub.template"
 
+	# Check for HW specific grub template otherwise use default template
+	if ! wget --spider "${grub}"; then
+		grub="$BASEURL/grub/${OS//_(arm|image)//}/default/grub.template"
+	fi
+
 	echo -e "${WHITE}Image: $image${NC}"
 	echo -e "${WHITE}Modules: $modules${NC}"
 	echo -e "${WHITE}Kernel: $kernel${NC}"
