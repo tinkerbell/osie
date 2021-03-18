@@ -29,22 +29,12 @@ RUN apt-get update -y && \
     apt-get -qy clean && \
     rm -rf /var/lib/apt/lists/* /tmp/osie
 
-# build openssl'd git, done here so we can keep it cached as long as possible
-COPY build-git-openssl.sh /tmp/osie/
-RUN apt-get update -y && \
-    /tmp/osie/build-git-openssl.sh && \
-    dpkg --unpack /tmp/osie/git_*.deb && \
-    apt-get install -f -y --no-install-recommends && \
-    apt-get -y autoremove && \
-    apt-get -y clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/osie
-
 # gron - grep for JSON
 COPY lfs/gron-0.6.0-amd64 /tmp/osie/
 RUN if [ $(uname -m) = 'x86_64' ]; then \
         mv /tmp/osie/gron-0.6.0-amd64 /usr/bin/gron; \
     fi && \
-    rm -rf /tmp/osie 
+    rm -rf /tmp/osie
 
 # build lshw, done here so we can keep it cached as long as possible
 COPY build-lshw.sh /tmp/osie/
