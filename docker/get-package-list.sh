@@ -24,12 +24,20 @@ packages=(
 	ipmitool
 	iproute2
 	jq
+	libncurses5
 	mdadm
+	mstflint
+	nvme-cli
 	parted
 	pciutils
 	pv
 	python3
+	python3-apt
+	python3-distutils
+	python3-pip
 	sg3-utils
+	smartmontools
+	systemd
 	unzip
 	vim
 	wget
