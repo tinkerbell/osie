@@ -1,4 +1,4 @@
-FROM ubuntu:xenial
+FROM ubuntu:focal
 
 VOLUME /statedir
 ENTRYPOINT ["/entrypoint.sh"]
