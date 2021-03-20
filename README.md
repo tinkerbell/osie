@@ -4,7 +4,7 @@
 ![](https://img.shields.io/badge/Stability-Experimental-red.svg)
 
 OSIE is the Operating System Installation Environment.
-It consists of an Alpine Linux based netboot image which fetches a prebuilt Ubuntu 16.04 container that does the actual installation.
+It consists of an Alpine Linux based netboot image which fetches a prebuilt Ubuntu 20.04 container that does the actual installation.
 All of the above is built from this repository using `GNU Make`.
 
 This repository is [Experimental](https://github.com/packethost/standards/blob/master/experimental-statement.md) meaning that it's based on untested ideas or techniques and not yet established or finalized or involves a radically new and innovative style!
@@ -14,7 +14,7 @@ This means that support is best effort (at best!) and we strongly encourage you 
 
 ### Ubuntu Based Container
 The OSIE Ubuntu based container is built with `docker` for both `aarch64` and `x86_64`.
-Some packages are rebuilt with different settings (git, using openssl) or updated upstream sources are built/installed.
+Some packages are rebuilt with different settings or updated upstream sources are built/installed.
 These can be built individually with `make build/osie-aarch64.tar.gz` or `make build build/osie-x86_64.tar.gz`.
 
 ### Alpine Based Netboot Image
