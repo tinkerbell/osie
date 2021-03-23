@@ -12,7 +12,7 @@ syslog_host=$(sed -nr 's|.*\bsyslog_host=(\S+).*|\1|p' /proc/cmdline)
 worker_id=$(sed -nr 's|.*\bworker_id=(\S+).*|\1|p' /proc/cmdline)
 instance_id=$(sed -nr 's|.*\binstance_id=(\S+).*|\1|p' /proc/cmdline)
 
-tink_worker_image="${docker_registry}/tinkerbell/tink-worker:sha-5e1f0fd8"
+tink_worker_image="${docker_registry}/tinkerbell/tink-worker:latest"
 
 # Create workflow motd
 cat <<'EOF'
