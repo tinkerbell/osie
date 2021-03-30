@@ -70,11 +70,12 @@ if [[ $arch == x86_64 ]] && [[ $reserved != "true" ]]; then
 	bios_version=$(detect_bios_version "${bios_vendor}")
 	echo "BIOS detected: ${bios_vendor} ${bios_version}"
 
-	set_autofail_stage "downloading BIOS configs"
-	download_bios_configs
+	# TEMPORARILY DISABLED:
+	#set_autofail_stage "downloading BIOS configs"
+	#download_bios_configs
 
-	set_autofail_stage "validating BIOS config"
-	validate_bios_config "${class}" "${bios_vendor}"
+	#set_autofail_stage "validating BIOS config"
+	#validate_bios_config "${class}" "${bios_vendor}"
 fi
 
 # Storage detection
