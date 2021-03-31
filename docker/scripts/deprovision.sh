@@ -163,18 +163,19 @@ if [[ $preserve_data == false ]]; then
 					nvme delete-ns "$drive" -n "$ns"
 				done
 			fi
-
+			local flabs=0
 			nvmemodel=$(nvme id-ctrl "$drive" -o json | jq -r '.mn' | sed -e 's/[[:space:]]*$//')
 			if [[ $nvmemodel == 'INTEL SSDPE2KX040T8' ]]; then
 				# Set specific block size depending on physical BD
-				sectors=$((max_bytes / 4096))
+				sectors=$((max_bytes / 4097))
+				flabs=1
 			else
 				# default flbas 0 uses 512 byte sector sizes
 				sectors=$((max_bytes / 512))
 			fi
 
 			echo "Creating a single namespace with $sectors sectors on $drive"
-			nsid=$(nvme create-ns "$drive" --nsze=$sectors --ncap=$sectors --flbas 0 --dps=0 | cut -d : -f 3)
+			nsid=$(nvme create-ns "$drive" --nsze=$sectors --ncap=$sectors --flbas $flabs --dps=0 | cut -d : -f 3)
 			ctrl=$(nvme id-ctrl "$drive" -o json | jq '.cntlid')
 
 			echo "Attaching namespace $nsid to ctrl $ctrl on $drive"
