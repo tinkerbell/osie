@@ -163,7 +163,7 @@ if [[ $preserve_data == false ]]; then
 					nvme delete-ns "$drive" -n "$ns"
 				done
 			fi
-			local flabs=0
+			flabs=0
 			nvmemodel=$(nvme id-ctrl "$drive" -o json | jq -r '.mn' | sed -e 's/[[:space:]]*$//')
 			if [[ $nvmemodel == 'INTEL SSDPE2KX040T8' ]]; then
 				# Set specific block size depending on physical BD
