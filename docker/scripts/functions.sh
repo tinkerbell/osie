@@ -158,11 +158,11 @@ function download_bios_configs() {
 	curl \
 		--fail \
 		--retry 3 \
-		https://github-mirror.packet.net/downloads/bios-configs-latest.tar.gz --output bios-configs-latest.tar.gz
+		https://bios-configs.platformequinix.net/bios-configs-latest.tar.gz --output bios-configs-latest.tar.gz
 	curl \
 		--fail \
 		--retry 3 \
-		https://github-mirror.packet.net/downloads/bios-configs-latest.tar.gz.sha256 --output bios-configs-latest.tar.gz.sha256
+		https://bios-configs.platformequinix.net/bios-configs-latest.tar.gz.sha256 --output bios-configs-latest.tar.gz.sha256
 
 	echo "Verifying BIOS configurations tarball"
 	sha256sum --check bios-configs-latest.tar.gz.sha256
