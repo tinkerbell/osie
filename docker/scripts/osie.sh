@@ -110,6 +110,13 @@ set_autofail_stage "custom image check"
 echo -e "${GREEN}#### Checking userdata for custom image...${NC}"
 image_repo=$(sed -nr 's|.*\bimage_repo=(\S+).*|\1|p' "$userdata")
 image_tag=$(sed -nr 's|.*\bimage_tag=(\S+).*|\1|p' "$userdata")
+
+# If in ceph/S3 set the appropriate AWS_* vars
+AWS_ACCESS_KEY_ID=$(sed -nr 's|.*\bAWS_ACCESS_KEY_ID=(\S+).*|\1|p' "$userdata")
+AWS_ENDPOINT=$(sed -nr 's|.*\bAWS_ENDPOINT=(\S+).*|\1|p' "$userdata")
+AWS_HOST=$(sed -nr 's|.*\bAWS_HOST=(\S+).*|\1|p' "$userdata")
+AWS_SECRET_KEY=$(sed -nr 's|.*\bAWS_SECRET_KEY=(\S+).*|\1|p' "$userdata")
+
 if [[ -z ${image_repo} ]]; then
 	echo "Using default image since no image_repo provided"
 else
@@ -184,21 +191,30 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	elif [[ $custom_image == true ]]; then
 		if [[ ${image_repo} =~ github ]]; then
 			git config --global http.sslverify false
+		elif [[ ${image_repo} =~ s3 ]]
+		  s3_path="${image_repo}"
 		fi
 
 		gituri="${image_repo}"
 	fi
-	# Silence verbose notice about deatched HEAD state
-	git config --global advice.detachedHead false
+	if [[ -z ${s3_path} ]]; then
+		# Silence verbose notice about deatched HEAD state
+		git config --global advice.detachedHead false
 
-	git -C $assetdir init
-	echo -e "${GREEN}#### Adding git remote uri: ${gituri}${NC}"
-	git -C $assetdir remote add origin "${gituri}"
-	echo -e "${GREEN}#### Performing a shallow git fetch for: ${image_tag}${NC}"
-	git -C $assetdir fetch --depth 1 origin "${image_tag}"
-	echo -e "${GREEN}###### Performing a checkout of FETCH_HEAD${NC}"
-	git -C $assetdir checkout FETCH_HEAD
-
+		git -C $assetdir init
+		echo -e "${GREEN}#### Adding git remote uri: ${gituri}${NC}"
+		git -C $assetdir remote add origin "${gituri}"
+		echo -e "${GREEN}#### Performing a shallow git fetch for: ${image_tag}${NC}"
+		git -C $assetdir fetch --depth 1 origin "${image_tag}"
+		echo -e "${GREEN}###### Performing a checkout of FETCH_HEAD${NC}"
+		git -C $assetdir checkout FETCH_HEAD
+    else
+		echo -e "${GREEN}#### Adding S3 uri: ${s3_path}${NC}"
+		s3cmd get "${s3_path}/image.tar.gz" "$assetdir/image.tar.gz" --no-ssl --host=${AWS_HOST} --host-bucket=''
+		s3cmd get "${s3_path}/initrd.tar.gz" "$assetdir/initrd.tar.gz" --no-ssl --host=${AWS_HOST} --host-bucket=''
+		s3cmd get "${s3_path}/kernel.tar.gz" "$assetdir/kernel.tar.gz" --no-ssl --host=${AWS_HOST} --host-bucket=''
+		s3cmd get "${s3_path}/modules.tar.gz" "$assetdir/modules.tar.gz" --no-ssl --host=${AWS_HOST} --host-bucket=''
+	fi
 	# Tell the API that the OS image has been retrieved
 	phone_home "${tinkerbell}" '{"type":"provisioning.104.50"}'
 
@@ -206,14 +222,15 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 
 	## Assemble configurables
 	##
-	# Kernel to throw on the target
-	kernel="$assetdir/kernel.tar.gz"
-	# Initrd to throw on the target
-	initrd="$assetdir/initrd.tar.gz"
-	# Modules to throw on the target
-	modules="$assetdir/modules.tar.gz"
 	# Image rootfs
 	image="$assetdir/image.tar.gz"
+	# Initrd to throw on the target
+	initrd="$assetdir/initrd.tar.gz"
+	# Kernel to throw on the target
+	kernel="$assetdir/kernel.tar.gz"
+	# Modules to throw on the target
+	modules="$assetdir/modules.tar.gz"
+
 	# Grub config
 	grub="$BASEURL/grub/${OS//_(arm|image)//}/$class/grub.template"
 
@@ -223,9 +240,9 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	fi
 
 	echo -e "${WHITE}Image: $image${NC}"
-	echo -e "${WHITE}Modules: $modules${NC}"
-	echo -e "${WHITE}Kernel: $kernel${NC}"
 	echo -e "${WHITE}Initrd: $initrd${NC}"
+	echo -e "${WHITE}Kernel: $kernel${NC}"
+	echo -e "${WHITE}Modules: $modules${NC}"
 	echo -e "${WHITE}Devices:${disks[*]}${NC}"
 	echo -e "${WHITE}CPR: ${NC}"
 	jq . $cprconfig
