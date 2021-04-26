@@ -186,6 +186,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	elif [[ $custom_image == true ]]; then
 		if [[ ${image_repo} =~ github ]]; then
 			git config --global http.sslverify false
+		fi
 		gituri="${image_repo}"
 	fi
 	if [[ -z ${s3_path} ]]; then
