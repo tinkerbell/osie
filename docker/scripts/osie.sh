@@ -110,19 +110,14 @@ set_autofail_stage "custom image check"
 echo -e "${GREEN}#### Checking userdata for custom image...${NC}"
 image_repo=$(sed -nr 's|.*\bimage_repo=(\S+).*|\1|p' "$userdata")
 image_tag=$(sed -nr 's|.*\bimage_tag=(\S+).*|\1|p' "$userdata")
+s3_path=$(sed -nr 's|.*\bs3_path=(\S+).*|\1|p' "$userdata")
 
-# If in ceph/S3 set the appropriate AWS_* vars
-AWS_ACCESS_KEY_ID=$(sed -nr 's|.*\bAWS_ACCESS_KEY_ID=(\S+).*|\1|p' "$userdata")
-AWS_ENDPOINT=$(sed -nr 's|.*\bAWS_ENDPOINT=(\S+).*|\1|p' "$userdata")
-AWS_HOST=$(sed -nr 's|.*\bAWS_HOST=(\S+).*|\1|p' "$userdata")
-AWS_SECRET_KEY=$(sed -nr 's|.*\bAWS_SECRET_KEY=(\S+).*|\1|p' "$userdata")
-
-if [[ -z ${image_repo} ]]; then
+if [[ -z ${image_repo} && -z ${s3_path} ]]; then
 	echo "Using default image since no image_repo provided"
 else
 	echo "NOTICE: Custom image repo found!"
 	echo "Overriding default image location with custom image_repo"
-	if [[ -z ${image_tag} ]]; then
+	if [[ -z ${image_tag} || ! -z ${s3_path} ]]; then
 		echo "ERROR: custom image_repo passed but no custom image_tag provided"
 		exit 1
 	fi
@@ -191,10 +186,6 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	elif [[ $custom_image == true ]]; then
 		if [[ ${image_repo} =~ github ]]; then
 			git config --global http.sslverify false
-		elif [[ ${image_repo} =~ s3 ]]
-		  s3_path="${image_repo}"
-		fi
-
 		gituri="${image_repo}"
 	fi
 	if [[ -z ${s3_path} ]]; then
@@ -208,7 +199,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 		git -C $assetdir fetch --depth 1 origin "${image_tag}"
 		echo -e "${GREEN}###### Performing a checkout of FETCH_HEAD${NC}"
 		git -C $assetdir checkout FETCH_HEAD
-    else
+    elif [[ ${s3_path} =~ "s3://" ]]
 		echo -e "${GREEN}#### Adding S3 uri: ${s3_path}${NC}"
 		s3cmd get "${s3_path}/image.tar.gz" "$assetdir/image.tar.gz" --no-ssl --host=${AWS_HOST} --host-bucket=''
 		s3cmd get "${s3_path}/initrd.tar.gz" "$assetdir/initrd.tar.gz" --no-ssl --host=${AWS_HOST} --host-bucket=''
