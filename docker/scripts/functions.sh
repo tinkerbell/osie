@@ -106,6 +106,7 @@ function configure_image_cache_dns() {
 	cp -a /etc/hosts /etc/hosts.new
 	{
 		echo "$images_ip        github.com"
+		echo "$images_ip        github-cloud.githubusercontent.com"
 		echo "$images_ip        github-cloud.s3.amazonaws.com"
 		echo "$images_ip        github-mirror.packet.net"
 	} >>/etc/hosts.new
@@ -113,7 +114,7 @@ function configure_image_cache_dns() {
 	# this up as a bind mount and we can't replace it.
 	cp -f /etc/hosts.new /etc/hosts
 	echo -n "LFS pulls via github-cloud will now resolve to image cache:"
-	getent hosts github-cloud.s3.amazonaws.com | awk '{print $1}'
+	getent hosts github-cloud.githubusercontent.com | awk '{print $1}'
 }
 
 # returns a string of the BIOS vendor: "dell", "supermicro", or "unknown"
