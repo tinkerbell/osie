@@ -56,8 +56,8 @@ packages=(
 	pciutils
 	pv
 	python3
-	sg3-utils
 	s3cmd
+	sg3-utils
 	unzip
 	vim
 	wget
