@@ -110,14 +110,14 @@ set_autofail_stage "custom image check"
 echo -e "${GREEN}#### Checking userdata for custom image...${NC}"
 image_repo=$(sed -nr 's|.*\bimage_repo=(\S+).*|\1|p' "$userdata")
 image_tag=$(sed -nr 's|.*\bimage_tag=(\S+).*|\1|p' "$userdata")
-s3_path=$(sed -nr 's|.*\bs3_path=(\S+).*|\1|p' "$userdata")
+image_s3_path=$(sed -nr 's|.*\bimage_s3_path=(\S+).*|\1|p' "$userdata")
 
-if [[ -z ${image_repo} && -z ${s3_path} ]]; then
+if [[ -z ${image_repo} && -z ${image_s3_path} ]]; then
 	echo "Using default image since no image_repo provided"
 else
 	echo "NOTICE: Custom image repo found!"
 	echo "Overriding default image location with custom image_repo"
-	if [[ -z ${image_tag} || ! -z ${s3_path} ]]; then
+	if [[ -z ${image_tag} && -z ${image_s3_path} ]]; then
 		echo "ERROR: custom image_repo passed but no custom image_tag provided"
 		exit 1
 	fi
@@ -189,7 +189,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 		fi
 		gituri="${image_repo}"
 	fi
-	if [[ -z ${s3_path} ]]; then
+	if [[ -z ${image_s3_path} ]]; then
 		# Silence verbose notice about deatched HEAD state
 		git config --global advice.detachedHead false
 
@@ -200,12 +200,12 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 		git -C $assetdir fetch --depth 1 origin "${image_tag}"
 		echo -e "${GREEN}###### Performing a checkout of FETCH_HEAD${NC}"
 		git -C $assetdir checkout FETCH_HEAD
-    elif [[ ${s3_path} =~ "s3://" ]]
-		echo -e "${GREEN}#### Adding S3 uri: ${s3_path}${NC}"
-		s3cmd get "${s3_path}/image.tar.gz" "$assetdir/image.tar.gz" --no-ssl --host=${AWS_HOST} --host-bucket=''
-		s3cmd get "${s3_path}/initrd.tar.gz" "$assetdir/initrd.tar.gz" --no-ssl --host=${AWS_HOST} --host-bucket=''
-		s3cmd get "${s3_path}/kernel.tar.gz" "$assetdir/kernel.tar.gz" --no-ssl --host=${AWS_HOST} --host-bucket=''
-		s3cmd get "${s3_path}/modules.tar.gz" "$assetdir/modules.tar.gz" --no-ssl --host=${AWS_HOST} --host-bucket=''
+	elif [[ ${image_s3_path} =~ "s3://" ]]; then 
+		echo -e "${GREEN}#### Adding S3 uri: ${image_s3_path}${NC}"
+		s3cmd get "${image_s3_path}/image.tar.gz" "$assetdir/image.tar.gz"
+		s3cmd get "${image_s3_path}/initrd.tar.gz" "$assetdir/initrd.tar.gz"
+		s3cmd get "${image_s3_path}/kernel.tar.gz" "$assetdir/kernel.tar.gz"
+		s3cmd get "${image_s3_path}/modules.tar.gz" "$assetdir/modules.tar.gz"
 	fi
 	# Tell the API that the OS image has been retrieved
 	phone_home "${tinkerbell}" '{"type":"provisioning.104.50"}'
