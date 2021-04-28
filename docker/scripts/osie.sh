@@ -200,7 +200,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 		git -C $assetdir fetch --depth 1 origin "${image_tag}"
 		echo -e "${GREEN}###### Performing a checkout of FETCH_HEAD${NC}"
 		git -C $assetdir checkout FETCH_HEAD
-	elif [[ ${image_s3_path} =~ "s3://" ]]; then 
+	elif [[ ${image_s3_path} =~ "s3://" ]]; then
 		echo -e "${GREEN}#### Adding S3 uri: ${image_s3_path}${NC}"
 		s3cmd get "${image_s3_path}/image.tar.gz" "$assetdir/image.tar.gz"
 		s3cmd get "${image_s3_path}/initrd.tar.gz" "$assetdir/initrd.tar.gz"
