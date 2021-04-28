@@ -106,6 +106,7 @@ function configure_image_cache_dns() {
 	cp -a /etc/hosts /etc/hosts.new
 	{
 		echo "$images_ip        github.com"
+		echo "$images_ip        github-cloud.githubusercontent.com"
 		echo "$images_ip        github-cloud.s3.amazonaws.com"
 		echo "$images_ip        github-mirror.packet.net"
 	} >>/etc/hosts.new
@@ -113,7 +114,7 @@ function configure_image_cache_dns() {
 	# this up as a bind mount and we can't replace it.
 	cp -f /etc/hosts.new /etc/hosts
 	echo -n "LFS pulls via github-cloud will now resolve to image cache:"
-	getent hosts github-cloud.s3.amazonaws.com | awk '{print $1}'
+	getent hosts github-cloud.githubusercontent.com | awk '{print $1}'
 }
 
 # returns a string of the BIOS vendor: "dell", "supermicro", or "unknown"
@@ -1010,7 +1011,7 @@ function github_mirror_check() {
 	echo -e "${YELLOW}###### Checking the health of github-mirror.packet.net...${NC}"
 
 	# Clone the repo, and checkout an LFS branch.
-	local timeout=10 # seconds
+	local timeout=60 # seconds
 	local lfs_testing_uri="https://github-mirror.packet.net/packethost/lfs-testing.git"
 	local lfs_testing_branch="remotes/origin/images-tiny"
 	if ! timeout --preserve-status $timeout git clone -q $lfs_testing_uri; then
