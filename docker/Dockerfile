@@ -77,7 +77,7 @@ RUN apt-get update -y && \
     rm -rf /var/lib/apt/lists/* /tmp/osie/
 
 ARG PACKET_HARDWARE_COMMIT=68a25da2b6a3d3281838bff6b62639438116d0d1
-ARG PACKET_NETWORKING_COMMIT=06061801efaf34caa8d8b1ae5973c15e5a23659d
+ARG PACKET_NETWORKING_COMMIT=3bb688df0861414dc4146a0c229c20816c4a5b6a
 
 RUN curl https://bootstrap.pypa.io/pip/3.5/get-pip.py | python3 && \
     pip3 install git+https://github.com/packethost/packet-hardware.git@${PACKET_HARDWARE_COMMIT} && \
