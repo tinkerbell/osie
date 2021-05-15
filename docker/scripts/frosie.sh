@@ -316,7 +316,7 @@ if [ -f "$target/usr/local/etc/cloud/cloud.cfg" ]; then
 		  Ec2:
 		    timeout: 60
 		    max_wait: 120
-		    metadata_urls: [ 'http://metadata.packet.net', 'http://147.75.207.1:80' ]
+		    metadata_urls: [ 'https://metadata.packet.net' ]
 		    dsmode: net
 		cloud_init_modules:
 		 - migrator
