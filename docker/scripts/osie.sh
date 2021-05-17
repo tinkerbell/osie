@@ -357,7 +357,7 @@ EOF
 			  Ec2:
 			    timeout: 60
 			    max_wait: 120
-			    metadata_urls: [ 'https://metadata.packet.net' ]
+			    metadata_urls: [ 'http://metadata.packet.net' ]
 			    dsmode: net
 			disable_root: 0
 			package_reboot_if_required: false
