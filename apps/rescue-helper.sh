@@ -7,13 +7,13 @@ set -o errexit -o pipefail -o xtrace
 
 # Create rescue motd
 cat <<'EOF' >/etc/motd
-                                                  
-,------.               ,--.        ,--.           
-|  .---' ,---. ,--.,--.`--',--,--, `--',--.  ,--. 
-|  `--, | .-. ||  ||  |,--.|      \,--. \  `'  /  
-|  `---.' '-' |'  ''  '|  ||  ||  ||  | /  /.  \  
-`------' `-|  | `----' `--'`--''--'`--''--'  '--' 
-           `--'                                   
+
+,------.               ,--.        ,--.
+|  .---' ,---. ,--.,--.`--',--,--, `--',--.  ,--.
+|  `--, | .-. ||  ||  |,--.|      \,--. \  `'  /
+|  `---.' '-' |'  ''  '|  ||  ||  ||  | /  /.  \
+`------' `-|  | `----' `--'`--''--'`--''--'  '--'
+           `--'
 ===============================================
    Rescue environment based on Alpine Linux $(cat /etc/alpine-release)
 
@@ -23,7 +23,7 @@ See docs at http://wiki.alpinelinux.org
 EOF
 
 mkdir -p /root/.ssh
-curl -sSLf https://metadata.packet.net/2009-04-04/meta-data/public-keys >/root/.ssh/authorized_keys
+curl -sSLf http://metadata.packet.net/2009-04-04/meta-data/public-keys >/root/.ssh/authorized_keys
 
 tinkerbell=$(sed -nr 's|.*\btinkerbell=(\S+).*|\1|p' /proc/cmdline)
 

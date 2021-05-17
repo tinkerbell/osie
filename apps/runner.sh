@@ -53,12 +53,12 @@ set -x
 # Create OSIE motd
 cat <<'EOF' >/etc/motd
 
-,------.               ,--.        ,--.           
-|  .---' ,---. ,--.,--.`--',--,--, `--',--.  ,--. 
-|  `--, | .-. ||  ||  |,--.|      \,--. \  `'  /  
-|  `---.' '-' |'  ''  '|  ||  ||  ||  | /  /.  \  
-`------' `-|  | `----' `--'`--''--'`--''--'  '--' 
-           `--'                                   
+,------.               ,--.        ,--.
+|  .---' ,---. ,--.,--.`--',--,--, `--',--.  ,--.
+|  `--, | .-. ||  ||  |,--.|      \,--. \  `'  /
+|  `---.' '-' |'  ''  '|  ||  ||  ||  | /  /.  \
+`------' `-|  | `----' `--'`--''--'`--''--'  '--'
+           `--'
 ===============================================
 ##          Task Runner Environment          ##
 ## OSIE Version: ${OSIE_VERSION} (${OSIE_BRANCH})
@@ -69,13 +69,13 @@ syslog_host=$(sed -nr 's|.*\bsyslog_host=(\S+).*|\1|p' /proc/cmdline)
 
 ensure_time
 
-hardware_id=$(curl -sSL --connect-timeout 60 https://metadata.packet.net/metadata | jq -r .hardware_id)
+hardware_id=$(curl -sSL --connect-timeout 60 http://metadata.packet.net/metadata | jq -r .hardware_id)
 statedir=${TMPDIR:-/tmp}/osie-statedir-$hardware_id
 metadata=$statedir/metadata
 mkdir -p "$statedir"
 
 echo "metadata:"
-curl -sSL --connect-timeout 60 https://metadata.packet.net/metadata |
+curl -sSL --connect-timeout 60 http://metadata.packet.net/metadata |
 	jq -S . |
 	tee "$metadata" |
 	jq .

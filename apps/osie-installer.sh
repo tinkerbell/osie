@@ -86,12 +86,12 @@ set -x
 # Create OSIE motd
 cat <<'EOF' >/etc/motd
 
-,------.               ,--.        ,--.           
-|  .---' ,---. ,--.,--.`--',--,--, `--',--.  ,--. 
-|  `--, | .-. ||  ||  |,--.|      \,--. \  `'  /  
-|  `---.' '-' |'  ''  '|  ||  ||  ||  | /  /.  \  
-`------' `-|  | `----' `--'`--''--'`--''--'  '--' 
-           `--'                                   
+,------.               ,--.        ,--.
+|  .---' ,---. ,--.,--.`--',--,--, `--',--.  ,--.
+|  `--, | .-. ||  ||  |,--.|      \,--. \  `'  /
+|  `---.' '-' |'  ''  '|  ||  ||  ||  | /  /.  \
+`------' `-|  | `----' `--'`--''--'`--''--'  '--'
+           `--'
 ===============================================
 #	OS Installation Environment	      #
 ###############################################
@@ -114,7 +114,7 @@ esac
 
 ensure_time
 
-hardware_id=$(curl -sSL --connect-timeout 60 https://metadata.packet.net/metadata | jq -r .hardware_id)
+hardware_id=$(curl -sSL --connect-timeout 60 http://metadata.packet.net/metadata | jq -r .hardware_id)
 statedir=${TMPDIR:-/tmp}/osie-statedir-$hardware_id
 metadata=$statedir/metadata
 userdata=$statedir/userdata
@@ -122,7 +122,7 @@ mkdir -p "$statedir"
 
 reason='unable to fetch metadata'
 echo "metadata:"
-curl -sSL --connect-timeout 60 https://metadata.packet.net/metadata |
+curl -sSL --connect-timeout 60 http://metadata.packet.net/metadata |
 	jq -S . |
 	tee "$metadata" |
 	jq .
@@ -143,7 +143,7 @@ jq -S . "$metadata"
 
 reason='unable to fetch userdata'
 echo "userdata:"
-curl -sSL --connect-timeout 60 https://metadata.packet.net/userdata | tee "$userdata"
+curl -sSL --connect-timeout 60 http://metadata.packet.net/userdata | tee "$userdata"
 
 # Get values from metadata
 facility=$(jq -r .facility "$metadata")
