@@ -110,14 +110,14 @@ set_autofail_stage "custom image check"
 echo -e "${GREEN}#### Checking userdata for custom image...${NC}"
 image_repo=$(sed -nr 's|.*\bimage_repo=(\S+).*|\1|p' "$userdata")
 image_tag=$(sed -nr 's|.*\bimage_tag=(\S+).*|\1|p' "$userdata")
-image_s3_path=$(sed -nr 's|.*\bimage_s3_path=(\S+).*|\1|p' "$userdata")
+image_uri=$(sed -nr 's|.*\bimage_uri=(\S+).*|\1|p' "$userdata")
 
-if [[ -z ${image_repo} && -z ${image_s3_path} ]]; then
+if [[ -z ${image_repo} && -z ${image_uri} ]]; then
 	echo "Using default image since no image_repo provided"
 else
 	echo "NOTICE: Custom image repo found!"
 	echo "Overriding default image location with custom image_repo"
-	if [[ -z ${image_tag} && -z ${image_s3_path} ]]; then
+	if [[ -z ${image_tag} && -z ${image_uri} ]]; then
 		echo "ERROR: custom image_repo passed but no custom image_tag provided"
 		exit 1
 	fi
@@ -189,7 +189,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 		fi
 		gituri="${image_repo}"
 	fi
-	if [[ -z ${image_s3_path} ]]; then
+	if [[ -z ${image_uri} ]]; then
 		# Silence verbose notice about deatched HEAD state
 		git config --global advice.detachedHead false
 
@@ -198,15 +198,19 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 		git -C $assetdir remote add origin "${gituri}"
 		echo -e "${GREEN}#### Performing a shallow git fetch for: ${image_tag}${NC}"
 		git -C $assetdir fetch --depth 1 origin "${image_tag}"
-		echo -e "${GREEN}###### Performing a checkout of FETCH_HEAD${NC}"
+		echo -e "${GREEN}#### Performing a checkout of FETCH_HEAD${NC}"
 		git -C $assetdir checkout FETCH_HEAD
-	elif [[ ${image_s3_path} =~ "s3://" ]]; then
-		echo -e "${GREEN}#### Adding S3 uri: ${image_s3_path}${NC}"
-		s3cmd get "${image_s3_path}/image.tar.gz" "$assetdir/image.tar.gz"
-		s3cmd get "${image_s3_path}/initrd.tar.gz" "$assetdir/initrd.tar.gz"
-		s3cmd get "${image_s3_path}/kernel.tar.gz" "$assetdir/kernel.tar.gz"
-		s3cmd get "${image_s3_path}/modules.tar.gz" "$assetdir/modules.tar.gz"
+	elif [[ $image_uri =~ ^https:// ]]; then
+		echo -e "${GREEN}#### Adding custom uri: ${image_uri}${NC}"
+		curl --retry 3 "${image_uri}/image.tar.gz" --output "$assetdir/image.tar.gz"
+		curl --retry 3 "${image_uri}/initrd.tar.gz" --output "$assetdir/initrd.tar.gz"
+		curl --retry 3 "${image_uri}/kernel.tar.gz" --output "$assetdir/kernel.tar.gz"
+		curl --retry 3 "${image_uri}/modules.tar.gz" --output "$assetdir/modules.tar.gz"
+	else
+		echo -e "${RED}#### Image URI is not https: ${image_uri}${NC}"
+		exit 1
 	fi
+
 	# Tell the API that the OS image has been retrieved
 	phone_home "${tinkerbell}" '{"type":"provisioning.104.50"}'
 
