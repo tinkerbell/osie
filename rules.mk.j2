@@ -220,9 +220,8 @@ build/osie-x86_64.tar.gz:  SED=
 build/osie-%.tar.gz: docker/Dockerfile ${osiesrcs}
 	$(E) "DOCKER   $@"
 	$(Q) sed '${SED}' $< > $<.$*
-	$(Q) docker build --build-arg GITVERSION=${gitversion} --build-arg GITBRANCH=${gitbranch} --build-arg DRONEBUILD=${dronebuild} -t osie:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
-	$(Q) docker save osie:$* > $@.tmp
-	$(Q) mv $@.tmp $@
+	$(Q) docker build --squash --build-arg GITVERSION=${gitversion} --build-arg GITBRANCH=${gitbranch} --build-arg DRONEBUILD=${dronebuild} -t osie:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
+	$(Q) docker save osie:$* | pigz >$@
 
 ifneq ($(CI),drone)
 build/osie-runner-aarch64.tar.gz: /proc/sys/fs/binfmt_misc/qemu-aarch64
@@ -232,9 +231,8 @@ build/osie-runner-x86_64.tar.gz:  SED=
 build/osie-runner-%.tar.gz: osie-runner/Dockerfile $(shell git ls-files osie-runner)
 	$(E) "DOCKER   $@"
 	$(Q) sed '${SED}' $< > $<.$*
-	$(Q) docker build --build-arg GITVERSION=${gitversion} --build-arg GITBRANCH=${gitbranch} --build-arg DRONEBUILD=${dronebuild} -t osie-runner:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
-	$(Q) docker save osie-runner:$* > $@.tmp
-	$(Q) mv $@.tmp $@
+	$(Q) docker build --squash --build-arg GITVERSION=${gitversion} --build-arg GITBRANCH=${gitbranch} --build-arg DRONEBUILD=${dronebuild} -t osie-runner:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
+	$(Q) docker save osie-runner:$* | pigz >$@
 
 build/osie-runner-aarch64.tar.gz:
 	$(E) "FAKE     $@"
