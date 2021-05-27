@@ -200,7 +200,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 		git -C $assetdir fetch --depth 1 origin "${image_tag}"
 		echo -e "${GREEN}#### Performing a checkout of FETCH_HEAD${NC}"
 		git -C $assetdir checkout FETCH_HEAD
-	elif [[ "$image_uri" =~ ^https:// ]]; then
+	elif [[ $image_uri =~ ^https:// ]]; then
 		echo -e "${GREEN}#### Adding custom uri: ${image_uri}${NC}"
 		curl --retry 3 "${image_uri}/image.tar.gz" --output "$assetdir/image.tar.gz"
 		curl --retry 3 "${image_uri}/initrd.tar.gz" --output "$assetdir/initrd.tar.gz"
