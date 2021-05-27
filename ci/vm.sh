@@ -75,75 +75,75 @@ gen_metadata() {
 		cprcmd=(jq -S '.filesystems += [{"mount":{"create":{"options": ["32", "-n", "EFI"]},"device":"/dev/sda1","format":"vfat","point":"/boot/efi"}}]')
 	fi
 
-	cat <<EOF
-{
-	"class": "$class",
-	"facility": "$facility",
-	"hardware_id": "$hardware_id",
-	"hostname": "dut",
-	"id": "$id",
-	"network": {
-		"addresses": [
-			{
-				"address": "$pubip4",
-				"address_family": 4,
-				"cidr": 31,
-				"gateway": "$subnet.1",
-				"management": true,
-				"netmask": "255.255.255.254",
-				"network": "$subnet.3",
-				"public": true
-			},
-			{
-				"address": "2604:1380:2:4200::5",
-				"address_family": 6,
-				"cidr": 127,
-				"gateway": "2604:1380:2:4200::4",
-				"management": true,
-				"netmask": "ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffe",
-				"network": "2604:1380:2:4200::4",
-				"public": true
-			},
-			{
-				"address": "10.0.0.2",
-				"address_family": 4,
-				"cidr": 31,
-				"gateway": "10.0.0.1",
-				"management": true,
-				"netmask": "255.255.255.254",
-				"network": "10.0.0.1",
-				"public": false
-			}
-		],
-		"bonding": {
-			"mode": 5
-		},
-		"interfaces": [
-			{
-				"mac": "${macs[0]}",
-				"name": "dummy0"
-			},
-			{
-				"mac": "${macs[1]}",
-				"name": "dummy1"
-			}
-		]
-	},
-	"operating_system": {
-		"slug": "$slug",
-		"distro": "$distro",
-		"version": "$version",
-		"license_activation": {
-		"state": "unlicensed"
-		},
-		"image_tag": "$tag"
-	},
-	"phone_home_url": "http://tinkerbell.$facility.packet.net",
-	"preserve_data": false,
-	"storage": $("${cprcmd[@]}"),
-	"wipe_disks": true
-}
-EOF
+	cat <<-EOF
+		{
+		  "class": "$class",
+		  "facility": "$facility",
+		  "hardware_id": "$hardware_id",
+		  "hostname": "dut",
+		  "id": "$id",
+		  "network": {
+		    "addresses": [
+		      {
+		        "address": "$pubip4",
+		        "address_family": 4,
+		        "cidr": 31,
+		        "gateway": "$subnet.1",
+		        "management": true,
+		        "netmask": "255.255.255.254",
+		        "network": "$subnet.3",
+		        "public": true
+		      },
+		      {
+		        "address": "2604:1380:2:4200::5",
+		        "address_family": 6,
+		        "cidr": 127,
+		        "gateway": "2604:1380:2:4200::4",
+		        "management": true,
+		        "netmask": "ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffe",
+		        "network": "2604:1380:2:4200::4",
+		        "public": true
+		      },
+		      {
+		        "address": "10.0.0.2",
+		        "address_family": 4,
+		        "cidr": 31,
+		        "gateway": "10.0.0.1",
+		        "management": true,
+		        "netmask": "255.255.255.254",
+		        "network": "10.0.0.1",
+		        "public": false
+		      }
+		    ],
+		    "bonding": {
+		      "mode": 5
+		    },
+		    "interfaces": [
+		      {
+		        "mac": "${macs[0]}",
+		        "name": "dummy0"
+		      },
+		      {
+		        "mac": "${macs[1]}",
+		        "name": "dummy1"
+		      }
+		    ]
+		  },
+		  "operating_system": {
+		    "distro": "$distro",
+		    "image_tag": "$tag",
+		    "license_activation": {
+		      "state": "unlicensed"
+		    },
+		    "slug": "$slug",
+		    "version": "$version"
+		  },
+		  "phone_home_url": "http://tinkerbell.$facility.packet.net",
+		  "preserve_data": false,
+		  "storage": $("${cprcmd[@]}"),
+		  "wipe_disks": true
+		}
+	EOF
 }
 
 do_symlink_ro_rw() {
