@@ -177,6 +177,7 @@ start_web() {
 	cat >Caddyfile <<-EOF
 		install.$facility.packet.net:80 {
 		    browse
+		    log stderr
 		    tls off
 
 		    proxy /misc/osie/current/repo-$arch install.ewr1.packet.net/alpine/$repo_dest/
@@ -192,6 +193,7 @@ start_web() {
 		}
 
 		tinkerbell.$facility.packet.net:80 {
+		    log stderr
 		    tls off
 		    upload / {
 		        to "uploads"
@@ -201,15 +203,17 @@ start_web() {
 		}
 
 		metadata.packet.net:80 {
+		    log stderr
 		}
 
 		metadata.packet.net:443 {
+		    log stderr
 		    tls server.pem server-key.pem
 		}
 	EOF
 
 	mkdir uploads
-	proxy -quiet &
+	proxy &>proxy.log &
 }
 
 stop_web() {
