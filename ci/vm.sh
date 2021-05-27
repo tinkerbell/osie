@@ -176,29 +176,33 @@ start_web() {
 
 	cat >Caddyfile <<-EOF
 		install.$facility.packet.net:80 {
-		    tls off
 		    browse
+		    tls off
+
 		    proxy /misc/osie/current/repo-$arch install.ewr1.packet.net/alpine/$repo_dest/
 		    rewrite /misc/osie/current {
-			regexp (.*)
-			to {1}
+		        regexp (.*)
+		        to {1}
 		    }
 		    proxy /repo-$arch/ install.ewr1.packet.net/alpine/$repo_dest/ {
-			without /repo-$arch/
+		        without /repo-$arch/
 		    }
 		    proxy /misc/osie install.ewr1.packet.net
 		    proxy /alpine/ install.ewr1.packet.net
 		}
+
 		tinkerbell.$facility.packet.net:80 {
 		    tls off
 		    upload / {
-			to "uploads"
-			random_suffix_len 5
-			yes_without_tls
+		        to "uploads"
+		        random_suffix_len 5
+		        yes_without_tls
 		    }
 		}
+
 		metadata.packet.net:80 {
 		}
+
 		metadata.packet.net:443 {
 		    tls server.pem server-key.pem
 		}
