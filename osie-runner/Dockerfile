@@ -4,14 +4,6 @@ ENTRYPOINT ["/entrypoint.sh"]
 CMD ["python3", "run.py"]
 VOLUME /statedir
 
-ARG GITVERSION
-ARG GITBRANCH
-ARG DRONEBUILD
-
-ENV OSIE_VERSION ${GITVERSION}
-ENV OSIE_BRANCH ${GITBRANCH}
-ENV DRONE_BUILD ${DRONEBUILD}
-
 WORKDIR /tmp
 COPY requirements.txt .
 RUN apk update && apk add --update --upgrade --no-cache \
@@ -31,3 +23,8 @@ RUN  pip install -r requirements.txt  \
 WORKDIR /
 
 ADD entrypoint.sh *.py /
+
+ARG GITVERSION
+ARG GITBRANCH
+ARG DRONEBUILD
+ENV OSIE_VERSION=${GITVERSION} OSIE_BRANCH=${GITBRANCH} DRONE_BUILD=${DRONEBUILD}
