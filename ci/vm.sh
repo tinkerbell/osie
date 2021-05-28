@@ -243,12 +243,8 @@ teardown() {
 }
 
 run_vm() {
-	local bios=() cmdline='' cpu='' machine='' console=''
+	local bios=() cpu='' machine=''
 
-	case $arch in
-	'aarch64') console=ttyAMA0,115200 ;;
-	'x86_64') console=ttyS0,115200 ;;
-	esac
 	case $(uname -m)-$arch in
 	'aarch64-aarch64') machine=virt cpu=host ;;
 	'aarch64-x86_64') machine=virt cpu=qemu64 ;;
@@ -256,15 +252,6 @@ run_vm() {
 	'x86_64-x86_64') machine=pc cpu=host ;;
 	*) echo 'unknown host-virt architecture combination' && exit 1 ;;
 	esac
-
-	cmdline="$cmdline console=$console"
-	cmdline="$cmdline facility=$facility"
-	cmdline="$cmdline ip=dhcp"
-	cmdline="$cmdline modloop=http://install.$facility.packet.net/misc/osie/current/$modloop"
-	cmdline="$cmdline modules=loop,squashfs,sd-mod,usb-storage"
-	cmdline="$cmdline rw"
-	cmdline="$cmdline tinkerbell=http://tinkerbell.$facility.packet.net"
-	cmdline="$cmdline $*"
 
 	if [[ $UEFI != 'true' ]]; then
 		bios=('-bios' '/usr/share/qemu/bios.bin')
@@ -293,9 +280,7 @@ run_vm() {
 
 	# shellcheck disable=SC2068
 	"qemu-system-$arch" \
-		-kernel "$kernel" \
-		-initrd "$initramfs" \
-		-append "$cmdline" \
+		"$@" \
 		-nographic \
 		-machine $machine,accel=kvm:tcg -cpu $cpu -smp 2 \
 		-drive if=virtio,file="$disk",format=raw \
@@ -354,7 +339,21 @@ do_test() {
 		-e 's|\./cleanup.sh.*|poweroff|' \
 		osie-installer.sh runner.sh
 
-	run_vm "packet_action=install packet_bootdev_mac=${macs[0]} slug=$slug:$tag pwhash=$(echo 5up | mkpasswd) plan=$class"
+	case $arch in
+	'aarch64') console=ttyAMA0,115200 ;;
+	'x86_64') console=ttyS0,115200 ;;
+	esac
+	cmdline=''
+	cmdline="$cmdline console=$console"
+	cmdline="$cmdline facility=$facility"
+	cmdline="$cmdline ip=dhcp"
+	cmdline="$cmdline modloop=http://install.$facility.packet.net/misc/osie/current/$modloop"
+	cmdline="$cmdline modules=loop,squashfs,sd-mod,usb-storage"
+	cmdline="$cmdline rw"
+	cmdline="$cmdline tinkerbell=http://tinkerbell.$facility.packet.net"
+	cmdline="$cmdline packet_action=install packet_bootdev_mac=${macs[0]} slug=$slug:$tag pwhash=$(echo 5up | mkpasswd)"
+
+	run_vm -kernel "$kernel" -initrd "$initramfs" -append "$cmdline"
 	grep -r 'provisioning.109' uploads
 	diff -u <(jq -cS . <<<'{"type":"provisioning.109"}') <(jq -cS . "$(grep -rl 'provisioning.109' uploads)")
 }
