@@ -399,6 +399,7 @@ test | tests)
 	check_required_arg_file "$kernel" 'kernel' '-k'
 	check_required_arg_file "$modloop" 'modloop' '-m'
 	;;
+*) echo "unknown command $cmd" >&2 && exit 1 ;;
 esac
 
 if [[ $cmd == tests ]]; then
