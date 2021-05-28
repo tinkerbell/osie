@@ -354,12 +354,6 @@ do_test() {
 	diff -u <(jq -cS . <<<'{"type":"provisioning.109"}') <(jq -cS . "$(grep -rl 'provisioning.109' uploads)")
 }
 
-do_network_test() {
-	cd "$scriptdir"
-	pip3 install ../docker/scripts/packet-networking
-	./test-network.sh
-}
-
 get_subnet() {
 	# convert subnets in use into grep -E pattern
 	pattern=$(ip -4 addr | awk '/inet 172/ {print $2}' | sort -h | sed 's|172.\([0-9]\+\).*|\1|' | tr '\n' '|' | sed -e 's/^/^(/' -e 's/|$/)/')
@@ -422,4 +416,4 @@ if [[ $cmd == tests ]]; then
 	exit
 fi
 
-"do_$cmd" "$@"
+do_test "$@"
