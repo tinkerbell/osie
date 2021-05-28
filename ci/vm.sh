@@ -243,11 +243,11 @@ teardown() {
 }
 
 run_vm() {
-	local bios=() cmdline='' cpu='' machine='' console='' nic=''
+	local bios=() cmdline='' cpu='' machine='' console=''
 
 	case $arch in
-	'aarch64') console=ttyAMA0,115200 nic=virtio-net ;;
-	'x86_64') console=ttyS0,115200 nic=e1000 ;;
+	'aarch64') console=ttyAMA0,115200 ;;
+	'x86_64') console=ttyS0,115200 ;;
 	esac
 	case $(uname -m)-$arch in
 	'aarch64-aarch64') machine=virt cpu=host ;;
@@ -303,10 +303,10 @@ run_vm() {
 		-device virtio-rng-pci,rng=rng0 \
 		-m 8192 \
 		${bios[@]} \
-		-netdev tap,id=net0,script="$script0",downscript=/bin/true -device "$nic,netdev=net0,mac=$mac0" \
-		-netdev tap,id=net1,script="$script1",downscript=/bin/true -device "$nic,netdev=net1,mac=$mac1" \
-		-netdev tap,id=net2,script="$script2",downscript=/bin/true -device "$nic,netdev=net2,mac=$mac2" \
-		-netdev tap,id=net3,script="$script3",downscript=/bin/true -device "$nic,netdev=net3,mac=$mac3" \
+		-netdev tap,id=net0,script="$script0",downscript=/bin/true -device "virtio-net,netdev=net0,mac=$mac0" \
+		-netdev tap,id=net1,script="$script1",downscript=/bin/true -device "virtio-net,netdev=net1,mac=$mac1" \
+		-netdev tap,id=net2,script="$script2",downscript=/bin/true -device "virtio-net,netdev=net2,mac=$mac2" \
+		-netdev tap,id=net3,script="$script3",downscript=/bin/true -device "virtio-net,netdev=net3,mac=$mac3" \
 		;
 }
 
