@@ -62,10 +62,9 @@ gen_metadata() {
 	local cprcmd hardware_id id
 	id=$(uuidgen)
 	hardware_id=$(uuidgen)
-	local plan=$1
-	local class=$2
-	local slug=$3
-	local tag=$4
+	local class=$1
+	local slug=$2
+	local tag=$3
 	local distro=${slug%%_*}
 	local version=${slug#*_}
 	version=${version//_/.}
@@ -140,7 +139,6 @@ gen_metadata() {
 		"image_tag": "$tag"
 	},
 	"phone_home_url": "http://tinkerbell.$facility.packet.net",
-	"plan": "$plan",
 	"preserve_data": false,
 	"storage": $("${cprcmd[@]}"),
 	"wipe_disks": true
@@ -304,10 +302,8 @@ do_test() {
 	start_log_rx
 
 	class=t1.small.x86
-	plan=baremetal_0
 	if [ "$arch" = 'aarch64' ]; then
 		class=c1.large.arm
-		plan=baremetal_2a
 	fi
 
 	slug=${OS%:*}
@@ -317,7 +313,7 @@ do_test() {
 	fi
 
 	# rename disk from scsi names to virtio names, e.g. sda1 -> vda1
-	gen_metadata "$plan" "$class" "$slug" "$tag" <"$scriptdir/cpr/$class.cpr.json" |
+	gen_metadata "$class" "$slug" "$tag" <"$scriptdir/cpr/$class.cpr.json" |
 		sed '/\bsd[a-z]\+[0-9]*\b/ s|\bs\(d[a-z]\+[0-9]*\)\b|v\1|' |
 		jq -S . |
 		tee metadata
