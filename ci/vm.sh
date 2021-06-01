@@ -351,7 +351,12 @@ do_test() {
 	'aarch64') console=ttyAMA0,115200 ;;
 	'x86_64') console=ttyS1,115200 ;;
 	esac
-	cmdline=''
+
+	test_provision
+}
+
+test_provision() {
+	local cmdline=''
 	cmdline="$cmdline console=$console"
 	cmdline="$cmdline facility=$facility"
 	cmdline="$cmdline ip=dhcp"
@@ -360,10 +365,15 @@ do_test() {
 	cmdline="$cmdline rw"
 	cmdline="$cmdline tinkerbell=http://tinkerbell.$facility.packet.net"
 	cmdline="$cmdline packet_action=install packet_bootdev_mac=${macs[0]} slug=$slug:$tag pwhash=$(echo 5up | mkpasswd)"
-
 	run_vm -kernel "$kernel" -initrd "$initramfs" -append "$cmdline"
-	grep -r 'provisioning.109' uploads
-	diff -u <(jq -cS . <<<'{"type":"provisioning.109"}') <(jq -cS . "$(grep -rl 'provisioning.109' uploads)")
+
+	# check for provision success code
+	eventid=provisioning.109
+	grep -qr "$eventid" uploads
+	got=$(grep -hr "$eventid" uploads)
+	#shellcheck disable=SC2089
+	want='{"type":"provisioning.109"}'
+	diff -u <(jq -cS . <<<"$want") <(jq -cS . <<<"$got")
 }
 
 get_subnet() {
