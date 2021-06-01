@@ -297,7 +297,7 @@ run_vm() {
 		-nographic \
 		"${serials[@]}" \
 		-machine $machine,accel=kvm:tcg -cpu $cpu -smp 2 -m 8192 \
-		-drive if=virtio,file="$disk",format=raw \
+		-drive if=virtio,file="$disk",format=raw,discard=unmap \
 		-object rng-random,filename=/dev/urandom,id=rng0 \
 		-device virtio-rng-pci,rng=rng0 \
 		${bios[@]} \
@@ -353,6 +353,10 @@ do_test() {
 	esac
 
 	test_provision
+	rm -f uploads/*
+
+	test_deprovision
+	rm -f uploads/*
 }
 
 test_provision() {
@@ -374,6 +378,34 @@ test_provision() {
 	#shellcheck disable=SC2089
 	want='{"type":"provisioning.109"}'
 	diff -u <(jq -cS . <<<"$want") <(jq -cS . <<<"$got")
+}
+
+test_deprovision() {
+	local cmdline=''
+	cmdline="$cmdline console=$console"
+	cmdline="$cmdline facility=$facility"
+	cmdline="$cmdline ip=dhcp"
+	cmdline="$cmdline modloop=http://install.$facility.packet.net/misc/osie/current/$modloop"
+	cmdline="$cmdline modules=loop,squashfs,sd-mod,usb-storage"
+	cmdline="$cmdline rw"
+	cmdline="$cmdline tinkerbell=http://tinkerbell.$facility.packet.net"
+	cmdline="$cmdline packet_action=install packet_state=deprovisioning packet_bootdev_mac=${macs[0]} slug=deprovision"
+	run_vm -kernel "$kernel" -initrd "$initramfs" -append "$cmdline"
+
+	# check for deprovisioning finished message
+	eventid=deprovisioning.306.02
+	grep -qr "$eventid" uploads
+	got=$(grep -hr "$eventid" uploads)
+	#shellcheck disable=SC2089
+	want='{"type":"deprovisioning.306.02","body":"Deprovision finished, rebooting server","private":true}'
+	diff -u <(jq -cS . <<<"$want") <(jq -cS . <<<"$got")
+
+	echo "Checking if disks were wiped"
+	if fdisk -l "$disk" 2>/dev/null | grep Disklabel >/dev/null; then
+		echo "disks were not wiped correctly!"
+		fdisk -l "$disk"
+		exit 2
+	fi
 }
 
 get_subnet() {
