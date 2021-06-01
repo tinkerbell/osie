@@ -75,7 +75,7 @@ gen_metadata() {
 		cprcmd=(jq -S '.filesystems += [{"mount":{"create":{"options": ["32", "-n", "EFI"]},"device":"/dev/sda1","format":"vfat","point":"/boot/efi"}}]')
 	fi
 
-	cat <<-EOF
+	cat <<-EOF | sed '/\bsd[a-z]\+[0-9]*\b/ s|\bs\(d[a-z]\+[0-9]*\)\b|v\1|' | jq -S . | tee metadata
 		{
 		  "class": "$class",
 		  "facility": "$facility",
@@ -321,10 +321,7 @@ do_test() {
 	fi
 
 	# rename disk from scsi names to virtio names, e.g. sda1 -> vda1
-	gen_metadata "$class" "$slug" "$tag" <"$scriptdir/cpr/$class.cpr.json" |
-		sed '/\bsd[a-z]\+[0-9]*\b/ s|\bs\(d[a-z]\+[0-9]*\)\b|v\1|' |
-		jq -S . |
-		tee metadata
+	gen_metadata "$class" "$slug" "$tag" <"$scriptdir/cpr/$class.cpr.json"
 
 	start_dhcp \
 		--dhcp-host="${macs[0]},$pubip4" \
