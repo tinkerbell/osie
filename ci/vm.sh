@@ -283,15 +283,23 @@ run_vm() {
 	local script2=${scripts[${ndxs[2]}]} mac2=${macs[${ndxs[2]}]}
 	local script3=${scripts[${ndxs[3]}]} mac3=${macs[${ndxs[3]}]}
 
+	case $console in
+	*ttyAMA0*) serials=() ;;
+	*ttyS0*) serials=(-serial stdio) ;;
+	*ttyS1*) serials=(-serial pty -serial stdio) ;;
+	*) echo "unknown console setting" >&2 && exit 1 ;;
+	esac
+
 	# shellcheck disable=SC2068
 	"qemu-system-$arch" \
 		"$@" \
+		-monitor unix:monitor.sock,server=on,wait=off \
 		-nographic \
-		-machine $machine,accel=kvm:tcg -cpu $cpu -smp 2 \
+		"${serials[@]}" \
+		-machine $machine,accel=kvm:tcg -cpu $cpu -smp 2 -m 8192 \
 		-drive if=virtio,file="$disk",format=raw \
 		-object rng-random,filename=/dev/urandom,id=rng0 \
 		-device virtio-rng-pci,rng=rng0 \
-		-m 8192 \
 		${bios[@]} \
 		-netdev tap,id=net0,script="$script0",downscript=/bin/true -device "virtio-net,netdev=net0,mac=$mac0" \
 		-netdev tap,id=net1,script="$script1",downscript=/bin/true -device "virtio-net,netdev=net1,mac=$mac1" \
@@ -341,7 +349,7 @@ do_test() {
 
 	case $arch in
 	'aarch64') console=ttyAMA0,115200 ;;
-	'x86_64') console=ttyS0,115200 ;;
+	'x86_64') console=ttyS1,115200 ;;
 	esac
 	cmdline=''
 	cmdline="$cmdline console=$console"
