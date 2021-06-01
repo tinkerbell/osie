@@ -269,8 +269,7 @@ run_vm() {
 				-drive "if=pflash,format=raw,file=$disk.vars"
 			)
 		else
-			# shellcheck disable=SC2178
-			bios=''
+			bios=()
 		fi
 	fi
 
