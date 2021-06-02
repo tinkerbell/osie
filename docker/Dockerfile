@@ -3,14 +3,6 @@ FROM ubuntu:xenial
 VOLUME /statedir
 ENTRYPOINT ["/entrypoint.sh"]
 
-ARG GITVERSION
-ARG GITBRANCH
-ARG DRONEBUILD
-
-ENV OSIE_VERSION ${GITVERSION}
-ENV OSIE_BRANCH ${GITBRANCH}
-ENV DRONE_BUILD ${DRONEBUILD}
-
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 
@@ -187,6 +179,11 @@ RUN curl --remote-name "https://raw.githubusercontent.com/packethost/metal-block
 
 COPY entrypoint.sh /entrypoint.sh
 COPY scripts/ /home/packet/
+
+ARG GITVERSION
+ARG GITBRANCH
+ARG DRONEBUILD
+ENV OSIE_VERSION=${GITVERSION} OSIE_BRANCH=${GITBRANCH} DRONE_BUILD=${DRONEBUILD}
 
 # ensure we always have up to date packages
 RUN apt-get -y update && \
