@@ -245,6 +245,9 @@ teardown() {
 
 }
 
+# This function exec's the last binary run, this seems weird but actually works out ok.
+# Bash ends up running this function in subprocesses so the exec replace run_vm's process not ci/vm.sh's
+# This is needed so that run_vm callers will get qemu's pid and can kill it (otherwise bash won't forward the SIGTERM received by the function)
 run_vm() {
 	local cpu='' machine=''
 
@@ -281,7 +284,7 @@ run_vm() {
 	esac
 
 	# shellcheck disable=SC2068
-	"qemu-system-$arch" \
+	exec "qemu-system-$arch" \
 		"$@" \
 		-monitor unix:monitor.sock,server=on,wait=off \
 		-nographic \
