@@ -342,10 +342,14 @@ do_test() {
 	'x86_64') console=ttyS1,115200 ;;
 	esac
 
-	test_provision
+	color=33
+	colorize $color "== Running Provision Test =="
+	test_provision |& stdbuf -i 0 sed "s/^/$(colorize $color 'test_provision│')/"
 	rm -f uploads/*
 
-	test_deprovision
+	color=34
+	colorize $color "== Running Deprovision Test =="
+	test_deprovision |& stdbuf -i 0 sed "s/^/$(colorize $color 'test_deprovision│')/"
 	rm -f uploads/*
 }
 
@@ -366,6 +370,12 @@ configure_nics() {
 			/bin/true/bin/true)
 		EOF
 	)
+}
+
+function colorize() {
+	local color=$1
+	shift
+	printf "$(tput sgr0)$(tput setaf "$color")%s$(tput sgr0)" "$*"
 }
 
 test_provision() {
