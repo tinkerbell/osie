@@ -275,14 +275,6 @@ run_vm() {
 
 	# scripts matches layout in $macs
 	local scripts=("$scriptdir/ifup.sh" "$scriptdir/ifup.sh" /bin/true /bin/true)
-	local ndxs
-	# shellcheck disable=SC2207
-	ndxs=($(shuf -e 0 1 2 3))
-	local script0=${scripts[${ndxs[0]}]} mac0=${macs[${ndxs[0]}]}
-	local script1=${scripts[${ndxs[1]}]} mac1=${macs[${ndxs[1]}]}
-	local script2=${scripts[${ndxs[2]}]} mac2=${macs[${ndxs[2]}]}
-	local script3=${scripts[${ndxs[3]}]} mac3=${macs[${ndxs[3]}]}
-
 	case $console in
 	*ttyAMA0*) serials=() ;;
 	*ttyS0*) serials=(-serial stdio) ;;
@@ -301,10 +293,10 @@ run_vm() {
 		-object rng-random,filename=/dev/urandom,id=rng0 \
 		-device virtio-rng-pci,rng=rng0 \
 		${bios[@]} \
-		-netdev tap,id=net0,script="$script0",downscript=/bin/true -device "virtio-net,netdev=net0,mac=$mac0" \
-		-netdev tap,id=net1,script="$script1",downscript=/bin/true -device "virtio-net,netdev=net1,mac=$mac1" \
-		-netdev tap,id=net2,script="$script2",downscript=/bin/true -device "virtio-net,netdev=net2,mac=$mac2" \
-		-netdev tap,id=net3,script="$script3",downscript=/bin/true -device "virtio-net,netdev=net3,mac=$mac3" \
+		-netdev tap,id=net0,script="${scripts[0]}",downscript=/bin/true -device "virtio-net,netdev=net0,mac=${macs[0]}" \
+		-netdev tap,id=net1,script="${scripts[1]}",downscript=/bin/true -device "virtio-net,netdev=net1,mac=${macs[1]}" \
+		-netdev tap,id=net2,script="${scripts[2]}",downscript=/bin/true -device "virtio-net,netdev=net2,mac=${macs[2]}" \
+		-netdev tap,id=net3,script="${scripts[3]}",downscript=/bin/true -device "virtio-net,netdev=net3,mac=${macs[3]}" \
 		;
 }
 
@@ -326,6 +318,8 @@ do_test() {
 	if [[ -z $tag ]] || [[ $OS == "$tag" ]]; then
 		tag=$slug-$class
 	fi
+
+	configure_nics
 
 	# rename disk from scsi names to virtio names, e.g. sda1 -> vda1
 	gen_metadata "$class" "$slug" "$tag" <"$scriptdir/cpr/$class.cpr.json"
@@ -357,6 +351,25 @@ do_test() {
 
 	test_deprovision
 	rm -f uploads/*
+}
+
+configure_nics() {
+	# macs[0] == dhcpmac
+	mapfile -t macs < <(
+		shuf <<-EOF
+			52:54:00:BA:DD:00
+			52:54:00:BA:DD:01
+			52:54:00:BA:DD:02
+			52:54:00:BA:DD:03
+		EOF
+	)
+	mapfile -t scripts < <(
+		shuf <<-EOF
+			$scriptdir/ifup.sh
+			$scriptdir/ifup.sh
+			/bin/true/bin/true)
+		EOF
+	)
 }
 
 test_provision() {
@@ -417,15 +430,6 @@ get_subnet() {
 n=$RANDOM
 facility=test$n
 disk=/tmp/test$n.img
-# shellcheck disable=SC2207
-macs=($(
-	shuf <<-EOF
-		52:54:00:BA:DD:00
-		52:54:00:BA:DD:01
-		52:54:00:BA:DD:02
-		52:54:00:BA:DD:03
-	EOF
-)) # macs[0] == dhcpmac
 subnet=$(get_subnet)
 pubip4=$subnet.2
 
