@@ -116,7 +116,7 @@ gen_metadata() {
 		      }
 		    ],
 		    "bonding": {
-		      "mode": 5
+		      "link_aggregation": "individual"
 		    },
 		    "interfaces": [
 		      {
@@ -144,6 +144,12 @@ gen_metadata() {
 		  "wipe_disks": true
 		}
 	EOF
+
+	mkdir -p 2009-04-04/meta-data
+	(
+		cd 2009-04-04/meta-data
+		echo "$id" >instance-id
+	)
 }
 
 do_symlink_ro_rw() {
@@ -348,6 +354,11 @@ do_test() {
 	rm -f uploads/*
 
 	color=34
+	colorize $color "== Running Boot & Phone-Home Test =="
+	test_boot_and_phone_home |& stdbuf -i 0 sed "s/^/$(colorize $color 'test_boot_and_phone_home│')/"
+	rm -f uploads/*
+
+	color=35
 	colorize $color "== Running Deprovision Test =="
 	test_deprovision |& stdbuf -i 0 sed "s/^/$(colorize $color 'test_deprovision│')/"
 	rm -f uploads/*
@@ -397,6 +408,27 @@ test_provision() {
 	#shellcheck disable=SC2089
 	want='{"type":"provisioning.109"}'
 	diff -u <(jq -cS . <<<"$want") <(jq -cS . <<<"$got")
+}
+
+test_boot_and_phone_home() {
+	run_vm &
+	local vmpid=$! i=0 t=10
+	until grep -qr instance_id uploads; do
+		sleep $t
+		# timeout after 5mins
+		if ((i++ == ((5 * 60) / t))); then
+			break
+		fi
+	done
+	echo 'system_powerdown' | socat unix-connect:monitor.sock -
+	timeout 30 sh -c "wait $vmpid" || kill -KILL $vmpid
+
+	# check for phone-home
+	eventid=instance_id
+	grep -qr "$eventid" uploads
+	got=$(grep -hr "$eventid" uploads)
+	want='{"instance_id":"'"$id"'"}'
+	diff -u <(jq -cS . <<<$want) <(jq -cS . <<<$got)
 }
 
 test_deprovision() {
