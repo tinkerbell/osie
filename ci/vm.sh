@@ -357,6 +357,13 @@ do_test() {
 	rm -f uploads/*
 
 	color=34
+	colorize $color "== Running Boot & Phone-Home Test =="
+	test_boot_and_phone_home |& stdbuf -i 0 sed "s/^/$(colorize $color 'test_boot_and_phone_home│')/" &&
+		echo "this test is expected to fail" >&2 &&
+		exit 1
+	rm -f uploads/*
+
+	color=35
 	colorize $color "== Running Deprovision Test =="
 	test_deprovision |& stdbuf -i 0 sed "s/^/$(colorize $color 'test_deprovision│')/"
 	rm -f uploads/*
@@ -406,6 +413,44 @@ test_provision() {
 	got=$(grep -hr "$eventid" uploads)
 	#shellcheck disable=SC2089
 	local want='{"type":"provisioning.109"}'
+	diff -u <(jq -cS . <<<"$want") <(jq -cS . <<<"$got")
+}
+
+test_boot_and_phone_home() {
+	run_vm &
+	local vmpid=$!
+
+	local i=0
+	until grep -qr instance_id uploads; do
+		# timeout after 2min
+		if ((i++ == 12)); then
+			break
+		fi
+		sleep 10
+	done
+	echo 'system_powerdown' | socat unix-connect:monitor.sock -
+
+	i=0
+	local qpid
+	# wait 2min for the vm to shutdown
+	until ((i++ == 12)); do
+		qpid=$(pgrep qemu || :)
+		if [[ -z ${qpid:-} ]] || ((qpid != vmpid)); then
+			break
+		fi
+		sleep 10
+	done
+	if ((i >= 12)); then
+		kill -KILL $vmpid
+		sleep 1
+	fi
+
+	# check for phone-home
+	local eventid=instance_id
+	grep -qr "$eventid" uploads
+	local got
+	got=$(grep -hr "$eventid" uploads)
+	local want='{"instance_id":"'"$id"'"}'
 	diff -u <(jq -cS . <<<"$want") <(jq -cS . <<<"$got")
 }
 
