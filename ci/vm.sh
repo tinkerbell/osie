@@ -59,8 +59,7 @@ make_disk() {
 }
 
 gen_metadata() {
-	local class=$1 slug=$2 tag=$3
-	id=$(uuidgen)
+	local class=$1 slug=$2 tag=$3 id=$4
 
 	local cprcmd
 	cprcmd=(cat)
@@ -320,8 +319,9 @@ do_test() {
 
 	configure_nics
 
+	id=$(uuidgen)
 	# rename disk from scsi names to virtio names, e.g. sda1 -> vda1
-	gen_metadata "$class" "$slug" "$tag" <"$scriptdir/cpr/$class.cpr.json"
+	gen_metadata "$class" "$slug" "$tag" "$id" <"$scriptdir/cpr/$class.cpr.json"
 
 	start_dhcp \
 		--dhcp-host="${macs[0]},$pubip4" \
