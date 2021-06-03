@@ -190,7 +190,7 @@ ifneq ($(CI),drone)
 test-{{arch}}: /proc/sys/fs/binfmt_misc/qemu-aarch64
 endif
 {% endif %}
-test-{{arch}}: $(cprs) build/osie-test-env package-apps package-grubs build/$v/osie-{{arch}}.tar.gz build/$v/osie-runner-{{arch}}.tar.gz build/$v/repo-{{arch}} ${packaged-{{arch}}} ci/ifup.sh ci/vm.sh build/$v/test-initramfs-{{arch}}/test-initramfs
+test-{{arch}}: $(cprs) build/osie-test-env package-apps package-grubs build/$v/osie-{{arch}}.tar.gz build/$v/osie-runner-{{arch}}.tar.gz build/$v/repo-{{arch}} ${packaged-{{arch}}} ci/ifup.sh ci/vm.sh build/$v/test-initramfs-{{arch}}/test-initramfs ## Run VM based tests for {{arch}}
 	$(E) "DOCKER   $@"
 ifneq ($(CI),drone)
 	docker run --rm -ti \
