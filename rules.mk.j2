@@ -71,8 +71,6 @@ T := null
 endif
 
 .PHONY: all deploy package package-apps package-grubs test test-aarch6 test-x86_64 v
-all: build/$v/osie-aarch64.tar.gz build/$v/osie-x86_64.tar.gz
-test: test-aarch64 test-x86_64
 v:
 	@echo $v
 
@@ -92,8 +90,6 @@ package-{{platform}}: ${packaged-{{platform}}}
 packages += ${packaged-{{platform}}}
 {% endfor %}
 
-package: build/$v.tar.gz build/$v.tar.gz.sha512sum
-package-common: package-apps package-grubs
 package-apps: ${packaged-apps}
 package-grubs: ${packaged-grubs}
 package-osies: ${packaged-osies}
@@ -103,7 +99,7 @@ s3Bucket := tinkerbell-oss
 ifdef DRONE_PULL_REQUEST
 s3Bucket := tinkerbell-oss-pr
 endif
-deploy: package
+deploy-to-s3: package
 	$(E) "UPLOAD   s3/tinkerbell-oss/osie-uploads/$v.tar.gz"
 	mc cp build/$v.tar.gz s3/${s3Bucket}/osie-uploads/$v.tar.gz
 	if [[ $${DRONE_BUILD_EVENT:-} == "push" ]] && [[ $${DRONE_BRANCH:-} == "master" ]]; then mc cp s3/tinkerbell-oss/osie-uploads/$v.tar.gz s3/tinkerbell-oss/osie-uploads/latest.tar.gz; fi
