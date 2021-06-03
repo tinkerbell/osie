@@ -1,10 +1,12 @@
-SHELL := bash
-.SHELLFLAGS := -o pipefail -c
-
+# Only use the recipes defined in these makefiles
+MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
-MAKEFLAGS +=  --no-builtin-rules
-
+# Delete target files if there's an error
+# This avoids a failure to then skip building on next run if the output is created by shell redirection for example
 .DELETE_ON_ERROR:
+# Use bash instead of plain sh
+SHELL := bash
+.SHELLFLAGS := -o pipefail -euc
 
 E=@echo
 ifeq ($(V),1)
