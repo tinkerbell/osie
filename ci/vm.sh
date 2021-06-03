@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -o errexit -o nounset -o pipefail -o xtrace
 
@@ -62,10 +62,9 @@ gen_metadata() {
 	local cprcmd hardware_id id
 	id=$(uuidgen)
 	hardware_id=$(uuidgen)
-	local plan=$1
-	local class=$2
-	local slug=$3
-	local tag=$4
+	local class=$1
+	local slug=$2
+	local tag=$3
 	local distro=${slug%%_*}
 	local version=${slug#*_}
 	version=${version//_/.}
@@ -76,76 +75,75 @@ gen_metadata() {
 		cprcmd=(jq -S '.filesystems += [{"mount":{"create":{"options": ["32", "-n", "EFI"]},"device":"/dev/sda1","format":"vfat","point":"/boot/efi"}}]')
 	fi
 
-	cat <<EOF
-{
-	"class": "$class",
-	"facility": "$facility",
-	"hardware_id": "$hardware_id",
-	"hostname": "dut",
-	"id": "$id",
-	"network": {
-		"addresses": [
-			{
-				"address": "$pubip4",
-				"address_family": 4,
-				"cidr": 31,
-				"gateway": "$subnet.1",
-				"management": true,
-				"netmask": "255.255.255.254",
-				"network": "$subnet.3",
-				"public": true
-			},
-			{
-				"address": "2604:1380:2:4200::5",
-				"address_family": 6,
-				"cidr": 127,
-				"gateway": "2604:1380:2:4200::4",
-				"management": true,
-				"netmask": "ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffe",
-				"network": "2604:1380:2:4200::4",
-				"public": true
-			},
-			{
-				"address": "10.0.0.2",
-				"address_family": 4,
-				"cidr": 31,
-				"gateway": "10.0.0.1",
-				"management": true,
-				"netmask": "255.255.255.254",
-				"network": "10.0.0.1",
-				"public": false
-			}
-		],
-		"bonding": {
-			"mode": 5
-		},
-		"interfaces": [
-			{
-				"mac": "${macs[0]}",
-				"name": "dummy0"
-			},
-			{
-				"mac": "${macs[1]}",
-				"name": "dummy1"
-			}
-		]
-	},
-	"operating_system": {
-		"slug": "$slug",
-		"distro": "$distro",
-		"version": "$version",
-		"license_activation": {
-		"state": "unlicensed"
-		},
-		"image_tag": "$tag"
-	},
-	"phone_home_url": "http://tinkerbell.$facility.packet.net",
-	"plan": "$plan",
-	"preserve_data": false,
-	"storage": $("${cprcmd[@]}"),
-	"wipe_disks": true
-}
-EOF
+	cat <<-EOF | sed '/\bsd[a-z]\+[0-9]*\b/ s|\bs\(d[a-z]\+[0-9]*\)\b|v\1|' | jq -S . | tee metadata
+		{
+		  "class": "$class",
+		  "facility": "$facility",
+		  "hardware_id": "$hardware_id",
+		  "hostname": "dut",
+		  "id": "$id",
+		  "network": {
+		    "addresses": [
+		      {
+		        "address": "$pubip4",
+		        "address_family": 4,
+		        "cidr": 31,
+		        "gateway": "$subnet.1",
+		        "management": true,
+		        "netmask": "255.255.255.254",
+		        "network": "$subnet.3",
+		        "public": true
+		      },
+		      {
+		        "address": "2604:1380:2:4200::5",
+		        "address_family": 6,
+		        "cidr": 127,
+		        "gateway": "2604:1380:2:4200::4",
+		        "management": true,
+		        "netmask": "ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffe",
+		        "network": "2604:1380:2:4200::4",
+		        "public": true
+		      },
+		      {
+		        "address": "10.0.0.2",
+		        "address_family": 4,
+		        "cidr": 31,
+		        "gateway": "10.0.0.1",
+		        "management": true,
+		        "netmask": "255.255.255.254",
+		        "network": "10.0.0.1",
+		        "public": false
+		      }
+		    ],
+		    "bonding": {
+		      "mode": 5
+		    },
+		    "interfaces": [
+		      {
+		        "mac": "${macs[0]}",
+		        "name": "dummy0"
+		      },
+		      {
+		        "mac": "${macs[1]}",
+		        "name": "dummy1"
+		      }
+		    ]
+		  },
+		  "operating_system": {
+		    "distro": "$distro",
+		    "image_tag": "$tag",
+		    "license_activation": {
+		      "state": "unlicensed"
+		    },
+		    "slug": "$slug",
+		    "version": "$version"
+		  },
+		  "phone_home_url": "http://tinkerbell.$facility.packet.net",
+		  "preserve_data": false,
+		  "storage": $("${cprcmd[@]}"),
+		  "wipe_disks": true
+		}
+	EOF
 }
 
 do_symlink_ro_rw() {
@@ -178,36 +176,44 @@ start_web() {
 
 	cat >Caddyfile <<-EOF
 		install.$facility.packet.net:80 {
-		    tls off
 		    browse
+		    log stderr
+		    tls off
+
 		    proxy /misc/osie/current/repo-$arch install.ewr1.packet.net/alpine/$repo_dest/
 		    rewrite /misc/osie/current {
-			regexp (.*)
-			to {1}
+		        regexp (.*)
+		        to {1}
 		    }
 		    proxy /repo-$arch/ install.ewr1.packet.net/alpine/$repo_dest/ {
-			without /repo-$arch/
+		        without /repo-$arch/
 		    }
 		    proxy /misc/osie install.ewr1.packet.net
 		    proxy /alpine/ install.ewr1.packet.net
 		}
+
 		tinkerbell.$facility.packet.net:80 {
+		    log stderr
 		    tls off
 		    upload / {
-			to "uploads"
-			random_suffix_len 5
-			yes_without_tls
+		        to "uploads"
+		        random_suffix_len 5
+		        yes_without_tls
 		    }
 		}
+
 		metadata.packet.net:80 {
+		    log stderr
 		}
+
 		metadata.packet.net:443 {
+		    log stderr
 		    tls server.pem server-key.pem
 		}
 	EOF
 
 	mkdir uploads
-	proxy -quiet &
+	proxy &>proxy.log &
 }
 
 stop_web() {
@@ -243,12 +249,8 @@ teardown() {
 }
 
 run_vm() {
-	local bios=() cmdline='' cpu='' machine='' console='' nic=''
+	local bios=() cpu='' machine=''
 
-	case $arch in
-	'aarch64') console=ttyAMA0,115200 nic=virtio-net ;;
-	'x86_64') console=ttyS0,115200 nic=e1000 ;;
-	esac
 	case $(uname -m)-$arch in
 	'aarch64-aarch64') machine=virt cpu=host ;;
 	'aarch64-x86_64') machine=virt cpu=qemu64 ;;
@@ -256,15 +258,6 @@ run_vm() {
 	'x86_64-x86_64') machine=pc cpu=host ;;
 	*) echo 'unknown host-virt architecture combination' && exit 1 ;;
 	esac
-
-	cmdline="$cmdline console=$console"
-	cmdline="$cmdline facility=$facility"
-	cmdline="$cmdline ip=dhcp"
-	cmdline="$cmdline modloop=http://install.$facility.packet.net/misc/osie/current/$modloop"
-	cmdline="$cmdline modules=loop,squashfs,sd-mod,usb-storage"
-	cmdline="$cmdline rw"
-	cmdline="$cmdline tinkerbell=http://tinkerbell.$facility.packet.net"
-	cmdline="$cmdline $*"
 
 	if [[ $UEFI != 'true' ]]; then
 		bios=('-bios' '/usr/share/qemu/bios.bin')
@@ -276,37 +269,34 @@ run_vm() {
 				-drive "if=pflash,format=raw,file=$disk.vars"
 			)
 		else
-			# shellcheck disable=SC2178
-			bios=''
+			bios=()
 		fi
 	fi
 
 	# scripts matches layout in $macs
 	local scripts=("$scriptdir/ifup.sh" "$scriptdir/ifup.sh" /bin/true /bin/true)
-	local ndxs
-	# shellcheck disable=SC2207
-	ndxs=($(shuf -e 0 1 2 3))
-	local script0=${scripts[${ndxs[0]}]} mac0=${macs[${ndxs[0]}]}
-	local script1=${scripts[${ndxs[1]}]} mac1=${macs[${ndxs[1]}]}
-	local script2=${scripts[${ndxs[2]}]} mac2=${macs[${ndxs[2]}]}
-	local script3=${scripts[${ndxs[3]}]} mac3=${macs[${ndxs[3]}]}
+	case $console in
+	*ttyAMA0*) serials=() ;;
+	*ttyS0*) serials=(-serial stdio) ;;
+	*ttyS1*) serials=(-serial pty -serial stdio) ;;
+	*) echo "unknown console setting" >&2 && exit 1 ;;
+	esac
 
 	# shellcheck disable=SC2068
 	"qemu-system-$arch" \
-		-kernel "$kernel" \
-		-initrd "$initramfs" \
-		-append "$cmdline" \
+		"$@" \
+		-monitor unix:monitor.sock,server=on,wait=off \
 		-nographic \
-		-machine $machine,accel=kvm:tcg -cpu $cpu -smp 2 \
-		-drive if=virtio,file="$disk",format=raw \
+		"${serials[@]}" \
+		-machine $machine,accel=kvm:tcg -cpu $cpu -smp 2 -m 8192 \
+		-drive if=virtio,file="$disk",format=raw,discard=unmap \
 		-object rng-random,filename=/dev/urandom,id=rng0 \
 		-device virtio-rng-pci,rng=rng0 \
-		-m 8192 \
 		${bios[@]} \
-		-netdev tap,id=net0,script="$script0",downscript=/bin/true -device "$nic,netdev=net0,mac=$mac0" \
-		-netdev tap,id=net1,script="$script1",downscript=/bin/true -device "$nic,netdev=net1,mac=$mac1" \
-		-netdev tap,id=net2,script="$script2",downscript=/bin/true -device "$nic,netdev=net2,mac=$mac2" \
-		-netdev tap,id=net3,script="$script3",downscript=/bin/true -device "$nic,netdev=net3,mac=$mac3" \
+		-netdev tap,id=net0,script="${scripts[0]}",downscript=/bin/true -device "virtio-net,netdev=net0,mac=${macs[0]}" \
+		-netdev tap,id=net1,script="${scripts[1]}",downscript=/bin/true -device "virtio-net,netdev=net1,mac=${macs[1]}" \
+		-netdev tap,id=net2,script="${scripts[2]}",downscript=/bin/true -device "virtio-net,netdev=net2,mac=${macs[2]}" \
+		-netdev tap,id=net3,script="${scripts[3]}",downscript=/bin/true -device "virtio-net,netdev=net3,mac=${macs[3]}" \
 		;
 }
 
@@ -319,10 +309,8 @@ do_test() {
 	start_log_rx
 
 	class=t1.small.x86
-	plan=baremetal_0
 	if [ "$arch" = 'aarch64' ]; then
 		class=c1.large.arm
-		plan=baremetal_2a
 	fi
 
 	slug=${OS%:*}
@@ -331,11 +319,10 @@ do_test() {
 		tag=$slug-$class
 	fi
 
+	configure_nics
+
 	# rename disk from scsi names to virtio names, e.g. sda1 -> vda1
-	gen_metadata "$plan" "$class" "$slug" "$tag" <"$scriptdir/cpr/$class.cpr.json" |
-		sed '/\bsd[a-z]\+[0-9]*\b/ s|\bs\(d[a-z]\+[0-9]*\)\b|v\1|' |
-		jq -S . |
-		tee metadata
+	gen_metadata "$class" "$slug" "$tag" <"$scriptdir/cpr/$class.cpr.json"
 
 	start_dhcp \
 		--dhcp-host="${macs[0]},$pubip4" \
@@ -352,17 +339,97 @@ do_test() {
 		-e '/^hardware_id=/ s|^|curl http://metadata.packet.net/bundle.pem >/tmp/caddy-cert.pem\n|' \
 		-e '/^\s*reboot$/ s|reboot|poweroff|' \
 		-e 's|\./cleanup.sh.*|poweroff|' \
+		-e 's|docker load|& -q|' \
 		osie-installer.sh runner.sh
 
-	run_vm "packet_action=install packet_bootdev_mac=${macs[0]} slug=$slug:$tag pwhash=$(echo 5up | mkpasswd) plan=$class"
-	grep -r 'provisioning.109' uploads
-	diff -u <(jq -cS . <<<'{"type":"provisioning.109"}') <(jq -cS . "$(grep -rl 'provisioning.109' uploads)")
+	case $arch in
+	'aarch64') console=ttyAMA0,115200 ;;
+	'x86_64') console=ttyS1,115200 ;;
+	esac
+
+	color=33
+	colorize $color "== Running Provision Test =="
+	test_provision |& stdbuf -i 0 sed "s/^/$(colorize $color 'test_provision│')/"
+	rm -f uploads/*
+
+	color=34
+	colorize $color "== Running Deprovision Test =="
+	test_deprovision |& stdbuf -i 0 sed "s/^/$(colorize $color 'test_deprovision│')/"
+	rm -f uploads/*
 }
 
-do_network_test() {
-	cd "$scriptdir"
-	pip3 install ../docker/scripts/packet-networking
-	./test-network.sh
+configure_nics() {
+	# macs[0] == dhcpmac
+	mapfile -t macs < <(
+		shuf <<-EOF
+			52:54:00:BA:DD:00
+			52:54:00:BA:DD:01
+			52:54:00:BA:DD:02
+			52:54:00:BA:DD:03
+		EOF
+	)
+	mapfile -t scripts < <(
+		shuf <<-EOF
+			$scriptdir/ifup.sh
+			$scriptdir/ifup.sh
+			/bin/true/bin/true)
+		EOF
+	)
+}
+
+function colorize() {
+	local color=$1
+	shift
+	printf "$(tput sgr0)$(tput setaf "$color")%s$(tput sgr0)" "$*"
+}
+
+test_provision() {
+	local cmdline=''
+	cmdline="$cmdline console=$console"
+	cmdline="$cmdline facility=$facility"
+	cmdline="$cmdline ip=dhcp"
+	cmdline="$cmdline modloop=http://install.$facility.packet.net/misc/osie/current/$modloop"
+	cmdline="$cmdline modules=loop,squashfs,sd-mod,usb-storage"
+	cmdline="$cmdline rw"
+	cmdline="$cmdline tinkerbell=http://tinkerbell.$facility.packet.net"
+	cmdline="$cmdline packet_action=install packet_bootdev_mac=${macs[0]} slug=$slug:$tag pwhash=$(echo 5up | mkpasswd)"
+	run_vm -kernel "$kernel" -initrd "$initramfs" -append "$cmdline"
+
+	# check for provision success code
+	eventid=provisioning.109
+	grep -qr "$eventid" uploads
+	got=$(grep -hr "$eventid" uploads)
+	#shellcheck disable=SC2089
+	want='{"type":"provisioning.109"}'
+	diff -u <(jq -cS . <<<"$want") <(jq -cS . <<<"$got")
+}
+
+test_deprovision() {
+	local cmdline=''
+	cmdline="$cmdline console=$console"
+	cmdline="$cmdline facility=$facility"
+	cmdline="$cmdline ip=dhcp"
+	cmdline="$cmdline modloop=http://install.$facility.packet.net/misc/osie/current/$modloop"
+	cmdline="$cmdline modules=loop,squashfs,sd-mod,usb-storage"
+	cmdline="$cmdline rw"
+	cmdline="$cmdline tinkerbell=http://tinkerbell.$facility.packet.net"
+	cmdline="$cmdline packet_action=install packet_state=deprovisioning packet_bootdev_mac=${macs[0]} slug=deprovision"
+	run_vm -kernel "$kernel" -initrd "$initramfs" -append "$cmdline"
+
+	# check for deprovisioning finished message
+	eventid=deprovisioning.306.02
+	grep -qr "$eventid" uploads
+	got=$(grep -hr "$eventid" uploads)
+	#shellcheck disable=SC2089
+	want='{"type":"deprovisioning.306.02","body":"Deprovision finished, rebooting server","private":true}'
+	diff -u <(jq -cS . <<<"$want") <(jq -cS . <<<"$got")
+
+	echo "Checking if disks were wiped"
+	if fdisk -l "$disk" 2>/dev/null | grep Disklabel >/dev/null; then
+		echo "disks were not wiped correctly!"
+		fdisk -l "$disk"
+		exit 2
+	fi
 }
 
 get_subnet() {
@@ -374,15 +441,6 @@ get_subnet() {
 n=$RANDOM
 facility=test$n
 disk=/tmp/test$n.img
-# shellcheck disable=SC2207
-macs=($(
-	shuf <<-EOF
-		52:54:00:BA:DD:00
-		52:54:00:BA:DD:01
-		52:54:00:BA:DD:02
-		52:54:00:BA:DD:03
-	EOF
-)) # macs[0] == dhcpmac
 subnet=$(get_subnet)
 pubip4=$subnet.2
 
@@ -410,6 +468,7 @@ test | tests)
 	check_required_arg_file "$kernel" 'kernel' '-k'
 	check_required_arg_file "$modloop" 'modloop' '-m'
 	;;
+*) echo "unknown command $cmd" >&2 && exit 1 ;;
 esac
 
 if [[ $cmd == tests ]]; then
@@ -427,4 +486,4 @@ if [[ $cmd == tests ]]; then
 	exit
 fi
 
-"do_$cmd" "$@"
+do_test "$@"

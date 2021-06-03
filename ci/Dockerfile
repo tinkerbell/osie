@@ -21,6 +21,7 @@ RUN apk add --no-cache --no-progress --update --upgrade \
         libarchive-tools \
         make \
         musl-dev \
+        ncurses \
         ovmf \
         pigz \
         py3-pip \
@@ -69,3 +70,4 @@ RUN curl -L https://github.com/git-lfs/git-lfs/releases/download/v2.5.1/git-lfs-
     git-lfs install
 
 COPY tls/ /tls/
+ENV TERM=xterm-256color
