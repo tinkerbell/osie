@@ -215,8 +215,7 @@ build/$v-rootfs-%: build/initramfs-%
 build/discover-metal-x86_64.tar.gz:
 	$(E) "DOCKER   $@"
 	docker pull quay.io/packet/discover-metal 2>&1 | tee $@.log >/dev/$T
-	docker save quay.io/packet/discover-metal:latest > $@.tmp
-	mv $@.tmp $@
+	docker save quay.io/packet/discover-metal:latest | pigz >$@
 
 ifneq ($(CI),drone)
 build/osie-aarch64.tar.gz: /proc/sys/fs/binfmt_misc/qemu-aarch64
