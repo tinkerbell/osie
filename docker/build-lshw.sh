@@ -10,6 +10,5 @@ curl -L "${LSHW_BASEURL}/${LSHW_RELEASE}.tar.gz" >lshw.tar.gz
 echo "${LSHW_SHA512}  lshw.tar.gz" | sha512sum -c
 tar -zxvf lshw.tar.gz
 cd lshw-${LSHW_RELEASE}/src
-make -j"$(nproc)" lshw pci.ids usb.ids oui.txt manuf.txt
-install -pDm 0755 lshw /usr/sbin
-install -pDm 0644 -t /usr/share/lshw/ pci.ids usb.ids oui.txt manuf.txt
+make -j"$(nproc)"
+make -j"$(nproc)" install

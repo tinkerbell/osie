@@ -31,24 +31,28 @@ RUN if [ $(uname -m) = 'x86_64' ]; then \
 RUN apt-get update -y && apt-get install -y build-essential
 
 # build lshw, done here so we can keep it cached as long as possible
-COPY build-lshw.sh /tmp/osie/
-RUN (cd /tmp/osie/ && ./build-lshw.sh) 
-RUN rm -rf /tmp/osie
+COPY build-lshw.sh /tmp/osie/build.sh
+RUN (cd /tmp/osie/ && DESTDIR=/tmp/out/ ./build.sh) 
+RUN cp -a /tmp/out/* /
+RUN rm -rf /tmp/osie /tmp/out
 
 # build nvme cli, done here so we can keep it cached as long as possible
-COPY build-nvme-cli.sh /tmp/osie/
-RUN (cd /tmp/osie/ && ./build-nvme-cli.sh) 
-RUN rm -rf /tmp/osie
+COPY build-nvme-cli.sh /tmp/osie/build.sh
+RUN (cd /tmp/osie/ && DESTDIR=/tmp/out/ ./build.sh) 
+RUN cp -a /tmp/out/* /
+RUN rm -rf /tmp/osie /tmp/out
 
 # build mstflint, done here so we can keep it cached as long as possible
-COPY build-mstflint.sh /tmp/osie/
-RUN (cd /tmp/osie/ && ./build-mstflint.sh) 
-RUN rm -rf /tmp/osie
+COPY build-mstflint.sh /tmp/osie/build.sh
+RUN (cd /tmp/osie/ && DESTDIR=/tmp/out/ ./build.sh) 
+RUN cp -a /tmp/out/* /
+RUN rm -rf /tmp/osie /tmp/out
 
 # build smartmontools, done here so we can keep it cached as long as possible
-COPY build-smartmontools.sh /tmp/osie/
-RUN (cd /tmp/osie/ && ./build-smartmontools.sh) 
-RUN rm -rf /tmp/osie
+COPY build-smartmontools.sh /tmp/osie/build.sh
+RUN (cd /tmp/osie/ && DESTDIR=/tmp/out/ ./build.sh) 
+RUN cp -a /tmp/out/* /
+RUN rm -rf /tmp/osie /tmp/out
 
 # Uninstall no longer needed build deps
 RUN apt-get -qy remove build-essential

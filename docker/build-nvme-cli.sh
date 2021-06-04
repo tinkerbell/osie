@@ -11,4 +11,4 @@ echo "${NVMECLI_SHA512}  nvme-cli.tar.gz" | sha512sum -c
 tar -zxvf nvme-cli.tar.gz
 cd nvme-cli-${NVMECLI_RELEASE}
 make -j"$(nproc)"
-make install-bin
+make "DESTDIR=$DESTDIR" install-bin
