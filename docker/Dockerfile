@@ -14,12 +14,11 @@ RUN if [ $(uname -m) = 'aarch64' ]; then \
     rm -rf /tmp/osie
 
 # runtime packages
-COPY get-package-list.sh git-lfs-linux-*-v2.5.1-4-g2f166e02 /tmp/osie/
-RUN apt-get update -y && \
-    apt-get install -y $(/tmp/osie/get-package-list.sh) && \
-    apt-get -qy autoremove && \
-    apt-get -qy clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/osie
+COPY get-package-list.sh /tmp/osie/
+RUN apt-get update -y && apt-get install -y $(/tmp/osie/get-package-list.sh)
+RUN apt-get -qy autoremove
+RUN apt-get -qy clean
+RUN rm -rf /var/lib/apt/lists/* /tmp/osie
 
 # gron - grep for JSON
 COPY lfs/gron-0.6.0-amd64 /tmp/osie/
@@ -30,81 +29,74 @@ RUN if [ $(uname -m) = 'x86_64' ]; then \
 
 # build lshw, done here so we can keep it cached as long as possible
 COPY build-lshw.sh /tmp/osie/
-RUN apt-get update -y && \
-    apt-get install -y build-essential && \
-    (cd /tmp/osie/ && ./build-lshw.sh) && \
-    apt-get -qy remove build-essential && \
-    apt-get -qy autoremove && \
-    apt-get -qy clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/osie/
+RUN apt-get update -y && apt-get install -y build-essential
+RUN (cd /tmp/osie/ && ./build-lshw.sh) 
+RUN apt-get -qy remove build-essential
+RUN apt-get -qy autoremove
+RUN apt-get -qy clean
+RUN rm -rf /var/lib/apt/lists/* /tmp/osie/
 
 # build nvme cli, done here so we can keep it cached as long as possible
 COPY build-nvme-cli.sh /tmp/osie/
-RUN apt-get update -y && \
-    apt-get install -y build-essential && \
-    (cd /tmp/osie/ && ./build-nvme-cli.sh) && \
-    apt-get -qy remove build-essential && \
-    apt-get -qy autoremove && \
-    apt-get -qy clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/osie/
+RUN apt-get update -y && apt-get install -y build-essential
+RUN (cd /tmp/osie/ && ./build-nvme-cli.sh) 
+RUN apt-get -qy remove build-essential
+RUN apt-get -qy autoremove
+RUN apt-get -qy clean
+RUN rm -rf /var/lib/apt/lists/* /tmp/osie/
 
 # build mstflint, done here so we can keep it cached as long as possible
 COPY build-mstflint.sh /tmp/osie/
-RUN apt-get update -y && \
-    apt-get install -y build-essential && \
-    (cd /tmp/osie/ && ./build-mstflint.sh) && \
-    apt-get -qy remove build-essential && \
-    apt-get -qy autoremove && \
-    apt-get -qy clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/osie/
+RUN apt-get update -y && apt-get install -y build-essential
+RUN (cd /tmp/osie/ && ./build-mstflint.sh) 
+RUN apt-get -qy remove build-essential
+RUN apt-get -qy autoremove
+RUN apt-get -qy clean
+RUN rm -rf /var/lib/apt/lists/* /tmp/osie/
 
 # build smartmontools, done here so we can keep it cached as long as possible
 COPY build-smartmontools.sh /tmp/osie/
-RUN apt-get update -y && \
-    apt-get install -y build-essential && \
-    (cd /tmp/osie/ && ./build-smartmontools.sh) && \
-    apt-get -qy remove build-essential && \
-    apt-get -qy autoremove && \
-    apt-get -qy clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/osie/
+RUN apt-get update -y && apt-get install -y build-essential
+RUN (cd /tmp/osie/ && ./build-smartmontools.sh) 
+RUN apt-get -qy remove build-essential 
+RUN apt-get -qy autoremove 
+RUN apt-get -qy clean 
+RUN rm -rf /var/lib/apt/lists/* /tmp/osie/
 
 ARG PACKET_HARDWARE_COMMIT=68a25da2b6a3d3281838bff6b62639438116d0d1
 ARG PACKET_NETWORKING_COMMIT=06061801efaf34caa8d8b1ae5973c15e5a23659d
 
-RUN curl https://bootstrap.pypa.io/pip/3.5/get-pip.py | python3 && \
-    pip3 install git+https://github.com/packethost/packet-hardware.git@${PACKET_HARDWARE_COMMIT} && \
-    pip3 install git+https://github.com/packethost/packet-networking.git@${PACKET_NETWORKING_COMMIT} && \
-    rm -rf ~/.cache/pip*
+RUN curl https://bootstrap.pypa.io/pip/3.5/get-pip.py | python3
+RUN pip3 install git+https://github.com/packethost/packet-hardware.git@${PACKET_HARDWARE_COMMIT}
+RUN pip3 install git+https://github.com/packethost/packet-networking.git@${PACKET_NETWORKING_COMMIT}
+RUN rm -rf ~/.cache/pip*
 
 # static prebuilt git-lfs packages
 COPY lfs/git-lfs-linux-*-v2.5.1-4-g2f166e02 /tmp/osie/
-RUN mv /tmp/osie/git-lfs-linux-$(uname -m)-* /usr/bin/git-lfs && \
-    chmod 755 /usr/bin/git-lfs && \
-    git-lfs install && \
-    rm -rf /tmp/osie
+RUN mv /tmp/osie/git-lfs-linux-$(uname -m)-* /usr/bin/git-lfs
+RUN chmod 755 /usr/bin/git-lfs
+RUN git-lfs install
+RUN rm -rf /tmp/osie
 
 # LSI CLI
 COPY lfs/megacli-noarch-bin.tar /tmp/osie/
-RUN tar -xvC / -f /tmp/osie/megacli-noarch-bin.tar && \
-    ln -nsf /opt/MegaRAID/MegaCli/MegaCli64 /usr/bin/ && \
-    rm -rf /tmp/osie
+RUN tar -xvC / -f /tmp/osie/megacli-noarch-bin.tar
+RUN ln -nsf /opt/MegaRAID/MegaCli/MegaCli64 /usr/bin/
+RUN rm -rf /tmp/osie
 
 # PERC CLI
 COPY lfs/perccli-1.17.10-1.tar.gz /tmp/osie/
-RUN tar -zxvC / -f /tmp/osie/perccli-1.17.10-1.tar.gz && \
-    ln -nsf /opt/MegaRAID/perccli/perccli64 /usr/bin/ && \
-    rm -rf /tmp/osie
+RUN tar -zxvC / -f /tmp/osie/perccli-1.17.10-1.tar.gz
+RUN ln -nsf /opt/MegaRAID/perccli/perccli64 /usr/bin/
 
 # Marvell CLI
 COPY lfs/mvcli-4.1.13.31_A01.zip /tmp/osie/
-RUN cd /tmp/osie && \
-    unzip mvcli-4.1.13.31_A01.zip && \
-    cd mvcli-4.1.13.31_A01/x64/cli && \
-    cp -f mvcli /usr/bin && \
-    cp -f libmvraid.so /usr/lib && \
-    chmod 755 /usr/bin/mvcli && \
-    cd && \
-    rm -r /tmp/osie
+WORKDIR /tmp/osie
+RUN unzip mvcli-4.1.13.31_A01.zip
+RUN install -m0755 mvcli-4.1.13.31_A01/x64/cli/mvcli /usr/bin
+RUN cp -f mvcli-4.1.13.31_A01/x64/cli/libmvraid.so /usr/lib
+WORKDIR /
+RUN rm -r /tmp/osie
 
 # SSA CLI
 RUN if [ $(uname -m) = 'x86_64' ]; then \
@@ -116,9 +108,9 @@ RUN if [ $(uname -m) = 'x86_64' ]; then \
 
 # IPMICFG
 COPY lfs/ipmicfg /tmp/osie/
-RUN cd /tmp/osie && \
-    install -m 755 /tmp/osie/ipmicfg /usr/bin/ipmicfg && \
-    rm -rf /tmp/osie
+RUN cd /tmp/osie
+RUN install -m 755 /tmp/osie/ipmicfg /usr/bin/ipmicfg
+RUN rm -rf /tmp/osie
 
 # RACADM
 COPY dchipm.ini /tmp/osie/
@@ -149,7 +141,8 @@ RUN if [ $(uname -m) = 'x86_64' ]; then \
 # URL=http://www.mellanox.com/downloads/firmware/mlxup
 # VERSION=4.6.0
 COPY lfs/mlxup-* /tmp/osie/
-RUN install -m755 -D /tmp/osie/mlxup-$(uname -m) /opt/mellanox/mlxup && rm -rf /tmp/osie/
+RUN install -m755 -D /tmp/osie/mlxup-$(uname -m) /opt/mellanox/mlxup
+RUN rm -rf /tmp/osie/
 
 ARG ECLYPSIUM_AGENT_VERSION=2.0.0
 ARG ECLYPSIUM_AGENT_SHA256=4bb5cfe3c6c3988b99c36e864f35abd8296120d197864a26f10a4c1868c9e31a
@@ -167,15 +160,16 @@ RUN if [ $(uname -m) = 'x86_64' ]; then \
 
 # freebsd ufs fs fuse
 COPY lfs/osie-fuse-* /tmp/osie/
-RUN mv /tmp/osie/osie-fuse*$(uname -m).deb /tmp/ && rm -rf /tmp/osie/
+RUN mv /tmp/osie/osie-fuse*$(uname -m).deb /tmp/
+RUN rm -rf /tmp/osie/
 
-RUN useradd packet -d /home/packet -m -U && \
-    chown -R packet:packet /home/packet
+RUN useradd packet -d /home/packet -m -U
+RUN chown -R packet:packet /home/packet
 WORKDIR /home/packet
 
 ARG METAL_BLOCK_STORAGE_COMMIT=95972b5a45a2c1be43dcb9288c551bee77557489
-RUN curl --remote-name "https://raw.githubusercontent.com/packethost/metal-block-storage/$METAL_BLOCK_STORAGE_COMMIT/metal-block-storage-{attach,detach}" && \
-    chmod +x /home/packet/metal-block-storage*
+RUN curl --remote-name "https://raw.githubusercontent.com/packethost/metal-block-storage/$METAL_BLOCK_STORAGE_COMMIT/metal-block-storage-{attach,detach}"
+RUN chmod +x /home/packet/metal-block-storage*
 
 COPY entrypoint.sh /entrypoint.sh
 COPY scripts/ /home/packet/
@@ -186,8 +180,7 @@ ARG DRONEBUILD
 ENV OSIE_VERSION=${GITVERSION} OSIE_BRANCH=${GITBRANCH} DRONE_BUILD=${DRONEBUILD}
 
 # ensure we always have up to date packages
-RUN apt-get -y update && \
-    apt-get -y dist-upgrade && \
-    apt-get -y autoremove && \
-    apt-get -y clean && \
-    rm -rf /var/lib/apt/lists/* /home/packet/requirements.txt
+RUN apt-get -y update && apt-get -y dist-upgrade
+RUN apt-get -y autoremove
+RUN apt-get -y clean
+RUN rm -rf /var/lib/apt/lists/* /home/packet/requirements.txt
