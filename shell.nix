@@ -2,15 +2,16 @@ let _pkgs = import <nixpkgs> { };
 in { pkgs ? import (_pkgs.fetchFromGitHub {
   owner = "NixOS";
   repo = "nixpkgs";
-  #branch@date: nixpkgs-unstable@2020-11-04
-  rev = "dfea4e4951a3cee4d1807d8d4590189cf16f366b";
-  sha256 = "02j7f5l2p08144b2fb7pg6sbni5km5y72k3nk3i7irddx8j2s04i";
+  #branch@date: nixpkgs-unstable@2021-01-25
+  rev = "ce7b327a52d1b82f82ae061754545b1c54b06c66";
+  sha256 = "1rc4if8nmy9lrig0ddihdwpzg2s8y36vf20hfywb8hph5hpsg4vj";
 }) { } }:
 
 with pkgs;
 
 mkShell {
   buildInputs = [
+    (docker.override { buildxSupport = true; })
     bash
     cpio
     curl

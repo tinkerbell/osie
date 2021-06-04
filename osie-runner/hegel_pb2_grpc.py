@@ -11,9 +11,9 @@ class HegelStub(object):
     def __init__(self, channel):
         """Constructor.
 
-    Args:
-      channel: A grpc.Channel.
-    """
+        Args:
+          channel: A grpc.Channel.
+        """
         self.Get = channel.unary_unary(
             "/hegel.Hegel/Get",
             request_serializer=hegel__pb2.GetRequest.SerializeToString,

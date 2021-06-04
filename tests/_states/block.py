@@ -108,9 +108,13 @@ def _parse_disk_info(out):
     )
     types, guids, flags, names = [regex.findall(out) for regex in regexes]
 
-    assert len(types) == len(guids) == len(flags) == len(names), (
-        "mismatched lengths: types=%d guids=%d flags=%d names=%d"
-        % (len(types), len(guids), len(flags), len(names))
+    assert (
+        len(types) == len(guids) == len(flags) == len(names)
+    ), "mismatched lengths: types=%d guids=%d flags=%d names=%d" % (
+        len(types),
+        len(guids),
+        len(flags),
+        len(names),
     )
 
     if len(basics) != len(types):
