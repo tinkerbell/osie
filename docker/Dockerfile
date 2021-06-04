@@ -27,41 +27,34 @@ RUN if [ $(uname -m) = 'x86_64' ]; then \
     fi && \
     rm -rf /tmp/osie
 
+# Install build deps for source builds
+RUN apt-get update -y && apt-get install -y build-essential
+
 # build lshw, done here so we can keep it cached as long as possible
 COPY build-lshw.sh /tmp/osie/
-RUN apt-get update -y && apt-get install -y build-essential
 RUN (cd /tmp/osie/ && ./build-lshw.sh) 
-RUN apt-get -qy remove build-essential
-RUN apt-get -qy autoremove
-RUN apt-get -qy clean
-RUN rm -rf /var/lib/apt/lists/* /tmp/osie/
+RUN rm -rf /tmp/osie
 
 # build nvme cli, done here so we can keep it cached as long as possible
 COPY build-nvme-cli.sh /tmp/osie/
-RUN apt-get update -y && apt-get install -y build-essential
 RUN (cd /tmp/osie/ && ./build-nvme-cli.sh) 
-RUN apt-get -qy remove build-essential
-RUN apt-get -qy autoremove
-RUN apt-get -qy clean
-RUN rm -rf /var/lib/apt/lists/* /tmp/osie/
+RUN rm -rf /tmp/osie
 
 # build mstflint, done here so we can keep it cached as long as possible
 COPY build-mstflint.sh /tmp/osie/
-RUN apt-get update -y && apt-get install -y build-essential
 RUN (cd /tmp/osie/ && ./build-mstflint.sh) 
-RUN apt-get -qy remove build-essential
-RUN apt-get -qy autoremove
-RUN apt-get -qy clean
-RUN rm -rf /var/lib/apt/lists/* /tmp/osie/
+RUN rm -rf /tmp/osie
 
 # build smartmontools, done here so we can keep it cached as long as possible
 COPY build-smartmontools.sh /tmp/osie/
-RUN apt-get update -y && apt-get install -y build-essential
 RUN (cd /tmp/osie/ && ./build-smartmontools.sh) 
-RUN apt-get -qy remove build-essential 
-RUN apt-get -qy autoremove 
-RUN apt-get -qy clean 
-RUN rm -rf /var/lib/apt/lists/* /tmp/osie/
+RUN rm -rf /tmp/osie
+
+# Uninstall no longer needed build deps
+RUN apt-get -qy remove build-essential
+RUN apt-get -qy autoremove
+RUN apt-get -qy clean
+RUN rm -rf /var/lib/apt/lists/*
 
 ARG PACKET_HARDWARE_COMMIT=68a25da2b6a3d3281838bff6b62639438116d0d1
 ARG PACKET_NETWORKING_COMMIT=06061801efaf34caa8d8b1ae5973c15e5a23659d

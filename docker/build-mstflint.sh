@@ -7,12 +7,12 @@ MSTFLINT_SHA512=965b25141d1b960bb575fc9fb089e912b0408af72919d23f295c6a8e8650c95c
 MSTFLINT_BASEURL=https://github.com/Mellanox/mstflint/releases/download/
 
 curl -L "${MSTFLINT_BASEURL}/v${MSTFLINT_RELEASE}/mstflint-${MSTFLINT_RELEASE}.tar.gz" >mstflint.tar.gz
-apt install -y zlib1g-dev libibmad-dev libssl-dev g++
+apt install -y zlib1g-dev libibmad-dev libssl-dev
 echo "${MSTFLINT_SHA512}  mstflint.tar.gz" | sha512sum -c
 tar -zxvf mstflint.tar.gz
 cd "mstflint-$(echo $MSTFLINT_RELEASE | sed 's/v//' | sed 's/-1//')"
 ./configure
 make -j"$(nproc)"
 make install
-apt-get purge -y zlib1g-dev libibmad-dev libssl-dev g++
+apt-get purge -y zlib1g-dev libibmad-dev libssl-dev
 apt-get autoremove -y
