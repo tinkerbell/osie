@@ -14,5 +14,3 @@ cd "mstflint-$(echo $MSTFLINT_RELEASE | sed 's/v//' | sed 's/-1//')"
 ./configure
 make -j"$(nproc)"
 make install
-apt-get purge -y zlib1g-dev libibmad-dev libssl-dev
-apt-get autoremove -y

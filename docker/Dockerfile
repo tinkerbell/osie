@@ -1,4 +1,37 @@
-FROM ubuntu:xenial
+FROM ubuntu:xenial as builder
+RUN apt-get update -y && apt-get install -y build-essential curl
+
+FROM builder as lshw
+COPY build-lshw.sh /tmp/osie/build.sh
+RUN cd /tmp/osie/ && DESTDIR=/tmp/out ./build.sh
+
+FROM builder as nvme
+COPY build-nvme-cli.sh /tmp/osie/build.sh
+RUN cd /tmp/osie/ && DESTDIR=/tmp/out ./build.sh
+
+FROM builder as mstflint
+COPY build-mstflint.sh /tmp/osie/build.sh
+RUN cd /tmp/osie/ && DESTDIR=/tmp/out ./build.sh
+
+FROM builder as smartmontools
+COPY build-smartmontools.sh /tmp/osie/build.sh
+RUN cd /tmp/osie/ && DESTDIR=/tmp/out ./build.sh
+
+FROM builder as racadm
+RUN apt-get update && apt-get install -y alien wget
+RUN rpm --verbose --import https://linux.dell.com/repo/pgp_pubkeys/0x1285491434D8786F.asc
+WORKDIR /tmp/osie
+RUN wget \
+        https://dl.dell.com/FOLDER05920767M/1/DellEMC-iDRACTools-Web-LX-9.4.0-3732_A00.tar.gz \
+        http://linux.dell.com/repo/community/openmanage/940/bionic/pool/main/s/srvadmin-omilcore/srvadmin-omilcore_9.4.0_amd64.deb
+RUN tar -xvf DellEMC-iDRACTools-Web-LX-9.4.0-3732_A00.tar.gz
+RUN if [ $(uname -m) = 'x86_64' ]; then \
+      alien iDRACTools/racadm/RHEL8/x86_64/*.rpm && install -D --mode=0644 --target-directory=/tmp/out *.deb; \
+    else \
+      mkdir /tmp/out && touch /tmp/out/not-really-a.deb; \
+    fi
+
+FROM ubuntu:xenial as final
 
 VOLUME /statedir
 ENTRYPOINT ["/entrypoint.sh"]
@@ -26,39 +59,6 @@ RUN if [ $(uname -m) = 'x86_64' ]; then \
         mv /tmp/osie/gron-0.6.0-amd64 /usr/bin/gron; \
     fi && \
     rm -rf /tmp/osie
-
-# Install build deps for source builds
-RUN apt-get update -y && apt-get install -y build-essential
-
-# build lshw, done here so we can keep it cached as long as possible
-COPY build-lshw.sh /tmp/osie/build.sh
-RUN (cd /tmp/osie/ && DESTDIR=/tmp/out/ ./build.sh) 
-RUN cp -a /tmp/out/* /
-RUN rm -rf /tmp/osie /tmp/out
-
-# build nvme cli, done here so we can keep it cached as long as possible
-COPY build-nvme-cli.sh /tmp/osie/build.sh
-RUN (cd /tmp/osie/ && DESTDIR=/tmp/out/ ./build.sh) 
-RUN cp -a /tmp/out/* /
-RUN rm -rf /tmp/osie /tmp/out
-
-# build mstflint, done here so we can keep it cached as long as possible
-COPY build-mstflint.sh /tmp/osie/build.sh
-RUN (cd /tmp/osie/ && DESTDIR=/tmp/out/ ./build.sh) 
-RUN cp -a /tmp/out/* /
-RUN rm -rf /tmp/osie /tmp/out
-
-# build smartmontools, done here so we can keep it cached as long as possible
-COPY build-smartmontools.sh /tmp/osie/build.sh
-RUN (cd /tmp/osie/ && DESTDIR=/tmp/out/ ./build.sh) 
-RUN cp -a /tmp/out/* /
-RUN rm -rf /tmp/osie /tmp/out
-
-# Uninstall no longer needed build deps
-RUN apt-get -qy remove build-essential
-RUN apt-get -qy autoremove
-RUN apt-get -qy clean
-RUN rm -rf /var/lib/apt/lists/*
 
 ARG PACKET_HARDWARE_COMMIT=68a25da2b6a3d3281838bff6b62639438116d0d1
 ARG PACKET_NETWORKING_COMMIT=06061801efaf34caa8d8b1ae5973c15e5a23659d
@@ -105,27 +105,8 @@ RUN if [ $(uname -m) = 'x86_64' ]; then \
 
 # IPMICFG
 COPY lfs/ipmicfg /tmp/osie/
-RUN cd /tmp/osie
 RUN install -m 755 /tmp/osie/ipmicfg /usr/bin/ipmicfg
 RUN rm -rf /tmp/osie
-
-# RACADM
-COPY dchipm.ini /tmp/osie/
-RUN cd /tmp/osie && \
-    if [ $(uname -m) != 'aarch64' ]; then \
-      apt-get update && apt-get install -y alien && \
-      rpm --import http://linux.dell.com/repo/pgp_pubkeys/0x1285491434D8786F.asc && \
-      wget \
-        https://dl.dell.com/FOLDER05920767M/1/DellEMC-iDRACTools-Web-LX-9.4.0-3732_A00.tar.gz \
-        http://linux.dell.com/repo/community/openmanage/940/bionic/pool/main/s/srvadmin-omilcore/srvadmin-omilcore_9.4.0_amd64.deb && \
-      tar -xvf DellEMC-iDRACTools-Web-LX-9.4.0-3732_A00.tar.gz && \
-      alien -i iDRACTools/racadm/RHEL8/x86_64/*.rpm && \
-      dpkg -i *.deb && \
-      apt-get purge -y alien && \
-      apt-get autoremove -y && \
-      cp dchipm.ini /opt/dell/srvadmin/etc/srvadmin-hapi/ini/ ; \
-    fi && \
-    rm -rf /tmp/osie
 
 # SuperMicro SUM
 COPY lfs/sum_2.4.0_Linux_x86_64_20191206.tar.gz /tmp/osie/
@@ -170,6 +151,22 @@ RUN chmod +x /home/packet/metal-block-storage*
 
 COPY entrypoint.sh /entrypoint.sh
 COPY scripts/ /home/packet/
+
+COPY --from=lshw /tmp/out/ /
+RUN lshw --help
+
+COPY --from=nvme /tmp/out/ /
+RUN nvme --help
+
+COPY --from=mstflint /tmp/out/ /
+RUN mstflint --help
+
+COPY --from=smartmontools /tmp/out/ /
+RUN smartctl --help
+
+COPY --from=racadm /tmp/out/*.deb /tmp/osie/
+RUN if [ $(uname -m) = x86_64 ]; then dpkg -i /tmp/osie/*.deb && /opt/dell/srvadmin/bin/idracadm7; fi
+COPY dchipm.ini /opt/dell/srvadmin/etc/srvadmin-hapi/ini/
 
 ARG GITVERSION
 ARG GITBRANCH
