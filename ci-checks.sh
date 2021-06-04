@@ -14,7 +14,7 @@ if ! shfmt -f . | grep -v -e installer/alpine/init -e packet_lsb_release -e shun
 	failed=1
 fi
 
-if ! black -t py35 --check --diff --exclude docker/scripts/packet-networking .; then
+if ! black -t py35 --check --diff .; then
 	failed=1
 fi
 # shellcheck disable=SC2010,SC2046
