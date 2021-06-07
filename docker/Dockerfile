@@ -39,13 +39,6 @@ ENTRYPOINT ["/entrypoint.sh"]
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 
-# apt sources fix
-COPY sources.list.aarch64 /tmp/osie/
-RUN if [ $(uname -m) = 'aarch64' ]; then \
-        mv /tmp/osie/sources.list.aarch64 /etc/apt/sources.list; \
-    fi && \
-    rm -rf /tmp/osie
-
 # runtime packages
 COPY get-package-list.sh /tmp/osie/
 RUN apt-get update -y && apt-get install -y $(/tmp/osie/get-package-list.sh)
