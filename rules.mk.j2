@@ -217,27 +217,42 @@ build/discover-metal-x86_64.tar.gz:
 	docker pull quay.io/packet/discover-metal 2>&1 | tee $@.log >/dev/$T
 	docker save quay.io/packet/discover-metal:latest | pigz >$@
 
-ifneq ($(CI),drone)
-build/osie-aarch64.tar.gz: /proc/sys/fs/binfmt_misc/qemu-aarch64
-endif
-build/osie-aarch64.tar.gz: SED=/ubuntu:xenial/ s|ubuntu:xenial|multiarch/ubuntu-debootstrap:arm64-xenial|
-build/osie-x86_64.tar.gz:  SED=
-build/osie-%.tar.gz: docker/Dockerfile ${osiesrcs}
-	$(E) "DOCKER   $@"
-	sed '${SED}' $< > $<.$*
-	docker build --squash --build-arg GITVERSION=${gitversion} --build-arg GITBRANCH=${gitbranch} --build-arg DRONEBUILD=${dronebuild} -t osie:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
-	docker save osie:$* | pigz >$@
+build/osie-%.tar.gz: build/osie-%.tar
+	$(E) "SQUASH   $@"
+	# TODO figure out how to squash
+	pigz <$^ >$@
 
 ifneq ($(CI),drone)
-build/osie-runner-aarch64.tar.gz: /proc/sys/fs/binfmt_misc/qemu-aarch64
+build/osie-aarch64.tar: /proc/sys/fs/binfmt_misc/qemu-aarch64
 endif
-build/osie-runner-aarch64.tar.gz: SED=/FROM/ s|.*|FROM multiarch/alpine:arm64-v3.7|
-build/osie-runner-x86_64.tar.gz:  SED=
-build/osie-runner-%.tar.gz: osie-runner/Dockerfile $(shell git ls-files osie-runner)
+build/osie-aarch64.tar: PLATFORM=linux/arm64
+build/osie-x86_64.tar:  PLATFORM=linux/x86_64
+build/osie-%.tar: docker/Dockerfile ${osiesrcs}
 	$(E) "DOCKER   $@"
-	sed '${SED}' $< > $<.$*
-	docker build --squash --build-arg GITVERSION=${gitversion} --build-arg GITBRANCH=${gitbranch} --build-arg DRONEBUILD=${dronebuild} -t osie-runner:$* -f $<.$* $(<D) 2>&1 | tee $@.log >/dev/$T
-	docker save osie-runner:$* | pigz >$@
+	docker buildx build \
+	    --build-arg DRONEBUILD=${dronebuild} \
+	    --build-arg GITBRANCH=${gitbranch} \
+	    --build-arg GITVERSION=${gitversion} \
+	    --output=type=tar,dest=$@ \
+	    --platform=${PLATFORM} \
+	    --tag osie:$* \
+	    $(<D) 2>&1 | tee $@.log >/dev/$T
+
+ifneq ($(CI),drone)
+build/osie-runner-aarch64.tar: /proc/sys/fs/binfmt_misc/qemu-aarch64
+endif
+build/osie-runner-aarch64.tar: PLATFORM=linux/arm64
+build/osie-runner-x86_64.tar:  PLATFORM=linux/x86_64
+build/osie-runner-%.tar: osie-runner/Dockerfile $(shell git ls-files osie-runner)
+	$(E) "DOCKER   $@"
+	docker buildx build \
+	    --build-arg GITVERSION=${gitversion}  \
+	    --build-arg GITBRANCH=${gitbranch}  \
+	    --build-arg DRONEBUILD=${dronebuild} \
+	    --output=type=tar,dest=$@ \
+	    --platform=${PLATFORM} \
+	    --tag osie-runner:$* \
+ 	    $(<D) 2>&1 | tee $@.log >/dev/$T
 
 build/osie-runner-aarch64.tar.gz:
 	$(E) "FAKE     $@"
