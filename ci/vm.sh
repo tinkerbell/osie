@@ -141,6 +141,11 @@ gen_metadata() {
 		  "wipe_disks": true
 		}
 	EOF
+
+	# cloud-init ec2's module will attempt to grab metadata from this initial endpoint
+	# and progressively try newer ones. EM metadata only provides 2009-04-04 version.
+	mkdir -p 2009-04-04/meta-data
+	echo "$id" >2009-04-04/meta-data/instance-id
 }
 
 do_symlink_ro_rw() {
@@ -360,9 +365,17 @@ do_test() {
 
 	color=34
 	colorize $color "== Running Boot & Phone-Home Test =="
-	test_boot_and_phone_home |& stdbuf -i 0 sed "s/^/$(colorize $color 'test_boot_and_phone_home│')/" &&
-		echo "this test is expected to fail" >&2 &&
-		exit 1
+	if [[ $arch == aarch64 ]]; then
+		# aarch64 doesn't work, idk why
+		# I have yet to see any console output at all so its hard to debug
+		# TODO: use vnc or other means to debug/fix
+		# https://github.com/tinkerbell/osie/issues/237
+		test_boot_and_phone_home |& stdbuf -i 0 sed "s/^/$(colorize $color 'test_boot_and_phone_home│')/" &&
+			echo "this test is expected to fail" >&2 &&
+			exit 1
+	else
+		test_boot_and_phone_home |& stdbuf -i 0 sed "s/^/$(colorize $color 'test_boot_and_phone_home│')/"
+	fi
 	rm -f uploads/*
 
 	color=35
