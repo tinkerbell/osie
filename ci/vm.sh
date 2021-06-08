@@ -59,21 +59,19 @@ make_disk() {
 }
 
 gen_metadata() {
-	local cprcmd hardware_id id
+	local class=$1 slug=$2 tag=$3
 	id=$(uuidgen)
-	hardware_id=$(uuidgen)
-	local class=$1
-	local slug=$2
-	local tag=$3
-	local distro=${slug%%_*}
-	local version=${slug#*_}
-	version=${version//_/.}
 
+	local cprcmd
 	cprcmd=(cat)
-
 	if [[ $UEFI == true ]] && [[ $arch != aarch64 ]]; then
 		cprcmd=(jq -S '.filesystems += [{"mount":{"create":{"options": ["32", "-n", "EFI"]},"device":"/dev/sda1","format":"vfat","point":"/boot/efi"}}]')
 	fi
+
+	local distro=${slug%%_*} version=${slug#*_}
+	version=${version//_/.}
+	local hardware_id
+	hardware_id=$(uuidgen)
 
 	cat <<-EOF | sed '/\bsd[a-z]\+[0-9]*\b/ s|\bs\(d[a-z]\+[0-9]*\)\b|v\1|' | jq -S . | tee metadata
 		{
@@ -249,7 +247,7 @@ teardown() {
 }
 
 run_vm() {
-	local bios=() cpu='' machine=''
+	local cpu='' machine=''
 
 	case $(uname -m)-$arch in
 	'aarch64-aarch64') machine=virt cpu=host ;;
@@ -259,6 +257,7 @@ run_vm() {
 	*) echo 'unknown host-virt architecture combination' && exit 1 ;;
 	esac
 
+	local bios=()
 	if [[ $UEFI != 'true' ]]; then
 		bios=('-bios' '/usr/share/qemu/bios.bin')
 	else
@@ -273,8 +272,8 @@ run_vm() {
 		fi
 	fi
 
-	# scripts matches layout in $macs
 	local scripts=("$scriptdir/ifup.sh" "$scriptdir/ifup.sh" /bin/true /bin/true)
+	local serials=()
 	case $console in
 	*ttyAMA0*) serials=() ;;
 	*ttyS0*) serials=(-serial stdio) ;;
@@ -313,8 +312,8 @@ do_test() {
 		class=c1.large.arm
 	fi
 
-	slug=${OS%:*}
-	tag=${OS#*:}
+	local slug=${OS%:*}
+	local tag=${OS#*:}
 	if [[ -z $tag ]] || [[ $OS == "$tag" ]]; then
 		tag=$slug-$class
 	fi
@@ -396,11 +395,12 @@ test_provision() {
 	run_vm -kernel "$kernel" -initrd "$initramfs" -append "$cmdline"
 
 	# check for provision success code
-	eventid=provisioning.109
+	local eventid=provisioning.109
 	grep -qr "$eventid" uploads
+	local got
 	got=$(grep -hr "$eventid" uploads)
 	#shellcheck disable=SC2089
-	want='{"type":"provisioning.109"}'
+	local want='{"type":"provisioning.109"}'
 	diff -u <(jq -cS . <<<"$want") <(jq -cS . <<<"$got")
 }
 
@@ -417,11 +417,12 @@ test_deprovision() {
 	run_vm -kernel "$kernel" -initrd "$initramfs" -append "$cmdline"
 
 	# check for deprovisioning finished message
-	eventid=deprovisioning.306.02
+	local eventid=deprovisioning.306.02
 	grep -qr "$eventid" uploads
+	local got
 	got=$(grep -hr "$eventid" uploads)
 	#shellcheck disable=SC2089
-	want='{"type":"deprovisioning.306.02","body":"Deprovision finished, rebooting server","private":true}'
+	local want='{"type":"deprovisioning.306.02","body":"Deprovision finished, rebooting server","private":true}'
 	diff -u <(jq -cS . <<<"$want") <(jq -cS . <<<"$got")
 
 	echo "Checking if disks were wiped"
@@ -434,6 +435,7 @@ test_deprovision() {
 
 get_subnet() {
 	# convert subnets in use into grep -E pattern
+	local pattern
 	pattern=$(ip -4 addr | awk '/inet 172/ {print $2}' | sort -h | sed 's|172.\([0-9]\+\).*|\1|' | tr '\n' '|' | sed -e 's/^/^(/' -e 's/|$/)/')
 	seq 0 255 | grep -vwE "$pattern" | shuf -n1 | sed 's|.*|172.&.0|'
 }
