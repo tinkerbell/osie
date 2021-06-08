@@ -200,10 +200,12 @@ start_web() {
 		}
 
 		metadata.packet.net:80 {
+		    browse
 		    log stderr
 		}
 
 		metadata.packet.net:443 {
+		    browse
 		    log stderr
 		    tls server.pem server-key.pem
 		}
