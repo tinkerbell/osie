@@ -113,7 +113,7 @@ gen_metadata() {
 		      }
 		    ],
 		    "bonding": {
-		      "mode": 5
+		      "link_aggregation": "individual"
 		    },
 		    "interfaces": [
 		      {
