@@ -2,10 +2,11 @@
 
 # shellcheck disable=SC1091
 source functions.sh && init
+set -u
 
 USAGE="Usage: $0 -t /mnt/target -C /path/to/cprout.json
 Required Arguments:
-	-p plan      Server plan (ex: t1.small.x86)
+	-p class     Server class (ex: t1.small.x86)
 	-t target    Target mount point to write configs to
 	-C path      Path to file containing cpr.sh output json
 	-D path      Path to grub.default template
@@ -19,7 +20,7 @@ Description: This script will configure grub for the target distro
 "
 while getopts "p:t:C:D:T:hv" OPTION; do
 	case $OPTION in
-	p) plan=$OPTARG ;;
+	p) class=$OPTARG ;;
 	t) target="$OPTARG" ;;
 	C) cprout=$OPTARG ;;
 	D) default_path=$OPTARG ;;
@@ -69,90 +70,123 @@ DVER=$2
 echo "#### Detected OS on mounted target $target"
 echo "OS: $DOS  ARCH: $arch VER: $DVER"
 
-chroot_install=false
-
-if [[ $DOS == "RedHatEnterpriseServer" ]] && [[ $arch == "aarch64" ]]; then
-	chroot_install=true
-fi
-
 install_grub_chroot() {
+	local disk=$1 target=$2 uefi=$3 arch=$4 class=$5 os=$6
+
 	echo "Attempting to install Grub on $disk"
-	mount --bind /dev "$target/dev"
-	mount --bind /tmp "$target/tmp"
-	mount --bind /proc "$target/proc"
-	mount --bind /sys "$target/sys"
-	chroot "$target" /bin/bash -xe <<EOF
-is_uefi=false
-[[ -d /sys/firmware/efi ]] && {
-	is_uefi=true
-	mountpoint -q /sys/firmware/efi/efivars || {
-		mount -t efivarfs efivarfs /sys/firmware/efi/efivars
-	}
-}
+	for d in dev etc/resolv.conf proc sys tmp; do
+		mount --bind /$d "$target/$d"
+	done
 
-if which grub2-install; then
-	grub2-install --recheck "$disk"
-elif which grub-install; then
-	grub-install --recheck "$disk"
-else
-	echo 'grub-install or grub2-install are not installed on target os'
-	exit 1
-fi
-\$is_uefi && {
-	[ -f /etc/os-release ] && {
-		(
-			source /etc/os-release
-			efibootmgr | tee /dev/stderr | grep -iq "\$ID"
-		)
-	}
-	umount /sys/firmware/efi/efivars
-}
-EOF
-	umount "$target/dev" "$target/tmp" "$target/proc" "$target/sys"
-
-	if $uefi && [[ $plan == "c3.medium.x86" ]] && [[ $DOS == "CentOS" ]]; then
-		add_post_install_service "$target"
-		efi_uuid="$(efi_device "$target/boot/efi" -o partuuid)"
-		efi_id="$(find_uuid_boot_id "$efi_uuid")"
-		echo "Forcing next boot to be target os"
-		efibootmgr -n "$efi_id"
+	didmount=false
+	if "$uefi"; then
+		if ! mountpoint -q "$target/sys/firmware/efi/efivars"; then
+			didmount=true
+			mount -t efivarfs efivarfs "$target/sys/firmware/efi/efivars"
+		fi
+		if [[ $arch == aarch64 ]]; then
+			#TODO(mmlb) add comment about why, get info from git commit and/or jira
+			#gist: some of our aarch64 firmwares will fail to boot if efivars is updated
+			# we can't unmount because then grub and/or efibootmgr complains and errors
+			# but we can mount ro and efibootmgr will complain about ro but not error exit
+			mount -o remount,ro "$target/sys/firmware/efi/efivars"
+		fi
 	fi
+
+	install -Dm700 target-files/bin/packet-post-install.sh "$target/bin/packet-post-install.sh"
+
+	chroot "$target" /bin/bash <<-EOF
+		$(declare -f install_grub)
+		set -euxo pipefail
+		mount
+		install_grub "$disk" "$uefi" "$arch" "$class" "$os"
+
+	EOF
+	if $didmount; then
+		umount /sys/firmware/efi/efivars
+	fi
+	umount "$target"/{dev,tmp,proc}
+	#umount "$target/sys"
 }
 
-install_grub_osie() {
+install_grub() (
+	#shellcheck disable=SC2030
+	local disk=$1 uefi=$2 arch=$3 class=$4 os=$5
+
+	if which grub2-install &>/dev/null; then
+		grub=grub2
+	elif which grub-install &>/dev/null; then
+		grub=grub
+	else
+		echo 'grub-install or grub2-install are not installed on target os'
+		exit 1
+	fi
+
 	echo "Running grub-install on $disk"
 	if ! $uefi; then
-		grub-install --recheck --root-directory="$target" "$disk"
-	else
-		[[ $arch == aarch64 ]] && mount -o remount,ro /sys/firmware/efi/efivars
-
-		grub-install --recheck --bootloader-id=GRUB --root-directory="$target" --efi-directory="$target/boot/efi"
-		grubefi=$(find "$target/boot/efi" -name 'grub*.efi' -print -quit)
-		install -Dm755 "$grubefi" "$target/boot/efi/EFI/BOOT/BOOTX64.EFI"
-
-		if [[ -z $grubefi ]]; then
-			echo "error: couldn't find a suitable grub EFI file"
-			exit 1
-		fi
-
-		if [[ $arch == aarch64 ]]; then
-			echo "Renaming $grubefi to default BOOT binary"
-			install -Dm755 "$grubefi" "$target/boot/efi/EFI/BOOT/BOOTAA64.EFI"
-			install -Dm755 "$grubefi" "$target/boot/efi/EFI/GRUB2/GRUBAA64.EFI"
-		else
-			# grub-install doesn't error if efibootmgr can't actually set the boot entries/order
-			efibootmgr | tee /dev/stderr | grep -iq grub
-		fi
+		# target=/
+		#$grub-install --recheck --root-directory="$target" "$disk"
+		$grub-install --recheck "$disk"
+		return
 	fi
-}
+
+	echo "os=$os"
+	sudo dnf reinstall -y shim-* grub2-*
+	efibootmgr --create --disk /dev/vda --part 1 --loader /EFI/centos/grubia32.efi --label CentOS Boot Loader --verbose
+
+	# target=/
+	#$grub-install --recheck --bootloader-id=ubuntu --root-directory="$target" --efi-directory="$target/boot/efi"
+	#$grub-install --recheck --target=x86_64-efi --bootloader-id=centos --efi-directory=/boot/efi
+
+	grubefi=$(find /boot/efi -name 'grub*.efi' -print -quit)
+	if [[ -z ${grubefi:-} ]]; then
+		echo "error: couldn't find a suitable grub EFI file"
+		exit 1
+	fi
+	install -Dm755 "$grubefi" /boot/efi/EFI/BOOT/BOOTX64.EFI
+
+	$grub-mkconfig -o /boot/efi/EFI/centos/grub.cfg
+
+	if [[ $arch == aarch64 ]]; then
+		echo "Renaming $grubefi to default BOOT binary"
+		install -Dm755 "$grubefi" /boot/efi/EFI/BOOT/BOOTAA64.EFI
+		install -Dm755 "$grubefi" /boot/efi/EFI/GRUB2/GRUBAA64.EFI
+	fi
+
+	ID=$os
+	if [[ -f /etc/os-release ]]; then
+		source /etc/os-release
+	fi
+	# grub-install doesn't error if efibootmgr can't actually set the boot entries/order so lets check it
+	efibootmgr | tee /dev/stderr | grep -iq "$ID"
+
+	if [[ $class == "c3.medium.x86" ]] && [[ $os == "CentOS" ]]; then
+		cat >"/etc/systemd/system/packet-post-install.service" <<-EOF
+			[Unit]
+			Description=Packet post install setup
+			After=multi-user.target
+			[Service]
+			Type=oneshot
+			ExecStart=/bin/packet-post-install.sh
+			[Install]
+			WantedBy=multi-user.target
+		EOF
+		ln -s /etc/systemd/system/packet-post-install.service /etc/systemd/system/multi-user.target.wants/packet-post-install.service
+
+		efi_uuid=$(findmnt -n --target /boot/efi -o partuuid)
+		efi_id=$(efibootmgr -v | grep "$efi_uuid" | sed 's/^Boot\([0-9a-f]\{4\}\).*/\1/gI;t;d')
+
+		echo "Forcing next boot to be target os"
+		efibootmgr -n "$efi_id"
+	else
+		rm -f /bin/packet-post-install.sh
+	fi
+)
 
 # shellcheck disable=SC2207
 bootdevs=$(jq -r '.bootdevs[]' "$cprout")
 [[ -n $bootdevs ]]
 for disk in $bootdevs; do
-	if $chroot_install; then
-		install_grub_chroot
-	else
-		install_grub_osie
-	fi
+	#shellcheck disable=SC2031
+	install_grub_chroot "$disk" "$target" "$uefi" "$arch" "$class" "$DOS"
 done

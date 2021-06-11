@@ -164,9 +164,9 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	mkdir $assetdir
 	set_autofail_stage "OS image fetch"
 	echo -e "${GREEN}#### Fetching image (and more) via git ${NC}"
-	configure_image_cache_dns
 
 	if [[ ${OS} =~ : && $custom_image == false ]]; then
+		configure_image_cache_dns
 		image_tag=$(echo "$OS" | awk -F':' '{print $2}')
 
 		githost="github-mirror.packet.net"

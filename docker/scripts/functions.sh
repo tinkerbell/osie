@@ -556,16 +556,6 @@ function is_uefi() {
 	[[ -d /sys/firmware/efi ]]
 }
 
-efi_device() {
-	local efi_path="$1"
-	[ -n "$efi_path" ] && shift || efi_path="/boot/efi"
-	findmnt -n --target "$efi_path" "$@"
-}
-
-find_uuid_boot_id() {
-	efibootmgr -v | grep "$1" | sed 's/^Boot\([0-9a-f]\{4\}\).*/\1/gI;t;d'
-}
-
 # syntax: name key
 # expects metadata in stdin
 # safely sets $name=$metadata[$key]
@@ -1158,12 +1148,4 @@ ip_choose_if() {
 	for x in /sys/class/net/eth*; do
 		[ -e "$x" ] && echo "${x##*/}" && return
 	done
-}
-
-add_post_install_service() {
-	local target="$1"
-	install -Dm700 target-files/bin/packet-post-install.sh "$target/bin/packet-post-install.sh"
-
-	cp -v target-files/services/packet-post-install.service "$target/etc/systemd/system/packet-post-install.service"
-	ln -s /etc/systemd/system/packet-post-install.service "$target/etc/systemd/system/multi-user.target.wants/packet-post-install.service"
 }

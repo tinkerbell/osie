@@ -182,16 +182,16 @@ start_web() {
 		    log stderr
 		    tls off
 
-		    proxy /misc/osie/current/repo-$arch install.ewr1.packet.net/alpine/$repo_dest/
+		    proxy /misc/osie/current/repo-$arch install.packet.net/alpine/$repo_dest/
 		    rewrite /misc/osie/current {
 		        regexp (.*)
 		        to {1}
 		    }
-		    proxy /repo-$arch/ install.ewr1.packet.net/alpine/$repo_dest/ {
+		    proxy /repo-$arch/ install.packet.net/alpine/$repo_dest/ {
 		        without /repo-$arch/
 		    }
-		    proxy /misc/osie install.ewr1.packet.net
-		    proxy /alpine/ install.ewr1.packet.net
+		    proxy /misc/osie install.packet.net
+		    proxy /alpine/ install.packet.net
 		}
 
 		tinkerbell.$facility.packet.net:80 {
@@ -300,6 +300,9 @@ run_vm() {
 	*) echo "unknown console setting" >&2 && exit 1 ;;
 	esac
 
+	#-device virtio-scsi-pci,id=scsi0,num_queues=4 \
+	#-device scsi-hd,drive=drive0,bus=scsi0.0,channel=0,scsi-id=0,lun=0 \
+	#-drive file="$disk",if=none,id=drive0,format=raw,discard=unmap \
 	# shellcheck disable=SC2068
 	exec "qemu-system-$arch" \
 		"$@" \
@@ -368,7 +371,8 @@ do_test() {
 
 	color=33
 	colorize $color "== Running Provision Test =="
-	test_provision |& stdbuf -i 0 sed "s/^/$(colorize $color 'test_provision│')/"
+	#test_provision |& stdbuf -i 0 sed "s/^/$(colorize $color 'test_provision│')/"
+	test_provision
 	rm -f uploads/*
 
 	color=34
