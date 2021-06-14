@@ -263,7 +263,9 @@ run_vm() {
 	if [[ $UEFI != 'true' ]]; then
 		bios=('-bios' '/usr/share/qemu/bios.bin')
 	else
-		cp /usr/share/OVMF/OVMF_VARS.fd "$disk.vars"
+		if ! [[ -f "$disk.vars" ]]; then
+			cp /usr/share/OVMF/OVMF_VARS.fd "$disk.vars"
+		fi
 		if [[ $arch == x86_64 ]]; then
 			bios=(
 				-drive 'if=pflash,format=raw,file=/usr/share/OVMF/OVMF_CODE.fd,readonly'
