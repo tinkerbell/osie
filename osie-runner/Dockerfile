@@ -4,14 +4,6 @@ ENTRYPOINT ["/entrypoint.sh"]
 CMD ["python3", "run.py"]
 VOLUME /statedir
 
-ARG GITVERSION
-ARG GITBRANCH
-ARG DRONEBUILD
-
-ENV OSIE_VERSION ${GITVERSION}
-ENV OSIE_BRANCH ${GITBRANCH}
-ENV DRONE_BUILD ${DRONEBUILD}
-
 WORKDIR /tmp
 RUN apk add --update --upgrade --no-cache bash docker jq libstdc++ python3
 COPY requirements.txt .
@@ -26,3 +18,8 @@ RUN apk add --update --upgrade --no-cache --virtual build-deps alpine-sdk curl l
 WORKDIR /
 
 ADD entrypoint.sh *.py /
+
+ARG GITVERSION
+ARG GITBRANCH
+ARG DRONEBUILD
+ENV OSIE_VERSION=${GITVERSION} OSIE_BRANCH=${GITBRANCH} DRONE_BUILD=${DRONEBUILD}
