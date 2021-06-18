@@ -135,10 +135,10 @@ RUN cd /tmp/osie && \
       apt-get update && apt-get install -y alien && \
       rpm --import http://linux.dell.com/repo/pgp_pubkeys/0x1285491434D8786F.asc && \
       wget \
-        https://dl.dell.com/FOLDER05920767M/1/DellEMC-iDRACTools-Web-LX-9.4.0-3732_A00.tar.gz \
+        https://dl.dell.com/FOLDER06748227M/1/DellEMC-iDRACTools-Web-LX-9.5.1-4188_A00.tar.gz \
         http://linux.dell.com/repo/community/openmanage/940/bionic/pool/main/s/srvadmin-omilcore/srvadmin-omilcore_9.4.0_amd64.deb && \
-      tar -xvf DellEMC-iDRACTools-Web-LX-9.4.0-3732_A00.tar.gz && \
-      alien -i iDRACTools/racadm/RHEL8/x86_64/*.rpm && \
+      tar -xvf DellEMC-iDRACTools-Web-LX-9.5.1-4188_A00.tar.gz && \
+      alien -i iDRACTools/racadm/RHEL7/x86_64/*.rpm && \
       dpkg -i *.deb && \
       apt-get purge -y alien && \
       apt-get autoremove -y && \
