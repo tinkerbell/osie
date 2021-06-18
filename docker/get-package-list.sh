@@ -56,7 +56,6 @@ packages=(
 	pciutils
 	pv
 	python3
-	s3cmd
 	sg3-utils
 	unzip
 	vim
