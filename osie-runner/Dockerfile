@@ -15,7 +15,7 @@ RUN apk update && apk add --update --upgrade --no-cache \
            libstdc++ \
            linux-headers \
            python3-dev
-# Latest version is ok/on purpose
+
 RUN  pip install -r requirements.txt  \
     &&  python3 -m pip uninstall -y pip \
     && apk del alpine-sdk linux-headers python3-dev \
