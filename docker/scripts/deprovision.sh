@@ -271,8 +271,8 @@ baremetal_2a2 | baremetal_2a4 | baremetal_hua)
 *)
 	set_autofail_stage "running packet-hardware inventory"
 	packet-hardware inventory --verbose --tinkerbell "${tinkerbell}/hardware-components"
-	# Catalog various BIOS feature states (not yet supported on aarch64)
-	if [[ $arch == "x86_64" ]]; then
+	# Catalog various BIOS feature states (not yet supported on aarch64, still fixing issues on m1.xl)
+	if [[ $arch == "x86_64" ]] && [[ $class != "m1.xlarge.x86" ]]; then
 		set_autofail_stage "running packet-hardware inventorybios"
 		# TODO: post this data to HollowDB when it becomes available
 		# When running the inventorybios command outside of the packet-hardware
