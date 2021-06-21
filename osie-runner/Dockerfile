@@ -6,19 +6,24 @@ VOLUME /statedir
 
 WORKDIR /tmp
 COPY requirements.txt .
+# runtime deps
 RUN apk add --update --upgrade --no-cache \
         bash \
-        curl \
-        alpine-sdk \
         docker \
         jq \
         libstdc++ \
+    && \
+# build time deps
+    apk add --update --upgrade --no-cache --virtual build-deps \
+        alpine-sdk \
+        curl \
         linux-headers \
-        python3-dev
+        python3-dev \
+        ;
 
 RUN pip install -r requirements.txt && \
     python3 -m pip uninstall -y pip && \
-    apk del alpine-sdk linux-headers python3-dev && \
+    apk del build-deps && \
     rm -rf /tmp/* $HOME/.cache
 
 WORKDIR /
