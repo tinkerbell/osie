@@ -74,6 +74,11 @@ rm -f /sbin/mdev
 
 mkdir /worker
 
+# Certain workflow actions require access to the 'sg' device
+# We load the 'sg' module here to enable that, but should probably
+# load the module within the action(s) requring it
+modprobe sg
+
 # tink-worker has been updated to use ID rather than WORKER_ID
 # TODO: remove setting WORKER_ID when we no longer want to support backwards compatibility
 # with the older tink-worker
