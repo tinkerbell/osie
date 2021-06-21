@@ -5,7 +5,6 @@ CMD ["python3", "run.py"]
 VOLUME /statedir
 
 WORKDIR /tmp
-COPY requirements.txt .
 # runtime deps
 RUN apk add --update --upgrade --no-cache \
         bash \
@@ -21,6 +20,7 @@ RUN apk add --update --upgrade --no-cache \
         python3-dev \
         ;
 
+COPY requirements.txt .
 RUN pip install -r requirements.txt && \
     python3 -m pip uninstall -y pip && \
     apk del build-deps && \
