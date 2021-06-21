@@ -6,7 +6,7 @@ VOLUME /statedir
 
 WORKDIR /tmp
 COPY requirements.txt .
-RUN apk update && apk add --update --upgrade --no-cache \
+RUN apk add --update --upgrade --no-cache \
         bash \
         curl \
         alpine-sdk \
