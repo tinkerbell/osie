@@ -16,10 +16,10 @@ RUN apk update && apk add --update --upgrade --no-cache \
         linux-headers \
         python3-dev
 
-RUN pip install -r requirements.txt \
-    && python3 -m pip uninstall -y pip \
-    && apk del alpine-sdk linux-headers python3-dev \
-    && rm -rf /tmp/* $HOME/.cache
+RUN pip install -r requirements.txt && \
+    python3 -m pip uninstall -y pip && \
+    apk del alpine-sdk linux-headers python3-dev && \
+    rm -rf /tmp/* $HOME/.cache
 
 WORKDIR /
 ADD entrypoint.sh *.py /
