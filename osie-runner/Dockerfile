@@ -15,7 +15,6 @@ RUN apk add --update --upgrade --no-cache \
 # build time deps
     apk add --update --upgrade --no-cache --virtual build-deps \
         alpine-sdk \
-        curl \
         linux-headers \
         python3-dev \
         ;
