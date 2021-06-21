@@ -7,21 +7,21 @@ VOLUME /statedir
 WORKDIR /tmp
 COPY requirements.txt .
 RUN apk update && apk add --update --upgrade --no-cache \
-           bash \
-           curl \
-           alpine-sdk \
-           docker \
-           jq \
-           libstdc++ \
-           linux-headers \
-           python3-dev
+        bash \
+        curl \
+        alpine-sdk \
+        docker \
+        jq \
+        libstdc++ \
+        linux-headers \
+        python3-dev
 
-RUN  pip install -r requirements.txt  \
-    &&  python3 -m pip uninstall -y pip \
+RUN pip install -r requirements.txt \
+    && python3 -m pip uninstall -y pip \
     && apk del alpine-sdk linux-headers python3-dev \
     && rm -rf /tmp/* $HOME/.cache
-WORKDIR /
 
+WORKDIR /
 ADD entrypoint.sh *.py /
 
 ARG GITVERSION
