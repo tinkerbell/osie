@@ -5,23 +5,27 @@ CMD ["python3", "run.py"]
 VOLUME /statedir
 
 WORKDIR /tmp
-COPY requirements.txt .
-RUN apk update && apk add --update --upgrade --no-cache \
-           bash \
-           curl \
-           alpine-sdk \
-           docker \
-           jq \
-           libstdc++ \
-           linux-headers \
-           python3-dev
-# Latest version is ok/on purpose
-RUN  pip install -r requirements.txt  \
-    &&  python3 -m pip uninstall -y pip \
-    && apk del alpine-sdk linux-headers python3-dev \
-    && rm -rf /tmp/* $HOME/.cache
-WORKDIR /
+# runtime deps
+RUN apk add --update --upgrade --no-cache \
+        bash \
+        docker \
+        jq \
+        libstdc++ \
+    && \
+# build time deps
+    apk add --update --upgrade --no-cache --virtual build-deps \
+        alpine-sdk \
+        linux-headers \
+        python3-dev \
+        ;
 
+COPY requirements.txt .
+RUN pip install -r requirements.txt && \
+    python3 -m pip uninstall -y pip && \
+    apk del build-deps && \
+    rm -rf /tmp/* $HOME/.cache
+
+WORKDIR /
 ADD entrypoint.sh *.py /
 
 ARG GITVERSION
