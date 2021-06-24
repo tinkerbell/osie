@@ -59,21 +59,18 @@ make_disk() {
 }
 
 gen_metadata() {
-	local cprcmd hardware_id id
-	id=$(uuidgen)
-	hardware_id=$(uuidgen)
-	local class=$1
-	local slug=$2
-	local tag=$3
-	local distro=${slug%%_*}
-	local version=${slug#*_}
-	version=${version//_/.}
+	local class=$1 slug=$2 tag=$3 id=$4
 
+	local cprcmd
 	cprcmd=(cat)
-
 	if [[ $UEFI == true ]] && [[ $arch != aarch64 ]]; then
 		cprcmd=(jq -S '.filesystems += [{"mount":{"create":{"options": ["32", "-n", "EFI"]},"device":"/dev/sda1","format":"vfat","point":"/boot/efi"}}]')
 	fi
+
+	local distro=${slug%%_*} version=${slug#*_}
+	version=${version//_/.}
+	local hardware_id
+	hardware_id=$(uuidgen)
 
 	cat <<-EOF | sed '/\bsd[a-z]\+[0-9]*\b/ s|\bs\(d[a-z]\+[0-9]*\)\b|v\1|' | jq -S . | tee metadata
 		{
@@ -116,7 +113,7 @@ gen_metadata() {
 		      }
 		    ],
 		    "bonding": {
-		      "mode": 5
+		      "link_aggregation": "individual"
 		    },
 		    "interfaces": [
 		      {
@@ -144,6 +141,11 @@ gen_metadata() {
 		  "wipe_disks": true
 		}
 	EOF
+
+	# cloud-init ec2's module will attempt to grab metadata from this initial endpoint
+	# and progressively try newer ones. EM metadata only provides 2009-04-04 version.
+	mkdir -p 2009-04-04/meta-data
+	echo "$id" >2009-04-04/meta-data/instance-id
 }
 
 do_symlink_ro_rw() {
@@ -203,10 +205,12 @@ start_web() {
 		}
 
 		metadata.packet.net:80 {
+		    browse
 		    log stderr
 		}
 
 		metadata.packet.net:443 {
+		    browse
 		    log stderr
 		    tls server.pem server-key.pem
 		}
@@ -248,8 +252,11 @@ teardown() {
 
 }
 
+# This function exec's the last binary run, this seems weird but actually works out ok.
+# Bash ends up running this function in subprocesses so the exec replace run_vm's process not ci/vm.sh's
+# This is needed so that run_vm callers will get qemu's pid and can kill it (otherwise bash won't forward the SIGTERM received by the function)
 run_vm() {
-	local bios=() cpu='' machine=''
+	local cpu='' machine=''
 
 	case $(uname -m)-$arch in
 	'aarch64-aarch64') machine=virt cpu=host ;;
@@ -259,10 +266,13 @@ run_vm() {
 	*) echo 'unknown host-virt architecture combination' && exit 1 ;;
 	esac
 
+	local bios=()
 	if [[ $UEFI != 'true' ]]; then
 		bios=('-bios' '/usr/share/qemu/bios.bin')
 	else
-		cp /usr/share/OVMF/OVMF_VARS.fd "$disk.vars"
+		if ! [[ -f "$disk.vars" ]]; then
+			cp /usr/share/OVMF/OVMF_VARS.fd "$disk.vars"
+		fi
 		if [[ $arch == x86_64 ]]; then
 			bios=(
 				-drive 'if=pflash,format=raw,file=/usr/share/OVMF/OVMF_CODE.fd,readonly'
@@ -273,8 +283,8 @@ run_vm() {
 		fi
 	fi
 
-	# scripts matches layout in $macs
 	local scripts=("$scriptdir/ifup.sh" "$scriptdir/ifup.sh" /bin/true /bin/true)
+	local serials=()
 	case $console in
 	*ttyAMA0*) serials=() ;;
 	*ttyS0*) serials=(-serial stdio) ;;
@@ -283,7 +293,7 @@ run_vm() {
 	esac
 
 	# shellcheck disable=SC2068
-	"qemu-system-$arch" \
+	exec "qemu-system-$arch" \
 		"$@" \
 		-monitor unix:monitor.sock,server=on,wait=off \
 		-nographic \
@@ -313,16 +323,17 @@ do_test() {
 		class=c1.large.arm
 	fi
 
-	slug=${OS%:*}
-	tag=${OS#*:}
+	local slug=${OS%:*}
+	local tag=${OS#*:}
 	if [[ -z $tag ]] || [[ $OS == "$tag" ]]; then
 		tag=$slug-$class
 	fi
 
 	configure_nics
 
+	id=$(uuidgen)
 	# rename disk from scsi names to virtio names, e.g. sda1 -> vda1
-	gen_metadata "$class" "$slug" "$tag" <"$scriptdir/cpr/$class.cpr.json"
+	gen_metadata "$class" "$slug" "$tag" "$id" <"$scriptdir/cpr/$class.cpr.json"
 
 	start_dhcp \
 		--dhcp-host="${macs[0]},$pubip4" \
@@ -353,6 +364,21 @@ do_test() {
 	rm -f uploads/*
 
 	color=34
+	colorize $color "== Running Boot & Phone-Home Test =="
+	if [[ $arch == aarch64 ]]; then
+		# aarch64 doesn't work, idk why
+		# I have yet to see any console output at all so its hard to debug
+		# TODO: use vnc or other means to debug/fix
+		# https://github.com/tinkerbell/osie/issues/237
+		test_boot_and_phone_home |& stdbuf -i 0 sed "s/^/$(colorize $color 'test_boot_and_phone_home│')/" &&
+			echo "this test is expected to fail" >&2 &&
+			exit 1
+	else
+		test_boot_and_phone_home |& stdbuf -i 0 sed "s/^/$(colorize $color 'test_boot_and_phone_home│')/"
+	fi
+	rm -f uploads/*
+
+	color=35
 	colorize $color "== Running Deprovision Test =="
 	test_deprovision |& stdbuf -i 0 sed "s/^/$(colorize $color 'test_deprovision│')/"
 	rm -f uploads/*
@@ -396,11 +422,50 @@ test_provision() {
 	run_vm -kernel "$kernel" -initrd "$initramfs" -append "$cmdline"
 
 	# check for provision success code
-	eventid=provisioning.109
+	local eventid=provisioning.109
 	grep -qr "$eventid" uploads
+	local got
 	got=$(grep -hr "$eventid" uploads)
 	#shellcheck disable=SC2089
-	want='{"type":"provisioning.109"}'
+	local want='{"type":"provisioning.109"}'
+	diff -u <(jq -cS . <<<"$want") <(jq -cS . <<<"$got")
+}
+
+test_boot_and_phone_home() {
+	run_vm &
+	local vmpid=$!
+
+	local i=0
+	until grep -qr instance_id uploads; do
+		# timeout after 2min
+		if ((i++ == 12)); then
+			break
+		fi
+		sleep 10
+	done
+	echo 'system_powerdown' | socat unix-connect:monitor.sock -
+
+	i=0
+	local qpid
+	# wait 2min for the vm to shutdown
+	until ((i++ == 12)); do
+		qpid=$(pgrep qemu || :)
+		if [[ -z ${qpid:-} ]] || ((qpid != vmpid)); then
+			break
+		fi
+		sleep 10
+	done
+	if ((i >= 12)); then
+		kill -KILL $vmpid
+		sleep 1
+	fi
+
+	# check for phone-home
+	local eventid=instance_id
+	grep -qr "$eventid" uploads
+	local got
+	got=$(grep -hr "$eventid" uploads)
+	local want='{"instance_id":"'"$id"'"}'
 	diff -u <(jq -cS . <<<"$want") <(jq -cS . <<<"$got")
 }
 
@@ -417,11 +482,12 @@ test_deprovision() {
 	run_vm -kernel "$kernel" -initrd "$initramfs" -append "$cmdline"
 
 	# check for deprovisioning finished message
-	eventid=deprovisioning.306.02
+	local eventid=deprovisioning.306.02
 	grep -qr "$eventid" uploads
+	local got
 	got=$(grep -hr "$eventid" uploads)
 	#shellcheck disable=SC2089
-	want='{"type":"deprovisioning.306.02","body":"Deprovision finished, rebooting server","private":true}'
+	local want='{"type":"deprovisioning.306.02","body":"Deprovision finished, rebooting server","private":true}'
 	diff -u <(jq -cS . <<<"$want") <(jq -cS . <<<"$got")
 
 	echo "Checking if disks were wiped"
@@ -434,6 +500,7 @@ test_deprovision() {
 
 get_subnet() {
 	# convert subnets in use into grep -E pattern
+	local pattern
 	pattern=$(ip -4 addr | awk '/inet 172/ {print $2}' | sort -h | sed 's|172.\([0-9]\+\).*|\1|' | tr '\n' '|' | sed -e 's/^/^(/' -e 's/|$/)/')
 	seq 0 255 | grep -vwE "$pattern" | shuf -n1 | sed 's|.*|172.&.0|'
 }
