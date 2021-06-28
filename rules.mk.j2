@@ -109,10 +109,15 @@ endif
 deploy-to-s3: package
 	$(E) "UPLOAD   s3/tinkerbell-oss/osie-uploads/osie-$v.tar.gz"
 	mc cp build/osie-$v.tar.gz s3/${s3Bucket}/osie-uploads/osie-$v.tar.gz
-	if [[ $${DRONE_BUILD_EVENT:-} == "push" ]] && [[ $${DRONE_BRANCH:-} == "master" ]]; then mc cp s3/tinkerbell-oss/osie-uploads/osie-$v.tar.gz s3/tinkerbell-oss/osie-uploads/latest.tar.gz; fi
+	if [[ $${DRONE_BUILD_EVENT:-} == "push" ]] && [[ $${DRONE_BRANCH:-} == "master" ]]; then
+		mc cp s3/tinkerbell-oss/osie-uploads/osie-$v.tar.gz s3/tinkerbell-oss/osie-uploads/latest.tar.gz
+	fi
 	$(E) "UPLOAD   s3/tinkerbell-oss/osie-uploads/osie-$v.tar.gz.sha512sum"
 	mc cp build/osie-$v.tar.gz.sha512sum s3/${s3Bucket}/osie-uploads/osie-$v.tar.gz.sha512sum
-	if [[ $${DRONE_BUILD_EVENT:-} == "push" ]] && [[ $${DRONE_BRANCH:-} == "master" ]]; then mc cp s3/tinkerbell-oss/osie-uploads/osie-$v.tar.gz.sha512sum s3/tinkerbell-oss/osie-uploads/latest.tar.gz.sha512sum; fi
+	if [[ $${DRONE_BUILD_EVENT:-} == "push" ]] && [[ $${DRONE_BRANCH:-} == "master" ]]; then
+		sed 's| (.*) | (latest.tar.gz) |' build/$v.tar.gz.sha512sum >build/latest.tar.gz.sha512sum
+		mc cp s3/tinkerbell-oss/osie-uploads/latest.tar.gz.sha512sum s3/tinkerbell-oss/osie-uploads/latest.tar.gz.sha512sum
+	fi
 	echo "deploy this build from the deploy-osie repo with the following command:"
 	echo -n "./deploy update osie-$v -m \"$$"
 	echo -n "(sed -n '/^## \[/,$$ {/\S/!q; p}' CHANGELOG.md)\" "
