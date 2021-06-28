@@ -1,6 +1,6 @@
 ---
 osie-test-env: &osie-test-env
-  image: osie-test-env:${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
+  image: osie-test-env:${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA:0:8}
 
 clone:
   git:
@@ -12,7 +12,7 @@ pipeline:
   build_osie_test_env_image:
     image: docker
     commands:
-      - docker build -t osie-test-env:${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA} ci
+      - docker build -t osie-test-env:${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA:0:8} ci
       - mkdir build
       - touch build/osie-test-env
     volumes:
