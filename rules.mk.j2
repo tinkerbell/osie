@@ -36,23 +36,6 @@ endif
 
 ifndef v
 v := $(shell git describe --dirty)
-ifeq (-g,$(findstring -g,$v))
-build_git_version := true
-endif
-ifeq (-dirty,$(findstring -dirty,$v))
-build_git_version := true
-endif
-
-ifeq (true,${build_git_version})
-t := $(word 1, $(subst -, ,$v))
-n := $(word 2, $(subst -, ,$v))
-c := $(shell git rev-parse --short HEAD)
-d := ,dirty
-d := $(subst dirty,$d,$(findstring dirty,$v))
-b := $(shell git symbolic-ref HEAD | sed -e 's|^refs/heads/||' -e 's|/|-|g' -e 's|^|,b=|')
-v := $t-n=$n,c=$c$b$d
-v := $(patsubst %dirty,dirty,$v)
-endif
 endif
 
 # ensure build/osie-$v always exists without having to add as an explicit dependency
