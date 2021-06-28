@@ -115,7 +115,7 @@ deploy-to-s3: package
 	$(E) "UPLOAD   s3/tinkerbell-oss/osie-uploads/osie-$v.tar.gz.sha512sum"
 	mc cp build/osie-$v.tar.gz.sha512sum s3/${s3Bucket}/osie-uploads/osie-$v.tar.gz.sha512sum
 	if [[ $${DRONE_BUILD_EVENT:-} == "push" ]] && [[ $${DRONE_BRANCH:-} == "master" ]]; then
-		sed 's| (.*) | (latest.tar.gz) |' build/$v.tar.gz.sha512sum >build/latest.tar.gz.sha512sum
+		sed 's| (.*) | (latest.tar.gz) |' build/osie-$v.tar.gz.sha512sum >build/latest.tar.gz.sha512sum
 		mc cp s3/tinkerbell-oss/osie-uploads/latest.tar.gz.sha512sum s3/tinkerbell-oss/osie-uploads/latest.tar.gz.sha512sum
 	fi
 	echo "deploy this build from the deploy-osie repo with the following command:"
