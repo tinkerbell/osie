@@ -36,23 +36,6 @@ endif
 
 ifndef v
 v := $(shell git describe --dirty)
-ifeq (-g,$(findstring -g,$v))
-build_git_version := true
-endif
-ifeq (-dirty,$(findstring -dirty,$v))
-build_git_version := true
-endif
-
-ifeq (true,${build_git_version})
-t := $(word 1, $(subst -, ,$v))
-n := $(word 2, $(subst -, ,$v))
-c := $(shell git rev-parse --short HEAD)
-d := ,dirty
-d := $(subst dirty,$d,$(findstring dirty,$v))
-b := $(shell git symbolic-ref HEAD | sed -e 's|^refs/heads/||' -e 's|/|-|g' -e 's|^|,b=|')
-v := $t-n=$n,c=$c$b$d
-v := $(patsubst %dirty,dirty,$v)
-endif
 endif
 
 # ensure build/osie-$v always exists without having to add as an explicit dependency
@@ -118,11 +101,9 @@ deploy-to-s3: package
 		sed 's| (.*) | (latest.tar.gz) |' build/osie-$v.tar.gz.sha512sum >build/latest.tar.gz.sha512sum
 		mc cp s3/tinkerbell-oss/osie-uploads/latest.tar.gz.sha512sum s3/tinkerbell-oss/osie-uploads/latest.tar.gz.sha512sum
 	fi
-	echo "deploy this build from the deploy-osie repo with the following command:"
-	echo -n "./deploy update osie-$v -m \"$$"
-	echo -n "(sed -n '/^## \[/,$$ {/\S/!q; p}' CHANGELOG.md)\" "
-	echo -n "$$(sed 's|.*= ||' build/osie-$v.tar.gz.sha512sum)"
 	echo
+	echo "EM specific info: deploy this build from the deploy-osie repo with the following command:"
+	echo "./deploy update osie-$v $(shell awk '{print $$NF}' build/osie-$v.tar.gz.sha512sum)"
 
 upload-test: ${packages}
 	$(E) "UPLOAD   s3/tinkerbell-oss/osie-uploads/osie-testing/osie-$v/"
