@@ -64,7 +64,7 @@ function autofail() {
 trap autofail EXIT
 
 # Check BIOS config and update if drift is detected
-if [[ $arch == x86_64 ]] && [[ $reserved != "true" ]]; then
+if [[ $arch == "x86_64" ]] && [[ $reserved != "true" ]]; then
 	set_autofail_stage "detecting BIOS information"
 	bios_vendor=$(detect_bios_vendor)
 	bios_version=$(detect_bios_version "${bios_vendor}")
@@ -141,7 +141,7 @@ if [[ $preserve_data == false ]]; then
 	nvme_drives=($(find /dev -regex ".*/nvme[0-9]+" | sort -h))
 	echo "Found ${#nvme_drives[@]} nvme drives"
 	nvme list
-	if [[ $class == x.large.arm ]]; then
+	if [[ $class == "x.large.arm" ]]; then
 		echo "Skipping NVMe namespace management for $class hardware"
 	elif ((${#nvme_drives[@]} > 0)); then
 		for drive in "${nvme_drives[@]}"; do
@@ -164,7 +164,7 @@ if [[ $preserve_data == false ]]; then
 			fi
 			flbas=0
 			nvmemodel=$(nvme id-ctrl "$drive" -o json | jq -r '.mn' | sed -e 's/[[:space:]]*$//')
-			if [[ $nvmemodel == 'INTEL SSDPE2KX040T8' ]]; then
+			if [[ $nvmemodel == "INTEL SSDPE2KX040T8" ]]; then
 				# Set specific block size depending on physical BD
 				sectors=$((max_bytes / 4097))
 				flbas=1
@@ -199,7 +199,7 @@ if [[ $preserve_data == false ]]; then
 	# LSI MegaRAID and Dell PERC series 9
 	set_autofail_stage "checking/resetting MegaRAID/PERC RAID controllers"
 	# do not do grep -q, it doesn't play well with pipefail when lots of pci devices exist
-	if lspci -nn | grep -v 'SAS3008' | grep LSI >/dev/null && [[ $arch == x86_64 ]]; then
+	if [[ $arch == "x86_64" ]] && lspci -nn | grep -v 'SAS3008' | grep LSI >/dev/null; then
 		if perccli64 show | grep -E 'PERCH710PMini|PERCH730P|PERCH740PMini' >/dev/null; then
 			perc_reset "${disks[@]}"
 		else
@@ -213,8 +213,8 @@ if [[ $preserve_data == false ]]; then
 
 	# Marvell (Dell) BOSS-S1
 	set_autofail_stage "checking/resetting Marvell RAID controllers"
-	if lspci -nn | grep '88SE9230' | grep Marvell >/dev/null && [[ $arch == x86_64 ]]; then
-		if [[ $class == n2.xlarge.x86 ]]; then
+	if [[ $arch == "x86_64" ]] && lspci -nn | grep '88SE9230' | grep Marvell >/dev/null; then
+		if [[ $class == "n2.xlarge.x86" ]]; then
 			echo "Skipping RAID destroy for this $class hardware..."
 		else
 			marvell_reset
@@ -227,7 +227,7 @@ if [[ $preserve_data == false ]]; then
 
 	# Adaptec Smart Storage (HPE)
 	set_autofail_stage "checking/resetting Adaptec Smart Storage RAID logical drives"
-	if lspci -nn | grep 'Adaptec Smart Storage PQI' >/dev/null && [[ $arch == x86_64 ]]; then
+	if [[ $arch == "x86_64" ]] && lspci -nn | grep 'Adaptec Smart Storage PQI' >/dev/null; then
 		smartarray_reset
 	fi
 else
@@ -271,12 +271,22 @@ baremetal_2a2 | baremetal_2a4 | baremetal_hua)
 *)
 	set_autofail_stage "running packet-hardware inventory"
 	packet-hardware inventory --verbose --tinkerbell "${tinkerbell}/hardware-components"
+	# Catalog various BIOS feature states (not yet supported on aarch64, still fixing issues on m1/m2.xl)
+	if [[ $arch == "x86_64" ]] && [[ $class != "m1.xlarge.x86" ]] && [[ $class != "m2.xlarge.x86" ]]; then
+		set_autofail_stage "running packet-hardware inventorybios"
+		# TODO: post this data to HollowDB when it becomes available
+		# When running the inventorybios command outside of the packet-hardware
+		# container, UTIL_RACADM7 must be set to the location of the racadm binary
+		UTIL_RACADM7=/opt/dell/srvadmin/bin/idracadm7 packet-hardware inventorybios --verbose -u localhost --dry --cache-file /tmp/bios.json
+		echo "BIOS Inventory reported by packet-hardware:"
+		cat /tmp/bios.json
+	fi
 	;;
 esac
 
 # Run eclypsium
 if [[ -n ${ECLYPSIUM_TOKEN:-} ]]; then
-	if [[ $arch == x86_64 ]]; then
+	if [[ $arch == "x86_64" ]]; then
 		case "$class" in
 		disabled.plan.here)
 			echo "skipping eclypsium on unsuppported plan"

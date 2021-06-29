@@ -11,8 +11,10 @@ registry_password=$(sed -nr 's|.*\bregistry_password=(\S+).*|\1|p' /proc/cmdline
 syslog_host=$(sed -nr 's|.*\bsyslog_host=(\S+).*|\1|p' /proc/cmdline)
 worker_id=$(sed -nr 's|.*\bworker_id=(\S+).*|\1|p' /proc/cmdline)
 instance_id=$(sed -nr 's|.*\binstance_id=(\S+).*|\1|p' /proc/cmdline)
+CAPTURE_ACTION_LOGS=true
 
 tink_worker_image="${docker_registry}/tinkerbell/tink-worker:sha-5e1f0fd8"
+use_syslog=true
 
 # Create workflow motd
 cat <<'EOF'
@@ -44,15 +46,19 @@ wget "$packet_base_url/ca.pem"
 mkdir -p /etc/docker/ /etc/docker/certs.d/ "/etc/docker/certs.d/$docker_registry"
 cp ca.pem "/etc/docker/certs.d/$docker_registry/ca.crt"
 
-# configure docker daemon
-cat >/etc/docker/daemon.json <<-EOM
-	{
-	  "log-driver": "syslog",
-	  "log-opts": {
-	    "syslog-address": "udp://${syslog_host}:514"
-	  }
-	}
-EOM
+if [ $use_syslog = true ]; then
+	# configure docker daemon
+	cat >/etc/docker/daemon.json <<-EOM
+		{
+		  "log-driver": "syslog",
+		  "log-opts": {
+		    "syslog-address": "udp://${syslog_host}:514"
+		  }
+		}
+	EOM
+
+	CAPTURE_ACTION_LOGS=false
+fi
 
 service docker start
 i=0
@@ -86,6 +92,7 @@ docker run --privileged -t --name "tink-worker" \
 	-e "TINKERBELL_CERT_URL=$grpc_cert_url" \
 	-e "REGISTRY_USERNAME=$registry_username" \
 	-e "REGISTRY_PASSWORD=$registry_password" \
+	-e "CAPTURE_ACTION_LOGS=${CAPTURE_ACTION_LOGS}" \
 	-v /worker:/worker \
 	-v /var/run/docker.sock:/var/run/docker.sock \
 	-t \

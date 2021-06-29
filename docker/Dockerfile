@@ -3,20 +3,12 @@ FROM ubuntu:xenial
 VOLUME /statedir
 ENTRYPOINT ["/entrypoint.sh"]
 
-ARG GITVERSION
-ARG GITBRANCH
-ARG DRONEBUILD
-
-ENV OSIE_VERSION ${GITVERSION}
-ENV OSIE_BRANCH ${GITBRANCH}
-ENV DRONE_BUILD ${DRONEBUILD}
-
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 
 # apt sources fix
 COPY sources.list.aarch64 /tmp/osie/
-RUN if [ $(uname -m) = 'aarch64' ]; then \
+RUN if [ "$(uname -m)" = 'aarch64' ]; then \
         mv /tmp/osie/sources.list.aarch64 /etc/apt/sources.list; \
     fi && \
     rm -rf /tmp/osie
@@ -31,7 +23,7 @@ RUN apt-get update -y && \
 
 # gron - grep for JSON
 COPY lfs/gron-0.6.0-amd64 /tmp/osie/
-RUN if [ $(uname -m) = 'x86_64' ]; then \
+RUN if [ "$(uname -m)" = 'x86_64' ]; then \
         mv /tmp/osie/gron-0.6.0-amd64 /usr/bin/gron; \
     fi && \
     rm -rf /tmp/osie
@@ -76,7 +68,15 @@ RUN apt-get update -y && \
     apt-get -qy clean && \
     rm -rf /var/lib/apt/lists/* /tmp/osie/
 
-ARG PACKET_HARDWARE_COMMIT=68a25da2b6a3d3281838bff6b62639438116d0d1
+# ironlib cli wrapper, a prereq for packet-hardware since we don't run it from its container
+COPY lfs/getbiosconfig /tmp/osie/
+RUN cd /tmp/osie && \
+    if [ "$(uname -m)" = 'x86_64' ]; then \
+      install -m755 /tmp/osie/getbiosconfig /usr/sbin/getbiosconfig; \
+    fi && \
+    rm -rf /tmp/osie/
+
+ARG PACKET_HARDWARE_COMMIT=ddbafcbc74ef3db0677d56733442cd9f6f76a317
 ARG PACKET_NETWORKING_COMMIT=06061801efaf34caa8d8b1ae5973c15e5a23659d
 
 RUN curl https://bootstrap.pypa.io/pip/3.5/get-pip.py | python3 && \
@@ -115,7 +115,7 @@ RUN cd /tmp/osie && \
     rm -r /tmp/osie
 
 # SSA CLI
-RUN if [ $(uname -m) = 'x86_64' ]; then \
+RUN if [ "$(uname -m)" = 'x86_64' ]; then \
       temp="$(mktemp)" && \
       wget -O "$temp" 'https://downloads.linux.hpe.com/SDR/repo/mcp/pool/non-free/ssacli-4.17-6.0_amd64.deb' && \
       dpkg -i "$temp" && \
@@ -131,7 +131,7 @@ RUN cd /tmp/osie && \
 # RACADM
 COPY dchipm.ini /tmp/osie/
 RUN cd /tmp/osie && \
-    if [ $(uname -m) != 'aarch64' ]; then \
+    if [ "$(uname -m)" != 'aarch64' ]; then \
       apt-get update && apt-get install -y alien && \
       rpm --import http://linux.dell.com/repo/pgp_pubkeys/0x1285491434D8786F.asc && \
       wget \
@@ -148,7 +148,7 @@ RUN cd /tmp/osie && \
 
 # SuperMicro SUM
 COPY lfs/sum_2.4.0_Linux_x86_64_20191206.tar.gz /tmp/osie/
-RUN if [ $(uname -m) = 'x86_64' ]; then \
+RUN if [ "$(uname -m)" = 'x86_64' ]; then \
       mkdir -p /opt/supermicro && \
         tar -zxvf /tmp/osie/sum_2.4.0_Linux_x86_64_20191206.tar.gz -C /opt/supermicro && \
         ln -s /opt/supermicro/sum_2.4.0_Linux_x86_64 /opt/supermicro/sum; \
@@ -164,7 +164,7 @@ ARG ECLYPSIUM_AGENT_SHA256=4bb5cfe3c6c3988b99c36e864f35abd8296120d197864a26f10a4
 ARG ECLYPSIUM_AGENT_FILENAME=eclypsiumapp-${ECLYPSIUM_AGENT_VERSION}.deb
 
 COPY lfs/${ECLYPSIUM_AGENT_FILENAME} /tmp/
-RUN if [ $(uname -m) = 'x86_64' ]; then \
+RUN if [ "$(uname -m)" = 'x86_64' ]; then \
         cd /tmp && \
         echo "${ECLYPSIUM_AGENT_SHA256}  ${ECLYPSIUM_AGENT_FILENAME}" | sha256sum -c && \
         dpkg --unpack "${ECLYPSIUM_AGENT_FILENAME}" && \
@@ -187,6 +187,11 @@ RUN curl --remote-name "https://raw.githubusercontent.com/packethost/metal-block
 
 COPY entrypoint.sh /entrypoint.sh
 COPY scripts/ /home/packet/
+
+ARG GITVERSION
+ARG GITBRANCH
+ARG DRONEBUILD
+ENV OSIE_VERSION=${GITVERSION} OSIE_BRANCH=${GITBRANCH} DRONE_BUILD=${DRONEBUILD}
 
 # ensure we always have up to date packages
 RUN apt-get -y update && \
