@@ -6,9 +6,9 @@ rules.mk: rules.mk.j2 rules.mk.json
 
 -include rules.mk
 
-all: build/$v/osie-aarch64.tar.gz build/$v/osie-x86_64.tar.gz ## Build the osie container images
+all: build/osie-$v/osie-aarch64.tar.gz build/osie-$v/osie-x86_64.tar.gz ## Build the osie container images
 
-package: build/$v.tar.gz build/$v.tar.gz.sha512sum  ## Bundle up all the files needed for an OSIE release
+package: build/osie-$v.tar.gz build/osie-$v.tar.gz.sha512sum  ## Bundle up all the files needed for an OSIE release
 
 package-common: package-apps package-grubs ## Bundle up all the architecture independent files
 
