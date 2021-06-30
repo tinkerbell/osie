@@ -271,15 +271,17 @@ baremetal_2a2 | baremetal_2a4 | baremetal_hua)
 *)
 	set_autofail_stage "running packet-hardware inventory"
 	packet-hardware inventory --verbose --tinkerbell "${tinkerbell}/hardware-components"
-	# Catalog various BIOS feature states (not yet supported on aarch64, still fixing issues on m1/m2.xl)
-	if [[ $arch == "x86_64" ]] && [[ $class != "m1.xlarge.x86" ]] && [[ $class != "m2.xlarge.x86" ]]; then
-		set_autofail_stage "running packet-hardware inventorybios"
+	# Catalog various BIOS feature states (not yet supported on aarch64)
+	if [[ $arch == "x86_64" ]]; then
 		# TODO: post this data to HollowDB when it becomes available
 		# When running the inventorybios command outside of the packet-hardware
 		# container, UTIL_RACADM7 must be set to the location of the racadm binary
-		UTIL_RACADM7=/opt/dell/srvadmin/bin/idracadm7 packet-hardware inventorybios --verbose -u localhost --dry --cache-file /tmp/bios.json
-		echo "BIOS Inventory reported by packet-hardware:"
-		cat /tmp/bios.json
+		if UTIL_RACADM7=/opt/dell/srvadmin/bin/idracadm7 packet-hardware inventorybios --verbose -u localhost --dry --cache-file /tmp/bios.json; then
+			echo "BIOS Inventory reported by packet-hardware:"
+			cat /tmp/bios.json
+		else
+			echo "WARNING: packet-hardware inventorybios failed on server $id ($class) - needs investigation"
+		fi
 	fi
 	;;
 esac
