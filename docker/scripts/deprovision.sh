@@ -275,8 +275,9 @@ baremetal_2a2 | baremetal_2a4 | baremetal_hua)
 	if [[ $arch == "x86_64" ]]; then
 		# TODO: post this data to HollowDB when it becomes available
 		# When running the inventorybios command outside of the packet-hardware
-		# container, UTIL_RACADM7 must be set to the location of the racadm binary
-		if UTIL_RACADM7=/opt/dell/srvadmin/bin/idracadm7 packet-hardware inventorybios --verbose -u localhost --dry --cache-file /tmp/bios.json; then
+		# container, UTIL_RACADM7 and UTIL_SUM must be set to the locations of the
+		# racadm and sum binaries, respectively
+		if UTIL_RACADM7=/opt/dell/srvadmin/bin/idracadm7 UTIL_SUM=/opt/supermicro/sum/sum packet-hardware inventorybios --verbose -u localhost --dry --cache-file /tmp/bios.json; then
 			echo "BIOS Inventory reported by packet-hardware:"
 			cat /tmp/bios.json
 		else
