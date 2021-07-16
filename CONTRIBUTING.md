@@ -1,19 +1,31 @@
 ## Hello Contributors!
 
-Thx for your interest! We're so glad you're here.
+Thanks for your interest! We're so glad you're here.
 
 #### Important Resources
 
-- bugs: [https://github.com/tinkerbell/osie/issues](https://github.com/tinkerbell/osie/issues)
-- feature requests: [https://github.com/tinkerbell/osie/issues](https://github.com/tinkerbell/osie/issues)
+#### bugs: [https://github.com/tinkerbell/osie/issues](https://github.com/tinkerbell/osie/issues)
 
 ### Code of Conduct
 
-Available via [https://github.com/tinkerbell/osie/blob/master/.github/CODE_OF_CONDUCT.md](https://github.com/tinkerbell/osie/blob/master/.github/CODE_OF_CONDUCT.md)
+Please read and understand the code of conduct found [here](https://github.com/tinkerbell/.github/blob/master/CODE_OF_CONDUCT.md).
 
 ### Environment Details
 
-[https://github.com/tinkerbell/osie/blob/master/Makefile](https://github.com/tinkerbell/osie/blob/master/Makefile)
+Building is handled by `make`, please see the [Makefile](Makefile) for available targets.
+
+#### Nix
+
+This repo's build environment can be reproduced using `nix`.
+
+##### Install Nix
+
+Follow the [Nix installation](https://nixos.org/download.html) guide to setup Nix on your box.
+
+##### Load Dependencies
+
+Loading build dependencies is as simple as running `nix-shell` or using [lorri](https://github.com/nix-community/lorri).
+If you have `direnv` installed the included `.envrc` will make that step automatic.
 
 ### How to Submit Change Requests
 
