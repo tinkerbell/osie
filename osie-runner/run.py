@@ -61,7 +61,19 @@ def connect_hegel(facility):
         iterations += 1
         authority = get_hegel_authority(facility)
         log.info("connecting to", authority=authority)
-        channel = grpc.secure_channel(authority, creds)
+        # Timeouts: https://cs.mcgill.ca/~mxia3/2019/02/23/Using-gRPC-in-Production/
+        channel = grpc.secure_channel(
+            authority,
+            creds,
+            options=[
+                ("grpc.keepalive_time_ms", 10000),
+                ("grpc.keepalive_timeout_ms", 5000),
+                ("grpc.keepalive_permit_without_calls", 1),
+                ("grpc.http2.max_pings_without_data", 0),
+                ("grpc.http2.min_time_between_pings_ms", 10000),
+                ("grpc.http2.min_ping_interval_without_data_ms", 5000),
+            ],
+        )
         stub = hegel_pb2_grpc.HegelStub(channel)
 
         try:
