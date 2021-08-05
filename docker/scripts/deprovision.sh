@@ -273,16 +273,7 @@ baremetal_2a2 | baremetal_2a4 | baremetal_hua)
 	packet-hardware inventory --verbose --tinkerbell "${tinkerbell}/hardware-components"
 	# Catalog various BIOS feature states (not yet supported on aarch64)
 	if [[ $arch == "x86_64" ]]; then
-		# TODO: post this data to HollowDB when it becomes available
-		# When running the inventorybios command outside of the packet-hardware
-		# container, UTIL_RACADM7 and UTIL_SUM must be set to the locations of the
-		# racadm and sum binaries, respectively
-		if UTIL_RACADM7=/opt/dell/srvadmin/bin/idracadm7 UTIL_SUM=/opt/supermicro/sum/sum packet-hardware inventorybios --verbose -u localhost --dry --cache-file /tmp/bios.json; then
-			echo "BIOS Inventory reported by packet-hardware:"
-			cat /tmp/bios.json
-		else
-			echo "WARNING: packet-hardware inventorybios failed on server $id ($class) - needs investigation"
-		fi
+		bios_inventory "${id}" "${class}" "${facility}"
 	fi
 	;;
 esac
