@@ -104,6 +104,8 @@ facility=$(sed -nr 's|.*\bfacility=(\S+).*|\1|p' /proc/cmdline)
 packet_base_url=$(sed -nr 's|.*\bpacket_base_url=(\S+).*|\1|p' /proc/cmdline)
 pwhash=$(sed -nr 's|.*\bpwhash=(\S+).*|\1|p' /proc/cmdline)
 kslug=$(sed -nr 's|.*\bslug=(\S+).*|\1|p' /proc/cmdline)
+hollow_client_id=$(sed -nr 's|.*\bhollow_client_id=(\S+).*|\1|p' /proc/cmdline)
+hollow_client_request_secret=$(sed -nr 's|.*\bhollow_client_request_secret=(\S+).*|\1|p' /proc/cmdline)
 eclypsium_token=$(sed -nr 's|.*\beclypsium_token=(\S+).*|\1|p' /proc/cmdline)
 syslog_host=$(sed -nr 's|.*\bsyslog_host=(\S+).*|\1|p' /proc/cmdline)
 
@@ -229,6 +231,8 @@ $timeout_cmd docker run --privileged -ti \
 	-h "${hardware_id}" \
 	-e "container_uuid=$id" \
 	-e "RLOGHOST=$syslog_host" \
+	-e "HOLLOW_CLIENT_ID=${hollow_client_id:-}" \
+	-e "HOLLOW_CLIENT_REQUEST_SECRET=${hollow_client_request_secret:-}" \
 	-e "ECLYPSIUM_TOKEN=${eclypsium_token:-}" \
 	-v /dev:/dev \
 	-v /dev/console:/dev/console \

@@ -403,6 +403,59 @@ function validate_bios_config() {
 	fi
 }
 
+# usage: bios_inventory $id $plan $facility
+function bios_inventory() {
+	local id=$1
+	local plan=$2
+	local facility=$3
+	local bios_json_fn="/tmp/bios.json"
+	local hollow_auth_url
+	local hollow_audience
+	local hollow_token
+	local hollow_response
+	local hollow_url
+
+	# When running the inventorybios command outside of the packet-hardware
+	# container, UTIL_RACADM7 and UTIL_SUM must be set to the locations of the
+	# racadm and sum binaries, respectively
+	if UTIL_RACADM7=/opt/dell/srvadmin/bin/idracadm7 UTIL_SUM=/opt/supermicro/sum/sum packet-hardware inventorybios --verbose -u localhost --dry --cache-file "${bios_json_fn}"; then
+		echo "BIOS Inventory reported by packet-hardware:"
+		cat "${bios_json_fn}"
+
+		# Write data to Hollow
+		if [[ -z ${HOLLOW_CLIENT_ID:-} ]] || [[ -z ${HOLLOW_CLIENT_REQUEST_SECRET:-} ]]; then
+			echo "Warning: env credentials for Hollow not found, not writing to Hollow"
+			return 0
+		fi
+
+		hollow_auth_url="https://equinixmetal.us.auth0.com/oauth/token"
+		hollow_audience="https://hollow.platformequinix.net"
+		# Use eclypsium-proxy to reach the auth server from the deprov network
+		if ! hollow_token=$(HTTPS_PROXY="http://eclypsium-proxy-${facility}.packet.net:8888/" curl --request POST \
+			--url ${hollow_auth_url} \
+			--header 'Content-Type: application/json' \
+			--data '{"client_id":"'"${HOLLOW_CLIENT_ID}"'","client_secret":"'"${HOLLOW_CLIENT_REQUEST_SECRET}"'","audience":"'"${hollow_audience}"'","grant_type":"client_credentials"}' \
+			--fail | jq .access_token); then
+			echo "Warning: unable to retrieve access token for Hollow, not writing to Hollow"
+			return 0
+		fi
+
+		hollow_url="https://hollow.edge-a.${facility}.metalkube.net/api/v1/servers/${id}/versioned-attributes"
+		# Write the bios data to Hollow
+		if ! hollow_response=$(curl --request POST \
+			--url "${hollow_url}" \
+			--header "Authorization: Bearer $hollow_token" \
+			--header "Content-Type: application/json" \
+			--data @${bios_json_fn} \
+			--fail); then
+			echo "Warning: write to Hollow failed: ${hollow_response}"
+			return 0
+		fi
+	else
+		echo "WARNING: packet-hardware inventorybios failed on server ${id} (${plan}) - needs investigation"
+	fi
+}
+
 function dns_resolvers() {
 	declare -ga resolvers
 
