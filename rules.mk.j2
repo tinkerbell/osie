@@ -103,7 +103,7 @@ deploy-to-s3: package
 	fi
 	echo
 	echo "EM specific info: deploy this build from the deploy-osie repo with the following command:"
-	echo "./deploy update osie-$v $(shell awk '{print $$NF}' build/osie-$v.tar.gz.sha512sum)"
+	echo "./deploy update osie-$v $(shell awk '{print $$NF}' build/osie-$v.tar.gz.sha512sum) -m 'Your message to humans here'"
 
 upload-test: ${packages}
 	$(E) "UPLOAD   s3/tinkerbell-oss/osie-uploads/osie-testing/osie-$v/"
