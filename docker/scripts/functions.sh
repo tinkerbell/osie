@@ -788,10 +788,13 @@ function perc_reset() {
 	fi
 
 	#Check/set personality
-	if perccli64 /c0 show personality | grep "Current Personality" | grep "HBA-Mode" >/dev/null; then
-		echo "PERCCLI - Controller in HBA-Mode - OK"
+	if perccli64 /c0 show personality | grep "Current Personality" | grep -E "eHBA|HBA-Mode" >/dev/null; then
+		echo "PERCCLI - Controller in HBA/eHBA-Mode - OK"
 	elif [[ $percmodel == 'PERCH710PMini' || $percmodel == 'PERCH740PMini' ]]; then
 		echo "PERCCLI - Skipping set HBA-Mode. This $percmodel does not support HBA mode"
+	elif [[ $percmodel == 'PERCH745Front' ]]; then
+		echo "PERCCLI - Setting personality to eHBA-Mode"
+		perccli64 /c0 set personality=eHBA
 	else
 		echo "PERCCLI - Setting personality to HBA-Mode"
 		perccli64 /c0 set personality=HBA
