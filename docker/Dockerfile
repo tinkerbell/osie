@@ -98,8 +98,8 @@ RUN tar -xvC / -f /tmp/osie/megacli-noarch-bin.tar && \
     rm -rf /tmp/osie
 
 # PERC CLI
-COPY lfs/perccli-1.17.10-1.tar.gz /tmp/osie/
-RUN tar -zxvC / -f /tmp/osie/perccli-1.17.10-1.tar.gz && \
+COPY lfs/perccli-7.1020.0000.tar.gz /tmp/osie/
+RUN tar -zxvC / -f /tmp/osie/perccli-7.1020.0000.tar.gz && \
     ln -nsf /opt/MegaRAID/perccli/perccli64 /usr/bin/ && \
     rm -rf /tmp/osie
 
