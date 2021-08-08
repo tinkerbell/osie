@@ -812,6 +812,8 @@ function perc_reset() {
 	#Check for jbod and enable if needed
 	if perccli64 /c0 show jbod | grep "JBOD      ON" >/dev/null; then
 		echo "PERCCLI - JBOD is on - OK"
+	elif perccli64 /c0 show personality | grep "Auto Configure Behavior JBOD" >/dev/null; then
+		echo "PERCCLI - JBOD auto configure is on - OK"
 	elif [[ $percmodel == 'PERCH710PMini' || $percmodel == 'PERCH740PMini' ]]; then
 		echo "PERCCLI - Skipping set JBOD since $percmodel does not support it"
 	else
