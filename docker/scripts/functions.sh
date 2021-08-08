@@ -800,8 +800,8 @@ function perc_reset() {
 		perccli64 /c0 set personality=HBA
 	fi
 
-	#Check/delete all VDs!
-	if perccli64 /c0 /vall show | grep "No VDs" >/dev/null; then
+	#Check/delete all VDs! -- VDs and VD's it seems
+	if perccli64 /c0 /vall show | grep "No VD" >/dev/null; then
 		echo "PERCCLI - No VDs configured - OK"
 	else
 		echo "PERCCLI - Deleting all VDs"
