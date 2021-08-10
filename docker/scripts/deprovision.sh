@@ -200,7 +200,7 @@ if [[ $preserve_data == false ]]; then
 	set_autofail_stage "checking/resetting MegaRAID/PERC RAID controllers"
 	# do not do grep -q, it doesn't play well with pipefail when lots of pci devices exist
 	if [[ $arch == "x86_64" ]] && lspci -nn | grep -v 'SAS3008' | grep LSI >/dev/null; then
-		if perccli64 show | grep -E 'PERCH710PMini|PERCH730P|PERCH740PMini' >/dev/null; then
+		if perccli64 show | grep -E 'PERCH710PMini|PERCH730P|PERCH740PMini|PERCH745' >/dev/null; then
 			perc_reset "${disks[@]}"
 		else
 			megaraid_reset "${disks[@]}"
