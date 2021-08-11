@@ -403,6 +403,78 @@ function validate_bios_config() {
 	fi
 }
 
+# usage: bios_inventory $id $plan $facility
+function bios_inventory() {
+	local id=$1
+	local plan=$2
+	local facility=$3
+
+	# When running the inventorybios command outside of the packet-hardware
+	# container, UTIL_RACADM7 and UTIL_SUM must be set to the locations of the
+	# racadm and sum binaries, respectively
+	local bios_json_fn="/tmp/bios.json"
+	local hollow_json_fn="/tmp/hollow.json"
+	local hollow_namespace="net.equinixplatform.bios"
+	if UTIL_RACADM7=/opt/dell/srvadmin/bin/idracadm7 UTIL_SUM=/opt/supermicro/sum/sum packet-hardware inventorybios --verbose -u localhost --dry --cache-file "${bios_json_fn}"; then
+		# Generate JSON with additional fields required by Hollow
+		if ! jq --null-input \
+			--arg ns "${hollow_namespace}" \
+			--arg id "${id}" \
+			--slurpfile data "${bios_json_fn}" \
+			'{Namespace: $ns, hardware_uuid: $id, data: $data[]}' >"${hollow_json_fn}"; then
+			echo "Warning: error while generating hollow json"
+			return 0
+		fi
+		echo "BIOS feature inventory JSON is:"
+		cat "${hollow_json_fn}"
+
+		# Disable tracing since we're handling secrets
+		set +x
+
+		# Write data to Hollow
+		if [[ -z ${HOLLOW_CLIENT_ID:-} ]] || [[ -z ${HOLLOW_CLIENT_REQUEST_SECRET:-} ]]; then
+			echo "Warning: env credentials for Hollow not found, not writing to Hollow"
+			set -x
+			return 0
+		fi
+
+		local hollow_auth_url="https://auth.equinixmetal.com/oauth/token"
+		local hollow_audience="https://hollow.platformequinix.net"
+		# Use eclypsium-proxy to reach the auth server from the deprov network
+		echo "Requesting a hollow token from ${hollow_auth_url}"
+		local hollow_token
+		if ! hollow_token=$(HTTPS_PROXY="http://eclypsium-proxy-${facility}.packet.net:8888/" curl --request POST \
+			--url ${hollow_auth_url} \
+			--header 'Content-Type: application/json' \
+			--data '{"client_id":"'"${HOLLOW_CLIENT_ID}"'","client_secret":"'"${HOLLOW_CLIENT_REQUEST_SECRET}"'","audience":"'"${hollow_audience}"'","grant_type":"client_credentials"}' \
+			--fail | jq --raw-output .access_token); then
+			echo "Warning: unable to retrieve access token for Hollow, not writing to Hollow"
+			set -x
+			return 0
+		fi
+
+		local hollow_url="https://hollow.edge-a.${facility}.metalkube.net/api/v1/servers/${id}/versioned-attributes"
+		# Write the bios data to Hollow
+		echo "Writing BIOS feature inventory data to ${hollow_url}"
+		local hollow_response
+		if ! hollow_response=$(curl --request POST \
+			--url "${hollow_url}" \
+			--header "Authorization: Bearer $hollow_token" \
+			--header "Content-Type: application/json" \
+			--data @${hollow_json_fn} \
+			--fail); then
+			echo "Warning: write to Hollow failed: ${hollow_response}"
+			set -x
+			return 0
+		fi
+		echo "Hollow response: ${hollow_response}"
+	else
+		echo "WARNING: packet-hardware inventorybios failed on server ${id} (${plan}) - needs investigation"
+	fi
+
+	set -x
+}
+
 function dns_resolvers() {
 	declare -ga resolvers
 
