@@ -281,21 +281,14 @@ esac
 # Run eclypsium
 if [[ -n ${ECLYPSIUM_TOKEN:-} ]]; then
 	if [[ $arch == "x86_64" ]]; then
-		case "$class" in
-		disabled.plan.here)
-			echo "skipping eclypsium on unsuppported plan"
-			;;
-		*)
-			set_autofail_stage "running eclypsium"
-			https_proxy="http://eclypsium-proxy-${facility}.packet.net:8888/" /usr/bin/EclypsiumApp \
-				-s1 prod-0918.eclypsium.net "${ECLYPSIUM_TOKEN}" \
-				-disable-progress-bar \
-				-medium \
-				-log stderr \
-				-request-timeout 30 \
-				-custom-id "${id}" || echo 'EclypsiumApp Failed!'
-			;;
-		esac
+		set_autofail_stage "running eclypsium"
+		https_proxy="http://eclypsium-proxy-${facility}.packet.net:8888/" /usr/bin/EclypsiumApp \
+			-s1 prod-0918.eclypsium.net "${ECLYPSIUM_TOKEN}" \
+			-disable-progress-bar \
+			-medium \
+			-log stderr \
+			-request-timeout 30 \
+			-custom-id "${id}" || echo 'EclypsiumApp Failed!'
 	fi
 fi
 
