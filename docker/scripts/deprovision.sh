@@ -273,7 +273,7 @@ baremetal_2a2 | baremetal_2a4 | baremetal_hua)
 	packet-hardware inventory --verbose --tinkerbell "${tinkerbell}/hardware-components"
 	# Catalog various BIOS feature states (not yet supported on aarch64)
 	if [[ $arch == "x86_64" ]]; then
-		bios_inventory "${id}" "${class}" "${facility}"
+		bios_inventory "${HARDWARE_ID}" "${class}" "${facility}"
 	fi
 	;;
 esac
