@@ -230,6 +230,7 @@ reason='docker exited with an error (osie-installer)'
 $timeout_cmd docker run --privileged -ti \
 	-h "${hardware_id}" \
 	-e "container_uuid=$id" \
+	-e "HARDWARE_ID=${hardware_id}" \
 	-e "RLOGHOST=$syslog_host" \
 	-e "HOLLOW_CLIENT_ID=${hollow_client_id:-}" \
 	-e "HOLLOW_CLIENT_REQUEST_SECRET=${hollow_client_request_secret:-}" \

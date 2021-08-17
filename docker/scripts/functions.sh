@@ -403,9 +403,9 @@ function validate_bios_config() {
 	fi
 }
 
-# usage: bios_inventory $id $plan $facility
+# usage: bios_inventory $hwuuid $plan $facility
 function bios_inventory() {
-	local id=$1
+	local hwuuid=$1
 	local plan=$2
 	local facility=$3
 
@@ -414,12 +414,21 @@ function bios_inventory() {
 	# racadm and sum binaries, respectively
 	local bios_json_fn="/tmp/bios.json"
 	local hollow_json_fn="/tmp/hollow.json"
-	local hollow_namespace="net.equinixplatform.bios"
+	local hollow_namespace="net.platformequinix.bios"
 	if UTIL_RACADM7=/opt/dell/srvadmin/bin/idracadm7 UTIL_SUM=/opt/supermicro/sum/sum packet-hardware inventorybios --verbose -u localhost --dry --cache-file "${bios_json_fn}"; then
+		local inventorybios_json
+		inventorybios_json="$(cat "${bios_json_fn}")"
+		echo "inventorybios JSON is: [${inventorybios_json}]"
+
+		if [[ ${inventorybios_json} == "{}" ]]; then
+			echo "inventorybios JSON is empty, not writing to Hollow"
+			return 0
+		fi
+
 		# Generate JSON with additional fields required by Hollow
 		if ! jq --null-input \
 			--arg ns "${hollow_namespace}" \
-			--arg id "${id}" \
+			--arg id "${hwuuid}" \
 			--slurpfile data "${bios_json_fn}" \
 			'{Namespace: $ns, hardware_uuid: $id, data: $data[]}' >"${hollow_json_fn}"; then
 			echo "Warning: error while generating hollow json"
@@ -453,7 +462,7 @@ function bios_inventory() {
 			return 0
 		fi
 
-		local hollow_url="https://hollow.edge-a.${facility}.metalkube.net/api/v1/servers/${id}/versioned-attributes"
+		local hollow_url="https://hollow.edge-a.${facility}.metalkube.net/api/v1/servers/${hwuuid}/versioned-attributes"
 		# Write the bios data to Hollow
 		echo "Writing BIOS feature inventory data to ${hollow_url}"
 		local hollow_response
@@ -469,7 +478,7 @@ function bios_inventory() {
 		fi
 		echo "Hollow response: ${hollow_response}"
 	else
-		echo "WARNING: packet-hardware inventorybios failed on server ${id} (${plan}) - needs investigation"
+		echo "WARNING: packet-hardware inventorybios failed on server ${hwuuid} (${plan}) - needs investigation"
 	fi
 
 	set -x
