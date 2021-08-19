@@ -40,9 +40,17 @@ declare class && set_from_metadata class 'class' <"$metadata"
 declare reserved && set_from_metadata reserved 'reserved' true <"$metadata"
 declare tinkerbell && set_from_metadata tinkerbell 'phone_home_url' <"$metadata"
 declare id && set_from_metadata id 'id' <"$metadata"
+declare hw_id && set_from_metadata hw_id 'hardware_id' 'notfound' <"$metadata"
 declare preserve_data && set_from_metadata preserve_data 'preserve_data' false <"$metadata"
 declare deprovision_fast && set_from_metadata deprovision_fast 'deprovision_fast' false <"$metadata"
 declare efi_status && set_from_metadata efi_status 'specs.features.uefi' null <"$metadata"
+
+# Debug code for troubleshooting missing hardware_id metdatata
+if [[ ${hw_id} == "notfound" ]]; then
+	echo "Warning: hardware_id is missing from metadata for instance ${id} in facility ${facility}"
+else
+	echo "Notice: found hardware_id ${hw_id} for instance ${id} in facility ${facility}"
+fi
 
 # shellcheck disable=SC2001
 tinkerbell=$(echo "$tinkerbell" | sed 's|\(http://[^/]\+\).*|\1|')
