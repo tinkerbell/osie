@@ -447,15 +447,16 @@ function bios_inventory() {
 			return 0
 		fi
 
-		local hollow_auth_url="https://auth.equinixmetal.com/oauth/token"
-		local hollow_audience="https://hollow.platformequinix.net"
+		local hollow_auth_url="https://hydra.edge-a.${facility}.metalkube.net/oauth/token"
+		local hollow_auth_audience="https://hollow.equinixmetal.net"
+		local hollow_auth_scope="create:server:versioned-attributes"
 		# Use eclypsium-proxy to reach the auth server from the deprov network
 		echo "Requesting a hollow token from ${hollow_auth_url}"
 		local hollow_token
-		if ! hollow_token=$(HTTPS_PROXY="http://eclypsium-proxy-${facility}.packet.net:8888/" curl --request POST \
-			--url ${hollow_auth_url} \
-			--header 'Content-Type: application/json' \
-			--data '{"client_id":"'"${HOLLOW_CLIENT_ID}"'","client_secret":"'"${HOLLOW_CLIENT_REQUEST_SECRET}"'","audience":"'"${hollow_audience}"'","grant_type":"client_credentials"}' \
+		if ! hollow_token=$(curl --request POST \
+			--url "${hollow_auth_url}" \
+			--user "${HOLLOW_CLIENT_ID}:${HOLLOW_CLIENT_REQUEST_SECRET}" \
+			--data "grant_type=client_credentials&audience=${hollow_auth_audience}&scope=${hollow_auth_scope}" \
 			--fail | jq --raw-output .access_token); then
 			echo "Warning: unable to retrieve access token for Hollow, not writing to Hollow"
 			set -x
