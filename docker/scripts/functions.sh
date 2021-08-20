@@ -447,7 +447,7 @@ function bios_inventory() {
 			return 0
 		fi
 
-		local hollow_auth_url="https://hydra.edge-a.${facility}.metalkube.net/oauth/token"
+		local hollow_auth_url="https://hydra.edge-a.${facility}.metalkube.net/oauth2/token"
 		local hollow_auth_audience="https://hollow.equinixmetal.net"
 		local hollow_auth_scope="create:server:versioned-attributes"
 		# Use eclypsium-proxy to reach the auth server from the deprov network
