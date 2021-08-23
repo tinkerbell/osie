@@ -137,9 +137,9 @@ RUN cd /tmp/osie && \
       wget --quiet \
         https://dl.dell.com/FOLDER07423496M/1/DellEMC-iDRACTools-Web-LX-10.1.0.0-4566_A00.tar.gz \
         https://linux.dell.com/repo/community/openmanage/10100/focal/pool/main/s/srvadmin-omilcore/srvadmin-omilcore_10.1.0.0_amd64.deb && \
-      dpkg --install *.deb && \
       tar --extract --file DellEMC-iDRACTools-Web-LX-10.1.0.0-4566_A00.tar.gz && \
       alien --install iDRACTools/racadm/RHEL8/x86_64/*.rpm && \
+      dpkg --install *.deb && \
       ln -s /opt/dell/srvadmin/bin/idracadm7 /usr/bin/racadm && \
       apt-get purge -y alien && \
       apt-get autoremove -y && \
