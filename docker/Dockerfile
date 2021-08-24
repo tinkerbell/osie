@@ -3,20 +3,12 @@ FROM ubuntu:xenial
 VOLUME /statedir
 ENTRYPOINT ["/entrypoint.sh"]
 
-ARG GITVERSION
-ARG GITBRANCH
-ARG DRONEBUILD
-
-ENV OSIE_VERSION ${GITVERSION}
-ENV OSIE_BRANCH ${GITBRANCH}
-ENV DRONE_BUILD ${DRONEBUILD}
-
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 
 # apt sources fix
 COPY sources.list.aarch64 /tmp/osie/
-RUN if [ $(uname -m) = 'aarch64' ]; then \
+RUN if [ "$(uname -m)" = 'aarch64' ]; then \
         mv /tmp/osie/sources.list.aarch64 /etc/apt/sources.list; \
     fi && \
     rm -rf /tmp/osie
@@ -29,22 +21,12 @@ RUN apt-get update -y && \
     apt-get -qy clean && \
     rm -rf /var/lib/apt/lists/* /tmp/osie
 
-# build openssl'd git, done here so we can keep it cached as long as possible
-COPY build-git-openssl.sh /tmp/osie/
-RUN apt-get update -y && \
-    /tmp/osie/build-git-openssl.sh && \
-    dpkg --unpack /tmp/osie/git_*.deb && \
-    apt-get install -f -y --no-install-recommends && \
-    apt-get -y autoremove && \
-    apt-get -y clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/osie
-
 # gron - grep for JSON
 COPY lfs/gron-0.6.0-amd64 /tmp/osie/
-RUN if [ $(uname -m) = 'x86_64' ]; then \
+RUN if [ "$(uname -m)" = 'x86_64' ]; then \
         mv /tmp/osie/gron-0.6.0-amd64 /usr/bin/gron; \
     fi && \
-    rm -rf /tmp/osie 
+    rm -rf /tmp/osie
 
 # build lshw, done here so we can keep it cached as long as possible
 COPY build-lshw.sh /tmp/osie/
@@ -86,10 +68,18 @@ RUN apt-get update -y && \
     apt-get -qy clean && \
     rm -rf /var/lib/apt/lists/* /tmp/osie/
 
-ARG PACKET_HARDWARE_COMMIT=bc24777799308f6e884fb9bfdaac398b5f39083f
-ARG PACKET_NETWORKING_COMMIT=2c201b2da0563ca9363f78170663c0baa6054e32
+# ironlib cli wrapper, a prereq for packet-hardware since we don't run it from its container
+COPY lfs/getbiosconfig /tmp/osie/
+RUN cd /tmp/osie && \
+    if [ "$(uname -m)" = 'x86_64' ]; then \
+      install -m755 /tmp/osie/getbiosconfig /usr/sbin/getbiosconfig; \
+    fi && \
+    rm -rf /tmp/osie/
 
-RUN curl https://bootstrap.pypa.io/get-pip.py | python3 && \
+ARG PACKET_HARDWARE_COMMIT=ddbafcbc74ef3db0677d56733442cd9f6f76a317
+ARG PACKET_NETWORKING_COMMIT=06061801efaf34caa8d8b1ae5973c15e5a23659d
+
+RUN curl https://bootstrap.pypa.io/pip/3.5/get-pip.py | python3 && \
     pip3 install git+https://github.com/packethost/packet-hardware.git@${PACKET_HARDWARE_COMMIT} && \
     pip3 install git+https://github.com/packethost/packet-networking.git@${PACKET_NETWORKING_COMMIT} && \
     rm -rf ~/.cache/pip*
@@ -108,8 +98,8 @@ RUN tar -xvC / -f /tmp/osie/megacli-noarch-bin.tar && \
     rm -rf /tmp/osie
 
 # PERC CLI
-COPY lfs/perccli-1.17.10-1.tar.gz /tmp/osie/
-RUN tar -zxvC / -f /tmp/osie/perccli-1.17.10-1.tar.gz && \
+COPY lfs/perccli-7.1020.0000.tar.gz /tmp/osie/
+RUN tar -zxvC / -f /tmp/osie/perccli-7.1020.0000.tar.gz && \
     ln -nsf /opt/MegaRAID/perccli/perccli64 /usr/bin/ && \
     rm -rf /tmp/osie
 
@@ -125,7 +115,7 @@ RUN cd /tmp/osie && \
     rm -r /tmp/osie
 
 # SSA CLI
-RUN if [ $(uname -m) = 'x86_64' ]; then \
+RUN if [ "$(uname -m)" = 'x86_64' ]; then \
       temp="$(mktemp)" && \
       wget -O "$temp" 'https://downloads.linux.hpe.com/SDR/repo/mcp/pool/non-free/ssacli-4.17-6.0_amd64.deb' && \
       dpkg -i "$temp" && \
@@ -141,15 +131,16 @@ RUN cd /tmp/osie && \
 # RACADM
 COPY dchipm.ini /tmp/osie/
 RUN cd /tmp/osie && \
-    if [ $(uname -m) != 'aarch64' ]; then \
+    if [ "$(uname -m)" != 'aarch64' ]; then \
       apt-get update && apt-get install -y alien && \
       rpm --import http://linux.dell.com/repo/pgp_pubkeys/0x1285491434D8786F.asc && \
-      wget \
-        https://dl.dell.com/FOLDER05920767M/1/DellEMC-iDRACTools-Web-LX-9.4.0-3732_A00.tar.gz \
-        http://linux.dell.com/repo/community/openmanage/940/bionic/pool/main/s/srvadmin-omilcore/srvadmin-omilcore_9.4.0_amd64.deb && \
-      tar -xvf DellEMC-iDRACTools-Web-LX-9.4.0-3732_A00.tar.gz && \
-      alien -i iDRACTools/racadm/RHEL8/x86_64/*.rpm && \
-      dpkg -i *.deb && \
+      wget --quiet \
+        https://dl.dell.com/FOLDER07423496M/1/DellEMC-iDRACTools-Web-LX-10.1.0.0-4566_A00.tar.gz \
+        https://linux.dell.com/repo/community/openmanage/10100/focal/pool/main/s/srvadmin-omilcore/srvadmin-omilcore_10.1.0.0_amd64.deb && \
+      tar --extract --file DellEMC-iDRACTools-Web-LX-10.1.0.0-4566_A00.tar.gz && \
+      alien --install iDRACTools/racadm/RHEL8/x86_64/*.rpm && \
+      dpkg --install *.deb && \
+      ln -s /opt/dell/srvadmin/bin/idracadm7 /usr/bin/racadm && \
       apt-get purge -y alien && \
       apt-get autoremove -y && \
       cp dchipm.ini /opt/dell/srvadmin/etc/srvadmin-hapi/ini/ ; \
@@ -158,7 +149,7 @@ RUN cd /tmp/osie && \
 
 # SuperMicro SUM
 COPY lfs/sum_2.4.0_Linux_x86_64_20191206.tar.gz /tmp/osie/
-RUN if [ $(uname -m) = 'x86_64' ]; then \
+RUN if [ "$(uname -m)" = 'x86_64' ]; then \
       mkdir -p /opt/supermicro && \
         tar -zxvf /tmp/osie/sum_2.4.0_Linux_x86_64_20191206.tar.gz -C /opt/supermicro && \
         ln -s /opt/supermicro/sum_2.4.0_Linux_x86_64 /opt/supermicro/sum; \
@@ -174,7 +165,7 @@ ARG ECLYPSIUM_AGENT_SHA256=4bb5cfe3c6c3988b99c36e864f35abd8296120d197864a26f10a4
 ARG ECLYPSIUM_AGENT_FILENAME=eclypsiumapp-${ECLYPSIUM_AGENT_VERSION}.deb
 
 COPY lfs/${ECLYPSIUM_AGENT_FILENAME} /tmp/
-RUN if [ $(uname -m) = 'x86_64' ]; then \
+RUN if [ "$(uname -m)" = 'x86_64' ]; then \
         cd /tmp && \
         echo "${ECLYPSIUM_AGENT_SHA256}  ${ECLYPSIUM_AGENT_FILENAME}" | sha256sum -c && \
         dpkg --unpack "${ECLYPSIUM_AGENT_FILENAME}" && \
@@ -197,6 +188,11 @@ RUN curl --remote-name "https://raw.githubusercontent.com/packethost/metal-block
 
 COPY entrypoint.sh /entrypoint.sh
 COPY scripts/ /home/packet/
+
+ARG GITVERSION
+ARG GITBRANCH
+ARG DRONEBUILD
+ENV OSIE_VERSION=${GITVERSION} OSIE_BRANCH=${GITBRANCH} DRONE_BUILD=${DRONEBUILD}
 
 # ensure we always have up to date packages
 RUN apt-get -y update && \

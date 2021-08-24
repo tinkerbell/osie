@@ -342,7 +342,7 @@ if [ -f $target/etc/cloud/cloud.cfg ]; then
 		  Ec2:
 		    timeout: 60
 		    max_wait: 120
-		    metadata_urls: [ 'https://metadata.packet.net' ]
+		    metadata_urls: [ 'http://metadata.packet.net', 'http://147.75.207.1:80' ]
 		    dsmode: net
 		cloud_init_modules:
 		 - DataSourceEc2
@@ -554,3 +554,4 @@ cat >/statedir/cleanup.sh <<EOF
 reboot
 EOF
 chmod +x /statedir/cleanup.sh
+set_autofail_stage "completed"

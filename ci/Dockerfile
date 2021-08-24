@@ -21,6 +21,7 @@ RUN apk add --no-cache --no-progress --update --upgrade \
         libarchive-tools \
         make \
         musl-dev \
+        ncurses \
         ovmf \
         pigz \
         py3-pip \
@@ -45,12 +46,10 @@ RUN apk add --no-cache --no-progress --update --upgrade \
    ;
 
 
-RUN git clone -b v0.10.11 https://github.com/mholt/caddy /root/go/src/github.com/mholt/caddy && \
-    git clone https://github.com/wmark/go.abs /root/go/src/plugin.hosting/go/abs && (cd /root/go/src/plugin.hosting/go/abs && git checkout 1ba06a13d0c0530cb12338dd83254ececc6e509f) && \
-    git clone -b v1.3.2 https://github.com/wmark/caddy.upload /root/go/src/blitznote.com/src/caddy.upload && \
-    cd /root/go/src/blitznote.com/src/caddy.upload && go get -v && \
-    cd /root/go/src/github.com/mholt/caddy/caddy && sed -i -e '/This is where other plugins/a \\t_ "blitznote.com/src/caddy.upload"' caddymain/run.go && \
-    CGO_ENABLED=0 go build -v -o /bin/caddy
+COPY ./proxy /tmp/proxy/
+RUN cd /tmp/proxy && \
+    CGO_ENABLED=0 go build -v -tags "caddyserver0.9 caddyserver1.0"  -o /bin/proxy && \
+    /bin/proxy --version # this is going to break if/when we update to go1.15 (maybe 1.14?), at that point HAProxy + lua upload service is probably the way to go
 
 RUN mkdir $HOME/bin && \
     wget "https://dl.minio.io/client/mc/release/linux-amd64/mc" -O bin/mc && \
@@ -71,3 +70,4 @@ RUN curl -L https://github.com/git-lfs/git-lfs/releases/download/v2.5.1/git-lfs-
     git-lfs install
 
 COPY tls/ /tls/
+ENV TERM=xterm-256color

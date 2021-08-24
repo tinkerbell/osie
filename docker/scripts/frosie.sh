@@ -64,6 +64,18 @@ if [[ -z $tag ]]; then
 fi
 OS=$os${tag:+:$tag}
 
+# On errors, run autofail() before exiting
+set_autofail_stage "frOSIE startup"
+function autofail() {
+	# Passthrough for when the main script exits normally
+	# shellcheck disable=SC2181
+	(($? == 0)) && exit
+
+	puttink "${tinkerbell}" phone-home '{"type":"failure", "reason":"'"Error during ${autofail_stage:-unknown}"'"}'
+	print_error_summary "${autofail_stage:-unknown}"
+}
+trap autofail EXIT
+
 # if $BASEURL is not empty then the user specifically passed in the artifacts
 # location, we should not trample it
 BASEURL=${BASEURL:-http://install.$facility.packet.net/misc}
@@ -71,6 +83,7 @@ BASEURL=${BASEURL:-http://install.$facility.packet.net/misc}
 ## Fetch install assets via git
 assetdir=/tmp/assets
 mkdir $assetdir
+set_autofail_stage "OS image fetch"
 echo -e "${GREEN}#### Fetching image (and more) via git ${NC}"
 
 # config hosts entry so git-lfs assets are pulled through our image cache
@@ -94,6 +107,7 @@ git -C $assetdir checkout "${tag}"
 
 ## Assemble configurables
 ##
+set_autofail_stage "assembling configurables"
 # Target mount point
 target="/mnt/ufs"
 # Image rootfs
@@ -109,6 +123,7 @@ GREEN='\033[0;32m'
 BYELLOW='\033[0;33;5;7m'
 NC='\033[0m' # No Color
 
+set_autofail_stage "checking userdata for custom image url"
 echo -e "${GREEN}#### Checking userdata for custom image_url...${NC}"
 image_url=$(sed -nr 's|.*\bimage_url=(\S+).*|\1|p' "$userdata")
 if [[ -z ${image_url} ]]; then
@@ -127,6 +142,7 @@ echo "Devices: ${disks[*]}"
 stimer=$(date +%s)
 
 # make sure the disks are ok to use
+set_autofail_stage "checking disk types"
 assert_block_or_loop_devs "${disks[@]}"
 assert_same_type_devs "${disks[@]}"
 
@@ -136,6 +152,7 @@ rootdev="${imagedev}3"
 ## Execute the callback to API
 phone_home "${tinkerbell}" '{"type":"provisioning.104"}'
 
+set_autofail_stage "checking disks for existing partitions"
 echo -e "${GREEN}Checking disks for existing partitions...${NC}"
 if fdisk -l "${disks[@]}" 2>/dev/null | grep Disklabel >/dev/null; then
 	echo -e "${RED}Critical: Found pre-exsting partitions on a disk. Aborting install...${NC}"
@@ -148,6 +165,7 @@ echo "Disk candidates are ready for partitioning."
 phone_home "${tinkerbell}" '{"type":"provisioning.105"}'
 
 # Write rootfs to disk
+set_autofail_stage "writing rootfs to disk"
 echo -e "${GREEN}#### Extracting image archive and writing to first disk${NC}"
 zcat "$image" | dd iflag=fullblock conv=sparse bs=32k of="${imagedev}"
 
@@ -165,12 +183,15 @@ zcat "$image" | dd iflag=fullblock conv=sparse bs=32k of="${imagedev}"
 # Inform the API about OS/package installation
 phone_home "${tinkerbell}" '{"type":"provisioning.106"}'
 
+set_autofail_stage "installing osie-fuse package"
 dpkg -i "/tmp/osie-fuse-ufs2_1.0-1_$arch.deb"
 
+set_autofail_stage "running fuse-ufs"
 partprobe "${imagedev}"
 mkdir -p "$target"
 fuse-ufs -o rw "$rootdev" $target
 
+set_autofail_stage "configuring network parameters"
 echo "#### Retreived network config details"
 # tinkerbell provides DNS servers to OSIE via dhcp and udhcpc writes out
 # /etc/resolv.conf.   We parse resolv.conf to get those servers for inclusion within
@@ -295,7 +316,7 @@ if [ -f "$target/usr/local/etc/cloud/cloud.cfg" ]; then
 		  Ec2:
 		    timeout: 60
 		    max_wait: 120
-		    metadata_urls: [ 'https://metadata.packet.net' ]
+		    metadata_urls: [ 'http://metadata.packet.net', 'http://147.75.207.1:80' ]
 		    dsmode: net
 		cloud_init_modules:
 		 - migrator
@@ -350,6 +371,7 @@ phone_home "${tinkerbell}" '{"type":"provisioning.108"}'
 phone_home "${tinkerbell}" '{"type":"provisioning.109"}'
 echo "Done."
 
+set_autofail_stage "frOSIE final stage"
 ## End installation
 #
 etimer=$(date +%s)
@@ -360,3 +382,4 @@ cat >/statedir/cleanup.sh <<EOF
 reboot
 EOF
 chmod +x /statedir/cleanup.sh
+set_autofail_stage "completed"

@@ -104,29 +104,31 @@ else
 	exit 1
 fi
 
+early_phone=false
 custom_image=false
 set_autofail_stage "custom image check"
 echo -e "${GREEN}#### Checking userdata for custom image...${NC}"
 image_repo=$(sed -nr 's|.*\bimage_repo=(\S+).*|\1|p' "$userdata")
 image_tag=$(sed -nr 's|.*\bimage_tag=(\S+).*|\1|p' "$userdata")
-if [[ -z ${image_repo} ]]; then
+image_uri=$(sed -nr 's|.*\bimage_uri=(\S+).*|\1|p' "$userdata")
+
+if [[ -z ${image_repo} && -z ${image_uri} ]]; then
 	echo "Using default image since no image_repo provided"
-	early_phone=0
 else
 	echo "NOTICE: Custom image repo found!"
 	echo "Overriding default image location with custom image_repo"
-	if [[ -z ${image_tag} ]]; then
+	if [[ -z ${image_tag} && -z ${image_uri} ]]; then
 		echo "ERROR: custom image_repo passed but no custom image_tag provided"
 		exit 1
 	fi
-	early_phone=1
+	early_phone=true
 	custom_image=true
 fi
 
 # Phone home to tink NOW if non-packet custom image is used. We don't do this
 # later in case the custom OS image or url is bad, to ensure instance will be
 # preserved for the user to troubleshoot.
-if [ "$early_phone" -eq 1 ]; then
+if $early_phone; then
 	# Re-DHCP so we obtain an IP that will last beyond the early phone_home
 	set_autofail_stage "reacquire_dhcp (early_phone)"
 	reacquire_dhcp "$(ip_choose_if)"
@@ -185,19 +187,29 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 		if [[ ${image_repo} =~ github ]]; then
 			git config --global http.sslverify false
 		fi
-
 		gituri="${image_repo}"
 	fi
-	# Silence verbose notice about deatched HEAD state
-	git config --global advice.detachedHead false
+	if [[ -z ${image_uri} ]]; then
+		# Silence verbose notice about deatched HEAD state
+		git config --global advice.detachedHead false
 
-	git -C $assetdir init
-	echo -e "${GREEN}#### Adding git remote uri: ${gituri}${NC}"
-	git -C $assetdir remote add origin "${gituri}"
-	echo -e "${GREEN}#### Performing a shallow git fetch for: ${image_tag}${NC}"
-	git -C $assetdir fetch --depth 1 origin "${image_tag}"
-	echo -e "${GREEN}###### Performing a checkout of FETCH_HEAD${NC}"
-	git -C $assetdir checkout FETCH_HEAD
+		git -C $assetdir init
+		echo -e "${GREEN}#### Adding git remote uri: ${gituri}${NC}"
+		git -C $assetdir remote add origin "${gituri}"
+		echo -e "${GREEN}#### Performing a shallow git fetch for: ${image_tag}${NC}"
+		git -C $assetdir fetch --depth 1 origin "${image_tag}"
+		echo -e "${GREEN}#### Performing a checkout of FETCH_HEAD${NC}"
+		git -C $assetdir checkout FETCH_HEAD
+	elif [[ $image_uri =~ ^https:// ]]; then
+		echo -e "${GREEN}#### Adding custom uri: ${image_uri}${NC}"
+		curl --retry 3 "${image_uri}/image.tar.gz" --output "$assetdir/image.tar.gz"
+		curl --retry 3 "${image_uri}/initrd.tar.gz" --output "$assetdir/initrd.tar.gz"
+		curl --retry 3 "${image_uri}/kernel.tar.gz" --output "$assetdir/kernel.tar.gz"
+		curl --retry 3 "${image_uri}/modules.tar.gz" --output "$assetdir/modules.tar.gz"
+	else
+		echo -e "${RED}#### Image URI is not https: ${image_uri}${NC}"
+		exit 1
+	fi
 
 	# Tell the API that the OS image has been retrieved
 	phone_home "${tinkerbell}" '{"type":"provisioning.104.50"}'
@@ -206,21 +218,27 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 
 	## Assemble configurables
 	##
-	# Kernel to throw on the target
-	kernel="$assetdir/kernel.tar.gz"
-	# Initrd to throw on the target
-	initrd="$assetdir/initrd.tar.gz"
-	# Modules to throw on the target
-	modules="$assetdir/modules.tar.gz"
 	# Image rootfs
 	image="$assetdir/image.tar.gz"
+	# Initrd to throw on the target
+	initrd="$assetdir/initrd.tar.gz"
+	# Kernel to throw on the target
+	kernel="$assetdir/kernel.tar.gz"
+	# Modules to throw on the target
+	modules="$assetdir/modules.tar.gz"
+
 	# Grub config
 	grub="$BASEURL/grub/${OS//_(arm|image)//}/$class/grub.template"
 
+	# Check for HW specific grub template otherwise use default template
+	if ! wget --spider "${grub}"; then
+		grub="$BASEURL/grub/${OS//_(arm|image)//}/default/grub.template"
+	fi
+
 	echo -e "${WHITE}Image: $image${NC}"
-	echo -e "${WHITE}Modules: $modules${NC}"
-	echo -e "${WHITE}Kernel: $kernel${NC}"
 	echo -e "${WHITE}Initrd: $initrd${NC}"
+	echo -e "${WHITE}Kernel: $kernel${NC}"
+	echo -e "${WHITE}Modules: $modules${NC}"
 	echo -e "${WHITE}Devices:${disks[*]}${NC}"
 	echo -e "${WHITE}CPR: ${NC}"
 	jq . $cprconfig
@@ -352,7 +370,10 @@ EOF
 			  Ec2:
 			    timeout: 60
 			    max_wait: 120
-			    metadata_urls: [ 'https://metadata.packet.net' ]
+			    metadata_urls:
+			      - https://metadata.packet.net
+			      - http://metadata.packet.net
+			      - http://147.75.207.1
 			    dsmode: net
 			disable_root: 0
 			package_reboot_if_required: false
@@ -621,3 +642,4 @@ EOF
 fi
 
 chmod +x /statedir/cleanup.sh
+set_autofail_stage "completed"

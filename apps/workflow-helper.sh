@@ -8,9 +8,13 @@ grpc_cert_url=$(sed -nr 's|.*\bgrpc_cert_url=(\S+).*|\1|p' /proc/cmdline)
 packet_base_url=$(sed -nr 's|.*\bpacket_base_url=(\S+).*|\1|p' /proc/cmdline)
 registry_username=$(sed -nr 's|.*\bregistry_username=(\S+).*|\1|p' /proc/cmdline)
 registry_password=$(sed -nr 's|.*\bregistry_password=(\S+).*|\1|p' /proc/cmdline)
-tinkerbell=$(sed -nr 's|.*\btinkerbell=(\S+).*|\1|p' /proc/cmdline)
+syslog_host=$(sed -nr 's|.*\bsyslog_host=(\S+).*|\1|p' /proc/cmdline)
 worker_id=$(sed -nr 's|.*\bworker_id=(\S+).*|\1|p' /proc/cmdline)
-id=$(curl --connect-timeout 60 "$tinkerbell:50061/metadata" | jq -r .id)
+instance_id=$(sed -nr 's|.*\binstance_id=(\S+).*|\1|p' /proc/cmdline)
+CAPTURE_ACTION_LOGS=true
+
+tink_worker_image="${docker_registry}/tinkerbell/tink-worker:sha-5e1f0fd8"
+use_syslog=true
 
 # Create workflow motd
 cat <<'EOF'
@@ -42,6 +46,20 @@ wget "$packet_base_url/ca.pem"
 mkdir -p /etc/docker/ /etc/docker/certs.d/ "/etc/docker/certs.d/$docker_registry"
 cp ca.pem "/etc/docker/certs.d/$docker_registry/ca.crt"
 
+if [ $use_syslog = true ]; then
+	# configure docker daemon
+	cat >/etc/docker/daemon.json <<-EOM
+		{
+		  "log-driver": "syslog",
+		  "log-opts": {
+		    "syslog-address": "udp://${syslog_host}:514"
+		  }
+		}
+	EOM
+
+	CAPTURE_ACTION_LOGS=false
+fi
+
 service docker start
 i=0
 # shellcheck disable=SC2169
@@ -66,7 +84,7 @@ mkdir /worker
 # TODO: remove setting WORKER_ID when we no longer want to support backwards compatibility
 # with the older tink-worker
 docker run --privileged -t --name "tink-worker" \
-	-e "container_uuid=$id" \
+	-e "container_uuid=$instance_id" \
 	-e "WORKER_ID=$worker_id" \
 	-e "ID=$worker_id" \
 	-e "DOCKER_REGISTRY=$docker_registry" \
@@ -74,8 +92,9 @@ docker run --privileged -t --name "tink-worker" \
 	-e "TINKERBELL_CERT_URL=$grpc_cert_url" \
 	-e "REGISTRY_USERNAME=$registry_username" \
 	-e "REGISTRY_PASSWORD=$registry_password" \
+	-e "CAPTURE_ACTION_LOGS=${CAPTURE_ACTION_LOGS}" \
 	-v /worker:/worker \
 	-v /var/run/docker.sock:/var/run/docker.sock \
 	-t \
 	--net host \
-	"$docker_registry/tink-worker:latest"
+	"${tink_worker_image}"

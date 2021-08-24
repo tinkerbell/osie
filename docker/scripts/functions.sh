@@ -76,11 +76,12 @@ function tink() {
 	local method=$1 tink_host=$2 endpoint=$3 post_data=$4
 
 	curl \
-		-f \
 		-vvvvv \
-		-X "${method}" \
-		-H "Content-Type: application/json" \
-		-d "${post_data}" \
+		--data "${post_data}" \
+		--fail \
+		--header "Content-Type: application/json" \
+		--request "${method}" \
+		--retry 3 \
 		"${tink_host}/${endpoint}"
 }
 
@@ -105,6 +106,7 @@ function configure_image_cache_dns() {
 	cp -a /etc/hosts /etc/hosts.new
 	{
 		echo "$images_ip        github.com"
+		echo "$images_ip        github-cloud.githubusercontent.com"
 		echo "$images_ip        github-cloud.s3.amazonaws.com"
 		echo "$images_ip        github-mirror.packet.net"
 	} >>/etc/hosts.new
@@ -112,7 +114,7 @@ function configure_image_cache_dns() {
 	# this up as a bind mount and we can't replace it.
 	cp -f /etc/hosts.new /etc/hosts
 	echo -n "LFS pulls via github-cloud will now resolve to image cache:"
-	getent hosts github-cloud.s3.amazonaws.com | awk '{print $1}'
+	getent hosts github-cloud.githubusercontent.com | awk '{print $1}'
 }
 
 # returns a string of the BIOS vendor: "dell", "supermicro", or "unknown"
@@ -154,8 +156,14 @@ function download_bios_configs() {
 	configure_image_cache_dns
 
 	echo "Downloading latest BIOS configurations"
-	curl --fail https://github-mirror.packet.net/downloads/bios-configs-latest.tar.gz --output bios-configs-latest.tar.gz
-	curl --fail https://github-mirror.packet.net/downloads/bios-configs-latest.tar.gz.sha256 --output bios-configs-latest.tar.gz.sha256
+	curl \
+		--fail \
+		--retry 3 \
+		https://bios-configs.platformequinix.net/bios-configs-latest.tar.gz --output bios-configs-latest.tar.gz
+	curl \
+		--fail \
+		--retry 3 \
+		https://bios-configs.platformequinix.net/bios-configs-latest.tar.gz.sha256 --output bios-configs-latest.tar.gz.sha256
 
 	echo "Verifying BIOS configurations tarball"
 	sha256sum --check bios-configs-latest.tar.gz.sha256
@@ -202,9 +210,17 @@ function retrieve_current_bios_config() {
 	local vendor=$1
 
 	if [[ ${vendor} == "Dell" ]]; then
-		/opt/dell/srvadmin/bin/idracadm7 get -t json -f current_bios.txt >/dev/null
+		set_autofail_stage "running Dell's racadm to save current BIOS settings"
+		if ! /opt/dell/srvadmin/bin/idracadm7 get -t json -f current_bios.txt >/dev/null; then
+			echo "Warning: racadm command to save current BIOS config failed"
+			return 1
+		fi
 	elif [[ ${vendor} == "Supermicro" ]]; then
-		/opt/supermicro/sum/sum -c GetCurrentBiosCfg --file current_bios.txt >/dev/null
+		set_autofail_stage "running Supermicro's sum to save current BIOS settings"
+		if ! /opt/supermicro/sum/sum -c GetCurrentBiosCfg --file current_bios.txt >/dev/null; then
+			echo "Warning: sum command to save current BIOS config failed"
+			return 1
+		fi
 	fi
 
 	# Save a copy of the original BIOS config to /statedir in case we need to obtain
@@ -226,14 +242,16 @@ function normalize_dell_bios_config_file() {
 	fi
 
 	# Delete irrelevant sections from the JSON config to normalize for diff'ing
-	jq 'del(.SystemConfiguration.ServiceTag) |
-		  del(.SystemConfiguration.TimeStamp) |
+	jq 'del(.SystemConfiguration.Comments) |
+			del(.SystemConfiguration.ServiceTag) |
+			del(.SystemConfiguration.TimeStamp) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="NIC.Slot.3-1-1")) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="NIC.Slot.3-2-1")) |
 			del(.SystemConfiguration.Components[] | select(.FQDD=="BIOS.Setup.1-1").Attributes[] | select(.Name=="SetBootOrderEn")) |
 			del(.SystemConfiguration.Components[] | select(.FQDD=="BIOS.Setup.1-1").Attributes[] | select(.Name=="BiosBootSeq")) |
-			del(.SystemConfiguration.Components[] | select(.FQDD=="iDRAC.Embedded.1").Attributes[] | select(.Name=="NIC.1#DNSRacName")) |
-			del(.SystemConfiguration.Components[] | select(.FQDD=="System.Embedded.1").Attributes[] | select(.Name=="ServerOS.1#HostName")) |
-			del(.SystemConfiguration.Components[] | select(.FQDD=="iDRAC.Embedded.1").Attributes[] | select(.Name=="WebServer.1#CustomCipherString")) |
-			del(.SystemConfiguration.Components[] | select(.FQDD=="iDRAC.Embedded.1").Attributes[] | select(.Name=="WebServer.1#TitleBarOptionCustom"))' \
+			del(.SystemConfiguration.Components[] | select(.FQDD=="System.Embedded.1")) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="LifecycleController.Embedded.1")) |
+			del(.SystemConfiguration.Components[] | select(.FQDD=="iDRAC.Embedded.1"))' \
 		"${config_file}" >"${config_file_normalized}"
 }
 
@@ -256,16 +274,37 @@ function normalize_supermicro_bios_config_file() {
 	sed --in-place '/ME Firmware Status/d' "${config_file_normalized}"
 	# RAM Topology
 	sed --in-place '/P[1|2] DIMM[[:alpha:]][[:digit:]]/d' "${config_file_normalized}"
-	# Hard drive serial numbers
+	# Manufacturer specific details
+	sed --in-place '/Manufacturer/d' "${config_file_normalized}"
+	# Menu names are often based on removable hardware details
+	sed --in-place '/Menu name/d' "${config_file_normalized}"
+	# Various versions
+	sed --in-place '/BIOS Version/d' "${config_file_normalized}"
+	sed --in-place '/Build Date/d' "${config_file_normalized}"
+	sed --in-place '/Microcode Revision/d' "${config_file_normalized}"
+	sed --in-place '/Memory RC Version/d' "${config_file_normalized}"
+	sed --in-place '/PCIe Code Version/d' "${config_file_normalized}"
+	sed --in-place '/Firmware Version/d' "${config_file_normalized}"
+	# Password-related
+	sed --in-place '/Password/d' "${config_file_normalized}"
+	# Hard drive model info, names and serial numbers
+	sed --in-place '/sSATA/d' "${config_file_normalized}"
+	sed --in-place '/HDD Name/d' "${config_file_normalized}"
 	sed --in-place '/HDD Serial Number/d' "${config_file_normalized}"
+	sed --in-place '/Micron/d' "${config_file_normalized}"
+	sed --in-place '/Toshiba/d' "${config_file_normalized}"
+	# Security erase estimated time
+	sed --in-place '/Estimated Time/d' "${config_file_normalized}"
+	# IBA GE Slots
+	sed --in-place '/IBA GE Slot/d' "${config_file_normalized}"
 	# PXE boot wait time
 	sed --in-place '/PXE boot wait time/d' "${config_file_normalized}"
+	# FlexBoot version differences
+	sed --in-place '/FlexBoot/d' "${config_file_normalized}"
 	# Boot mode select
 	sed --in-place '/Option ValidIf.*Boot mode select/d' "${config_file_normalized}"
 	# Boot option ordering
 	sed --in-place '/Boot Option.*selectedOption/d' "${config_file_normalized}"
-	# TCG storage hardware
-	sed --in-place '/Menu name.*TOSHIBA.*order/d' "${config_file_normalized}"
 }
 
 # usage: compare_bios_config_files $config_file $plan
@@ -281,7 +320,9 @@ function compare_bios_config_files() {
 		return 1
 	fi
 
-	diff "${config_file_normalized}" "${current_config_normalized}" >bios_config_drift.diff || true
+	diff --ignore-all-space --ignore-blank-lines "${config_file_normalized}" \
+		"${current_config_normalized}" >bios_config_drift.diff || true
+
 	if [[ ! -s bios_config_drift.diff ]]; then
 		echo "No BIOS config drift detected (Based on plan: ${plan})"
 	else
@@ -297,7 +338,7 @@ function apply_bios_config() {
 	local vendor=$1
 	local config_file=$2
 
-	if [[ ! -f bios_config_drift.diff || -s bios_config_drift.diff ]]; then
+	if [[ ! -s bios_config_drift.diff ]]; then
 		echo "No BIOS config drift detected, not applying new config"
 		return 0
 	fi
@@ -307,7 +348,7 @@ function apply_bios_config() {
 		/opt/dell/srvadmin/bin/idracadm7 set -b Forced -f "${config_file}" -t JSON
 	elif [[ ${vendor} == "Supermicro" ]]; then
 		echo "Applying Supermicro BIOS configuration ${config_file}..."
-		/opt/supermicro/sum/sum -c ChangeBiosCfg --file "${config_file}"
+		/opt/supermicro/sum/sum -c ChangeBiosCfg --skip_unknown --file "${config_file}"
 	fi
 }
 
@@ -316,37 +357,132 @@ function validate_bios_config() {
 	local plan=$1
 	local vendor=$2
 	local config_file
+	local enforcement_status
 
 	# Check for a BIOS config for this plan
 	config_file=$(lookup_bios_config "${plan}" "${vendor}")
 
 	if [[ -z $config_file ]]; then
 		echo "Unable to find a bios config file for ${plan} (${vendor}) in the manifest, skipping BIOS validation"
-		return
+		return 0
 	fi
 
 	if [[ ! -f "bios-configs-latest/${config_file}" ]]; then
 		echo "A config file named [${config_file}] does not exist in BIOS configs tarball, skipping BIOS validation"
-		return
+		return 0
 	fi
 
 	# Save current BIOS config to a local file
-	retrieve_current_bios_config "${vendor}"
+	if ! retrieve_current_bios_config "${vendor}"; then
+		echo "Unable to retrieve the current BIOS config, skipping BIOS validation"
+		return 0
+	fi
 
 	# Normalize the BIOS config files to eliminate meaningless diffs
 	if [[ ${vendor} == "Dell" ]]; then
+		set_autofail_stage "normalizing Dell BIOS configs for validation"
 		normalize_dell_bios_config_file "bios-configs-latest/${config_file}"
 		normalize_dell_bios_config_file "current_bios.txt"
 	elif [[ ${vendor} == "Supermicro" ]]; then
+		set_autofail_stage "normalizing Supermicro BIOS configs for validation"
 		normalize_supermicro_bios_config_file "bios-configs-latest/${config_file}"
 		normalize_supermicro_bios_config_file "current_bios.txt"
 	fi
 
 	# Compare config_file with local file, reporting drift if found
+	set_autofail_stage "comparing current BIOS config with expected values"
 	compare_bios_config_files "bios-configs-latest/${config_file}" "${plan}"
 
-	set_autofail_stage "applying BIOS config"
-	apply_bios_config "${vendor}" "bios-configs-latest/${config_file}"
+	enforcement_status=$(lookup_bios_config_enforcement "${plan}" "${vendor}")
+	if [[ $enforcement_status == "enforce" ]]; then
+		set_autofail_stage "applying BIOS config"
+		apply_bios_config "${vendor}" "bios-configs-latest/${config_file}"
+	else
+		echo "BIOS config enforcment status is ${enforcement_status} for plan ${plan}, not applying config"
+		return 0
+	fi
+}
+
+# usage: bios_inventory $hwuuid $plan $facility
+function bios_inventory() {
+	local hwuuid=$1
+	local plan=$2
+	local facility=$3
+
+	# When running the inventorybios command outside of the packet-hardware
+	# container, UTIL_RACADM7 and UTIL_SUM must be set to the locations of the
+	# racadm and sum binaries, respectively
+	local bios_json_fn="/tmp/bios.json"
+	local hollow_json_fn="/tmp/hollow.json"
+	local hollow_namespace="net.platformequinix.bios"
+	if UTIL_RACADM7=/opt/dell/srvadmin/bin/idracadm7 UTIL_SUM=/opt/supermicro/sum/sum packet-hardware inventorybios --verbose -u localhost --dry --cache-file "${bios_json_fn}"; then
+		local inventorybios_json
+		inventorybios_json="$(cat "${bios_json_fn}")"
+		echo "inventorybios JSON is: [${inventorybios_json}]"
+
+		if [[ ${inventorybios_json} == "{}" ]]; then
+			echo "inventorybios JSON is empty, not writing to Hollow"
+			return 0
+		fi
+
+		# Generate JSON with additional fields required by Hollow
+		if ! jq --null-input \
+			--arg ns "${hollow_namespace}" \
+			--arg id "${hwuuid}" \
+			--slurpfile data "${bios_json_fn}" \
+			'{Namespace: $ns, hardware_uuid: $id, data: $data[]}' >"${hollow_json_fn}"; then
+			echo "Warning: error while generating hollow json"
+			return 0
+		fi
+		echo "BIOS feature inventory JSON is:"
+		cat "${hollow_json_fn}"
+
+		# Disable tracing since we're handling secrets
+		set +x
+
+		# Write data to Hollow
+		if [[ -z ${HOLLOW_CLIENT_ID:-} ]] || [[ -z ${HOLLOW_CLIENT_REQUEST_SECRET:-} ]]; then
+			echo "Warning: env credentials for Hollow not found, not writing to Hollow"
+			set -x
+			return 0
+		fi
+
+		local hollow_auth_url="https://hydra.edge-a.${facility}.metalkube.net/oauth2/token"
+		local hollow_auth_audience="https://hollow.equinixmetal.net"
+		local hollow_auth_scope="create:server:versioned-attributes"
+		# Use eclypsium-proxy to reach the auth server from the deprov network
+		echo "Requesting a hollow token from ${hollow_auth_url}"
+		local hollow_token
+		if ! hollow_token=$(curl --request POST \
+			--url "${hollow_auth_url}" \
+			--user "${HOLLOW_CLIENT_ID}:${HOLLOW_CLIENT_REQUEST_SECRET}" \
+			--data "grant_type=client_credentials&audience=${hollow_auth_audience}&scope=${hollow_auth_scope}" \
+			--fail | jq --raw-output .access_token); then
+			echo "Warning: unable to retrieve access token for Hollow, not writing to Hollow"
+			set -x
+			return 0
+		fi
+
+		local hollow_url="https://hollow.edge-a.${facility}.metalkube.net/api/v1/servers/${hwuuid}/versioned-attributes"
+		# Write the bios data to Hollow
+		echo "Writing BIOS feature inventory data to ${hollow_url}"
+		local hollow_response
+		if ! hollow_response=$(curl --request POST \
+			--url "${hollow_url}" \
+			--header "Authorization: Bearer $hollow_token" \
+			--header "Content-Type: application/json" \
+			--data @${hollow_json_fn} \
+			--fail); then
+			echo "Warning: write to Hollow failed: ${hollow_response}"
+			set -x
+			return 0
+		fi
+		echo "Hollow response: ${hollow_response}"
+	else
+		echo "WARNING: packet-hardware inventorybios failed on server ${hwuuid} (${plan}) - needs investigation"
+	fi
+
+	set -x
 }
 
 function dns_resolvers() {
@@ -734,17 +870,20 @@ function perc_reset() {
 	fi
 
 	#Check/set personality
-	if perccli64 /c0 show personality | grep "Current Personality" | grep "HBA-Mode" >/dev/null; then
-		echo "PERCCLI - Controller in HBA-Mode - OK"
+	if perccli64 /c0 show personality | grep "Current Personality" | grep -E "eHBA|HBA-Mode" >/dev/null; then
+		echo "PERCCLI - Controller in HBA/eHBA-Mode - OK"
 	elif [[ $percmodel == 'PERCH710PMini' || $percmodel == 'PERCH740PMini' ]]; then
 		echo "PERCCLI - Skipping set HBA-Mode. This $percmodel does not support HBA mode"
+	elif [[ $percmodel == 'PERCH745Front' ]]; then
+		echo "PERCCLI - Setting personality to eHBA-Mode"
+		perccli64 /c0 set personality=eHBA
 	else
 		echo "PERCCLI - Setting personality to HBA-Mode"
 		perccli64 /c0 set personality=HBA
 	fi
 
 	#Check/delete all VDs!
-	if perccli64 /c0 /vall show | grep "No VDs" >/dev/null; then
+	if perccli64 /c0 /vall show | grep "No VD" >/dev/null; then
 		echo "PERCCLI - No VDs configured - OK"
 	else
 		echo "PERCCLI - Deleting all VDs"
@@ -755,6 +894,8 @@ function perc_reset() {
 	#Check for jbod and enable if needed
 	if perccli64 /c0 show jbod | grep "JBOD      ON" >/dev/null; then
 		echo "PERCCLI - JBOD is on - OK"
+	elif perccli64 /c0 show personality | grep "Auto Configure Behavior JBOD" >/dev/null; then
+		echo "PERCCLI - JBOD auto configure is on - OK"
 	elif [[ $percmodel == 'PERCH710PMini' || $percmodel == 'PERCH740PMini' ]]; then
 		echo "PERCCLI - Skipping set JBOD since $percmodel does not support it"
 	else
@@ -957,7 +1098,7 @@ function github_mirror_check() {
 	echo -e "${YELLOW}###### Checking the health of github-mirror.packet.net...${NC}"
 
 	# Clone the repo, and checkout an LFS branch.
-	local timeout=20 # seconds
+	local timeout=60 # seconds
 	local lfs_testing_uri="https://github-mirror.packet.net/packethost/lfs-testing.git"
 	local lfs_testing_branch="remotes/origin/images-tiny"
 	if ! timeout --preserve-status $timeout git clone -q $lfs_testing_uri; then

@@ -2,8 +2,20 @@
 
 # shellcheck shell=dash
 
+cleanup() {
+	# shellcheck disable=SC2169
+	if [ -x "$statedir/cleanup.sh" ]; then
+		reason='running cleanup.sh'
+		cd "$statedir"
+		exec ./cleanup.sh
+	fi
+}
+
 reason='unknown'
 fail() {
+	code=$?
+	echo "last command returned exit_code=$code" >&2
+
 	if [ "$reason" = "docker exited with an error (osie-installer)" ]; then
 		# If OSIE exited with a non-zero return value, its autofail() trap function
 		# would have reported the failure reason. A failure from docker here is then
@@ -11,13 +23,23 @@ fail() {
 		# before the timeout occurred.
 		if [ -f "${statedir}/autofail_stage" ]; then
 			stage=$(cat "${statedir}/autofail_stage")
+			# If SOL isn't working properly docker can return an error even though the script has run to completion.
+			# Detect this by checking the autofail_stage value, which would indicate the completion.
+			# Don't report failure in this case, but just run the cleanup() function and exit.
+			if [ x"$stage" = x"completed" ]; then
+				cleanup
+				exit 0
+			fi
 			reason="Timed out during ${stage}"
 		fi
 	fi
 
-	curl -H 'Content-Type: application/json' \
-		-d '{"type":"failure", "reason":"'"$reason"'"}' \
-		"$phone_home_url"
+	curl \
+		-H 'Content-Type: application/json' \
+		-d @- \
+		"$phone_home_url" <<-EOF
+			{"type":"failure", "reason":"$reason", "exit_code":"$code"}
+		EOF
 }
 
 # ensure_time fetches metadata via http and compares the time the server says it
@@ -82,6 +104,8 @@ facility=$(sed -nr 's|.*\bfacility=(\S+).*|\1|p' /proc/cmdline)
 packet_base_url=$(sed -nr 's|.*\bpacket_base_url=(\S+).*|\1|p' /proc/cmdline)
 pwhash=$(sed -nr 's|.*\bpwhash=(\S+).*|\1|p' /proc/cmdline)
 kslug=$(sed -nr 's|.*\bslug=(\S+).*|\1|p' /proc/cmdline)
+hollow_client_id=$(sed -nr 's|.*\bhollow_client_id=(\S+).*|\1|p' /proc/cmdline)
+hollow_client_request_secret=$(sed -nr 's|.*\bhollow_client_request_secret=(\S+).*|\1|p' /proc/cmdline)
 eclypsium_token=$(sed -nr 's|.*\beclypsium_token=(\S+).*|\1|p' /proc/cmdline)
 syslog_host=$(sed -nr 's|.*\bsyslog_host=(\S+).*|\1|p' /proc/cmdline)
 
@@ -195,7 +219,7 @@ other_consoles=$(
 
 [ -z "$syslog_host" ] && syslog_host="$tinkerbell"
 
-container_timeout=1200 # seconds (20 minutes)
+container_timeout=$((20 * 60)) # 20 minutes in seconds
 timeout_cmd="timeout -s SIGKILL $container_timeout"
 if [ "$arch" = "aarch64" ]; then
 	# aarch64 is still using an older alpine, which has different syntax for timeout
@@ -206,7 +230,10 @@ reason='docker exited with an error (osie-installer)'
 $timeout_cmd docker run --privileged -ti \
 	-h "${hardware_id}" \
 	-e "container_uuid=$id" \
+	-e "HARDWARE_ID=${hardware_id}" \
 	-e "RLOGHOST=$syslog_host" \
+	-e "HOLLOW_CLIENT_ID=${hollow_client_id:-}" \
+	-e "HOLLOW_CLIENT_REQUEST_SECRET=${hollow_client_request_secret:-}" \
 	-e "ECLYPSIUM_TOKEN=${eclypsium_token:-}" \
 	-v /dev:/dev \
 	-v /dev/console:/dev/console \
@@ -221,10 +248,4 @@ $timeout_cmd docker run --privileged -ti \
 	tee $other_consoles
 )
 
-reason='cleanup.sh is not executable'
-# shellcheck disable=SC2169
-if [ -x "$statedir/cleanup.sh" ]; then
-	reason='cleanup.sh did not finish correctly'
-	cd "$statedir"
-	exec ./cleanup.sh
-fi
+cleanup

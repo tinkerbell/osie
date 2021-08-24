@@ -128,6 +128,8 @@ install_grub_osie() {
 
 		grub-install --recheck --bootloader-id=GRUB --root-directory="$target" --efi-directory="$target/boot/efi"
 		grubefi=$(find "$target/boot/efi" -name 'grub*.efi' -print -quit)
+		install -Dm755 "$grubefi" "$target/boot/efi/EFI/BOOT/BOOTX64.EFI"
+
 		if [[ -z $grubefi ]]; then
 			echo "error: couldn't find a suitable grub EFI file"
 			exit 1
