@@ -268,7 +268,7 @@ run_vm() {
 
 	# fall back to qemu software mode when KVM isn't available
 	local kvm_accel=",accel=kvm:tcg"
-	if ! (grep -Eq ' (svm|vmx)' /proc/cpuinfo) ; then
+	if ! (grep -Eq ' (svm|vmx)' /proc/cpuinfo); then
 		cpu=qemu64
 		kvm_accel=""
 	fi
@@ -305,7 +305,7 @@ run_vm() {
 		-monitor unix:monitor.sock,server=on,wait=off \
 		-nographic \
 		"${serials[@]}" \
-		-machine $machine$kvm_accel -cpu $cpu -smp 2 -m 8192 \
+		-machine "$machine$kvm_accel" -cpu $cpu -smp 2 -m 8192 \
 		-drive if=virtio,file="$disk",format=raw,discard=unmap \
 		-object rng-random,filename=/dev/urandom,id=rng0 \
 		-device virtio-rng-pci,rng=rng0 \
