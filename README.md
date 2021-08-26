@@ -50,6 +50,19 @@ Otherwise, ensure the following tools are installed:
 - minio (for mc)
 - pigz (and unpigz)
 
+#### Developing Locally
+
+The OSIE build uses docker's `--squash` functionality and that is currently locked behind an experimental feature flag.
+To enable experimental features in Docker, place the following json in `/etc/docker/daemon.json` and `$HOME/.docker/config.json`:
+
+```json
+{
+    "experimental": "true"
+}
+```
+
+`make OSES=ubuntu_20_04 V=1 T=1 test-x86_64`
+
 # Adding Alpine Packages To initramfs
 
 The Alpine x86_64 initramfs image used is fully self-reliant.
