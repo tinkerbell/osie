@@ -266,6 +266,13 @@ run_vm() {
 	*) echo 'unknown host-virt architecture combination' && exit 1 ;;
 	esac
 
+	# fall back to qemu software mode when KVM isn't available
+	local kvm_accel=",accel=kvm:tcg"
+	if ! (grep -Eq ' (svm|vmx)' /proc/cpuinfo) ; then
+		cpu=qemu64
+		kvm_accel=""
+	fi
+
 	local bios=()
 	if [[ $UEFI != 'true' ]]; then
 		bios=('-bios' '/usr/share/qemu/bios.bin')
@@ -298,7 +305,7 @@ run_vm() {
 		-monitor unix:monitor.sock,server=on,wait=off \
 		-nographic \
 		"${serials[@]}" \
-		-machine $machine,accel=kvm:tcg -cpu $cpu -smp 2 -m 8192 \
+		-machine $machine$kvm_accel -cpu $cpu -smp 2 -m 8192 \
 		-drive if=virtio,file="$disk",format=raw,discard=unmap \
 		-object rng-random,filename=/dev/urandom,id=rng0 \
 		-device virtio-rng-pci,rng=rng0 \
