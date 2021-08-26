@@ -10,6 +10,12 @@ All of the above is built from this repository using `GNU Make`.
 This repository is [Experimental](https://github.com/packethost/standards/blob/master/experimental-statement.md) meaning that it's based on untested ideas or techniques and not yet established or finalized or involves a radically new and innovative style!
 This means that support is best effort (at best!) and we strongly encourage you to NOT use this in production.
 
+## Cloning OSIE
+
+OSIE uses git-lfs for large files that are part of the build process. If you clone this repo without git-lfs installed and set up, your builds will fail.
+
+Install git-lfs per instructions at https://git-lfs.github.com/ and make sure to run `git lfs install` afterwards to set it up in your `~/.gitconfig`.
+
 ## Building OSIE
 
 ### Ubuntu Based Container
@@ -50,8 +56,6 @@ Otherwise, ensure the following tools are installed:
 - minio (for mc)
 - pigz (and unpigz)
 
-#### Developing Locally
-
 The OSIE build uses docker's `--squash` functionality and that is currently locked behind an experimental feature flag.
 To enable experimental features in Docker, place the following json in `/etc/docker/daemon.json` and `$HOME/.docker/config.json`:
 
@@ -60,6 +64,10 @@ To enable experimental features in Docker, place the following json in `/etc/doc
     "experimental": "true"
 }
 ```
+
+#### Developing Locally
+
+The quickest way to start running OSIE locally is:
 
 `make OSES=ubuntu_20_04 V=1 T=1 test-x86_64`
 
