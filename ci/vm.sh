@@ -257,21 +257,22 @@ teardown() {
 # This is needed so that run_vm callers will get qemu's pid and can kill it (otherwise bash won't forward the SIGTERM received by the function)
 run_vm() {
 	local cpu='' machine=''
+	local kvm_accel=',accel=kvm:tcg'
 
 	case $(uname -m)-$arch in
 	'aarch64-aarch64') machine=virt cpu=host ;;
 	'aarch64-x86_64') machine=virt cpu=qemu64 ;;
 	'x86_64-aarch64') machine=virt cpu=cortex-a57 ;;
-	'x86_64-x86_64') machine=pc cpu=host ;;
+	'x86_64-x86_64')
+		if ! (grep -Eq ' (svm|vmx)' /proc/cpuinfo); then
+			# fall back to qemu software mode when KVM isn't available
+			machine=pc cpu=qemu64 kvm_accel=''
+		else
+			machine=pc cpu=host
+		fi
+		;;
 	*) echo 'unknown host-virt architecture combination' && exit 1 ;;
 	esac
-
-	# fall back to qemu software mode when KVM isn't available
-	local kvm_accel=",accel=kvm:tcg"
-	if ! (grep -Eq ' (svm|vmx)' /proc/cpuinfo); then
-		cpu=qemu64
-		kvm_accel=""
-	fi
 
 	local bios=()
 	if [[ $UEFI != 'true' ]]; then
