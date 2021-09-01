@@ -20,9 +20,46 @@ import handlers
 
 import util
 
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
+from opentelemetry.instrumentation.grpc import GrpcInstrumentorClient
+from opentelemetry import propagate
+
 logging.basicConfig(format="%(message)s", stream=sys.stdout, level=logging.INFO)
 log = log.logger("runner")
 
+
+trace.set_tracer_provider(TracerProvider())
+tracer = trace.get_tracer_provider().get_tracer(__name__)
+# opentelemetry-python does not support OTEL_EXPORTER_OTLP_INSECURE so do it here
+# https://opentelemetry-python.readthedocs.io/en/latest/exporter/otlp/otlp.html
+otel_insecure = os.getenv("OTEL_EXPORTER_OTLP_INSECURE", "false").lower() in ("1", "true")
+trace.get_tracer_provider().add_span_processor(BatchSpanProcessor(OTLPSpanExporter(insecure=otel_insecure)))
+RequestsInstrumentor().instrument()
+GrpcInstrumentorClient().instrument()
+
+def load_otel_traceparent(traceparent):
+    """
+    Sets up OpenTelemetry after loading traceparent from either the kernel cmdline
+    or the TRACEPARENT environment variable.
+    """
+
+    if traceparent is None:
+        traceparent = os.getenv("TRACEPARENT")
+        if traceparent is None or not traceparent.strip():
+            return
+    ctx = propagate.extract({"traceparent": [traceparent]})
+
+    ## TODO: do something with this to make sure the autoinstrumentation
+    ## picks up the parent span
+
+    # start a span in the loaded context, that will parent everything else this instance
+    # of osie-runner does
+    #span = tracer.start_as_current_span(__name__, context=ctx)
+    return ctx
 
 def phone_homer(url):
     def func(json):
@@ -102,6 +139,9 @@ with open("/proc/cmdline", "r") as cmdline:
     cmdline_content = cmdline.read()
     tinkerbell = parse.urlparse(util.value_from_kopt(cmdline_content, "tinkerbell"))
     facility = util.value_from_kopt(cmdline_content, "facility")
+    kernel_tp = util.value_from_kopt(cmdline_content, "traceparent") # opentelemetry
+
+ctx = load_otel_traceparent(kernel_tp)
 
 phone_home = phone_homer(parse.urljoin(tinkerbell.geturl(), "phone-home"))
 fail = failer()
