@@ -285,10 +285,8 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	phone_home "${tinkerbell}" '{"type":"provisioning.106"}'
 
 	mkdir -p $target/etc/mdadm
-	if [[ $class != "t1.small.x86" ]]; then
-		echo -e "${GREEN}#### Updating MD RAID config file ${NC}"
-		mdadm --examine --scan >>$target/etc/mdadm/mdadm.conf
-	fi
+	echo -e "${GREEN}#### Updating MD RAID config file ${NC}"
+	mdadm --examine --scan >>$target/etc/mdadm/mdadm.conf
 
 	# ensure unique dbus/systemd machine-id
 	set_autofail_stage "machine-id setup"
