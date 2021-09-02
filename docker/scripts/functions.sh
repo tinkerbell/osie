@@ -163,12 +163,12 @@ function download_bios_configs() {
 	curl \
 		--fail \
 		--retry 3 \
-		-H "traceparent: $TRACEPARENT" \
+		--header "traceparent: $TRACEPARENT" \
 		https://bios-configs.platformequinix.net/bios-configs-latest.tar.gz --output bios-configs-latest.tar.gz
 	curl \
 		--fail \
 		--retry 3 \
-		-H "traceparent: $TRACEPARENT" \
+		--header "traceparent: $TRACEPARENT" \
 		https://bios-configs.platformequinix.net/bios-configs-latest.tar.gz.sha256 --output bios-configs-latest.tar.gz.sha256
 
 	echo "Verifying BIOS configurations tarball"
