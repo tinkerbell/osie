@@ -80,6 +80,7 @@ function tink() {
 		--data "${post_data}" \
 		--fail \
 		--header "Content-Type: application/json" \
+		--header "traceparent: $TRACEPARENT" \
 		--request "${method}" \
 		--retry 3 \
 		"${tink_host}/${endpoint}"
@@ -139,6 +140,7 @@ function detect_bios_vendor() {
 function detect_bios_version() {
 	local vendor=$1
 	local version=unknown
+	local started=$(date --rfc-3339=ns)
 
 	if [[ ${vendor} == "Dell" ]]; then
 		version=$(/opt/dell/srvadmin/bin/idracadm7 get BIOS.SysInformation 2>&1 | awk -F "=" '/^#SystemBiosVersion/ {print $2}')
@@ -146,6 +148,8 @@ function detect_bios_version() {
 	if [[ ${vendor} == "Supermicro" ]]; then
 		version=$(/opt/supermicro/sum/sum -c GetDmiInfo | grep --after-context 2 "^\[BIOS Information\]" | awk -F '"' '/^Version/ {print $2}')
 	fi
+
+	otel-cli span --name "${FUNCNAME[0]}" --attrs "vendor=$vendor" --start "$started"
 
 	echo "${version}"
 }
@@ -159,10 +163,12 @@ function download_bios_configs() {
 	curl \
 		--fail \
 		--retry 3 \
+		-H "traceparent: $TRACEPARENT" \
 		https://bios-configs.platformequinix.net/bios-configs-latest.tar.gz --output bios-configs-latest.tar.gz
 	curl \
 		--fail \
 		--retry 3 \
+		-H "traceparent: $TRACEPARENT" \
 		https://bios-configs.platformequinix.net/bios-configs-latest.tar.gz.sha256 --output bios-configs-latest.tar.gz.sha256
 
 	echo "Verifying BIOS configurations tarball"
@@ -208,6 +214,7 @@ function lookup_bios_config_enforcement() {
 # saves the current bios config to a file named current_bios.txt
 function retrieve_current_bios_config() {
 	local vendor=$1
+	local started=$(date --rfc-3339=ns)
 
 	if [[ ${vendor} == "Dell" ]]; then
 		set_autofail_stage "running Dell's racadm to save current BIOS settings"
@@ -222,6 +229,8 @@ function retrieve_current_bios_config() {
 			return 1
 		fi
 	fi
+
+	otel-cli span --name "${FUNCNAME[0]}" --attrs "vendor=$vendor" --start "$started"
 
 	# Save a copy of the original BIOS config to /statedir in case we need to obtain
 	# it for troubleshooting issues.
@@ -455,6 +464,7 @@ function bios_inventory() {
 		local hollow_token
 		if ! hollow_token=$(curl --request POST \
 			--url "${hollow_auth_url}" \
+			--header "traceparent: $TRACEPARENT" \
 			--user "${HOLLOW_CLIENT_ID}:${HOLLOW_CLIENT_REQUEST_SECRET}" \
 			--data "grant_type=client_credentials&audience=${hollow_auth_audience}&scope=${hollow_auth_scope}" \
 			--fail | jq --raw-output .access_token); then
@@ -471,6 +481,7 @@ function bios_inventory() {
 			--url "${hollow_url}" \
 			--header "Authorization: Bearer $hollow_token" \
 			--header "Content-Type: application/json" \
+			--header "traceparent: $TRACEPARENT" \
 			--data @${hollow_json_fn} \
 			--fail); then
 			echo "Warning: write to Hollow failed: ${hollow_response}"
