@@ -12,6 +12,21 @@ function init() {
 	BYELLOW='\033[0;33;5;7m'
 	NC='\033[0m' # No Color
 
+	# otel-cli will hang out in the background and watch for $$ to exit at which
+	# point it will send the span
+	local otelcarrier=$(mktemp)
+	local sockdir=$(mktemp -d)
+	otel-cli span background \
+		--name "$0" \
+		--service "osie" \
+		--sockdir "$sockdir" \
+		--tp-export \
+		--tp-carrier "$otelcarrier" \
+		--timeout 1800 &
+	# wait for otel-cli to start up and write $otelcarrier
+	otel-cli span background --wait --sockdir "$sockdir" --timeout 10
+	source "$otelcarrier" # load the new traceparent
+
 	set -o errexit -o pipefail -o xtrace
 }
 
