@@ -25,7 +25,9 @@ function init() {
 		--timeout 1800 &
 	# wait for otel-cli to start up and write $otelcarrier
 	otel-cli span background --wait --sockdir "$sockdir" --timeout 10
-	source "$otelcarrier" # load the new traceparent
+	if [ -s "$otelcarrier" ]; then
+		source "$otelcarrier" # load the new traceparent
+	fi
 
 	set -o errexit -o pipefail -o xtrace
 }
