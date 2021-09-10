@@ -69,7 +69,14 @@ def handler(handler_keep_wipe):
 def test_wipe(handler_keep_wipe):
     handler = handler_keep_wipe
     hwid = fake.uuid4()
-    c = call(hwid, hwid, tinkerbell, handler.host_state_dir, "wipe.sh")
+    c = call(
+        hwid,
+        hwid,
+        tinkerbell,
+        handler.host_state_dir,
+        "wipe.sh",
+        env=handler.inject_otel_envvars({}),
+    )
     calls = [c, call().check_returncode()]
 
     handler.wipe({"id": hwid})
@@ -99,7 +106,7 @@ def test_preinstalling(handler):
         handler.host_state_dir,
         "flavor-runner.sh",
         ("-M", "/statedir/metadata"),
-        {"PACKET_BOOTDEV_MAC": ""},
+        handler.inject_otel_envvars({"PACKET_BOOTDEV_MAC": ""}),
     )
 
     handler.handle_preinstalling(cacher_preinstalling)
@@ -191,7 +198,7 @@ def test_provisioning(handler, path, value):
         handler.host_state_dir,
         "flavor-runner.sh",
         ("-M", "/statedir/metadata"),
-        {"PACKET_BOOTDEV_MAC": ""},
+        handler.inject_otel_envvars({"PACKET_BOOTDEV_MAC": ""}),
     )
 
     if path:
@@ -302,7 +309,7 @@ def test_provisioning_mismatch_preinstalled(handler, path, value):
         handler.host_state_dir,
         "flavor-runner.sh",
         ("-M", "/statedir/metadata"),
-        {"PACKET_BOOTDEV_MAC": ""},
+        handler.inject_otel_envvars({"PACKET_BOOTDEV_MAC": ""}),
     )
 
     if path == "instance/userdata" and value:
@@ -396,7 +403,7 @@ def test_different_os_positive(mocked_run_osie, slug):
         handler.host_state_dir,
         "flavor-runner.sh",
         ("-M", "/statedir/metadata"),
-        {"PACKET_BOOTDEV_MAC": ""},
+        handler.inject_otel_envvars({"PACKET_BOOTDEV_MAC": ""}),
     )
 
     stamp = handler.statedir + "disks-partioned-image-extracted"
@@ -436,7 +443,7 @@ def test_existence_of_loop_sh(mocked_run_osie):
         handler.host_state_dir,
         "flavor-runner.sh",
         ("-M", "/statedir/metadata"),
-        {"PACKET_BOOTDEV_MAC": ""},
+        handler.inject_otel_envvars({"PACKET_BOOTDEV_MAC": ""}),
     )
 
     assert handler.handle_provisioning(d)
