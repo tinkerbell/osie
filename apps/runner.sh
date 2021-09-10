@@ -5,6 +5,7 @@
 reason='unknown'
 fail() {
 	curl -H 'Content-Type: application/json' \
+		-H "traceparent: $TRACEPARENT" \
 		-d '{"type":"failure", "reason":"'"$reason"'"}' \
 		"$phone_home_url"
 }
