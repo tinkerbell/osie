@@ -14,7 +14,7 @@ function init() {
 
 	# otel-cli will hang out in the background and watch for $$ to exit at which
 	# point it will send the span
-	local otelcarrier, sockdir
+	local otelcarrier sockdir
 	otelcarrier=$(mktemp)
 	sockdir=$(mktemp -d)
 	otel-cli span background \
