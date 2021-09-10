@@ -38,7 +38,7 @@ tracer = trace.get_tracer_provider().get_tracer(__name__)
 # https://opentelemetry-python.readthedocs.io/en/latest/exporter/otlp/otlp.html
 otel_insecure = os.getenv("OTEL_EXPORTER_OTLP_INSECURE", "false").lower() in (
     "1",
-    "true"
+    "true",
 )
 trace.get_tracer_provider().add_span_processor(
     BatchSpanProcessor(OTLPSpanExporter(insecure=otel_insecure))

@@ -74,7 +74,7 @@ class Handler:
 
         hardware_id = j["id"]
         log.info("wiping disks")
-        env=self.inject_otel_envvars({})
+        env = self.inject_otel_envvars({})
         ret = self.run_osie(
             hardware_id, hardware_id, tinkerbell, statedir, "wipe.sh", env=env
         )
