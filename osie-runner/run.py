@@ -36,10 +36,16 @@ trace.set_tracer_provider(TracerProvider())
 tracer = trace.get_tracer_provider().get_tracer(__name__)
 # opentelemetry-python does not support OTEL_EXPORTER_OTLP_INSECURE so do it here
 # https://opentelemetry-python.readthedocs.io/en/latest/exporter/otlp/otlp.html
-otel_insecure = os.getenv("OTEL_EXPORTER_OTLP_INSECURE", "false").lower() in ("1", "true")
-trace.get_tracer_provider().add_span_processor(BatchSpanProcessor(OTLPSpanExporter(insecure=otel_insecure)))
+otel_insecure = os.getenv("OTEL_EXPORTER_OTLP_INSECURE", "false").lower() in (
+    "1",
+    "true"
+)
+trace.get_tracer_provider().add_span_processor(
+    BatchSpanProcessor(OTLPSpanExporter(insecure=otel_insecure))
+)
 RequestsInstrumentor().instrument()
 GrpcInstrumentorClient().instrument()
+
 
 def load_otel_traceparent(kernel_tp):
     """
@@ -65,7 +71,7 @@ def load_otel_traceparent(kernel_tp):
         with tracer.start_as_current_span("run.py", kind=trace.SpanKind.SERVER):
             carrier = {}
             propagate.inject(carrier)
-            traceparent = carrier['traceparent']
+            traceparent = carrier["traceparent"]
 
     return traceparent
 
@@ -148,7 +154,7 @@ with open("/proc/cmdline", "r") as cmdline:
     cmdline_content = cmdline.read()
     tinkerbell = parse.urlparse(util.value_from_kopt(cmdline_content, "tinkerbell"))
     facility = util.value_from_kopt(cmdline_content, "facility")
-    kernel_tp = util.value_from_kopt(cmdline_content, "traceparent") # opentelemetry
+    kernel_tp = util.value_from_kopt(cmdline_content, "traceparent")  # opentelemetry
 
 traceparent = load_otel_traceparent(kernel_tp)
 

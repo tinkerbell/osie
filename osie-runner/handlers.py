@@ -9,7 +9,13 @@ import urllib.parse as parse
 
 class Handler:
     def __init__(
-        self, phone_home, log, tinkerbell, host_state_dir, statedir="/statedir/", traceparent=""
+        self,
+        phone_home,
+        log,
+        tinkerbell,
+        host_state_dir,
+        statedir="/statedir/",
+        traceparent="",
     ):
         self.phone_home = phone_home
         self.log = log
@@ -52,9 +58,13 @@ class Handler:
         helper does that. This only supports what's needed for unauthenticated
         and cleartext OTLP for now.
         """
-        env['TRACEPARENT'] = self.traceparent
-        env['OTEL_EXPORTER_OTLP_ENDPOINT'] = os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT', "")
-        env['OTEL_EXPORTER_OTLP_INSECURE'] = os.getenv('OTEL_EXPORTER_OTLP_INSECURE', "")
+        env["TRACEPARENT"] = self.traceparent
+        env["OTEL_EXPORTER_OTLP_ENDPOINT"] = os.getenv(
+            "OTEL_EXPORTER_OTLP_ENDPOINT", ""
+        )
+        env["OTEL_EXPORTER_OTLP_INSECURE"] = os.getenv(
+            "OTEL_EXPORTER_OTLP_INSECURE", ""
+        )
         return env
 
     def wipe(self, j):
@@ -65,7 +75,9 @@ class Handler:
         hardware_id = j["id"]
         log.info("wiping disks")
         env=self.inject_otel_envvars({})
-        ret = self.run_osie(hardware_id, hardware_id, tinkerbell, statedir, "wipe.sh", env=env)
+        ret = self.run_osie(
+            hardware_id, hardware_id, tinkerbell, statedir, "wipe.sh", env=env
+        )
         ret.check_returncode()
 
     def handle_preinstalling(self, j):
