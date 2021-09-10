@@ -150,7 +150,7 @@ with open("/proc/cmdline", "r") as cmdline:
     facility = util.value_from_kopt(cmdline_content, "facility")
     kernel_tp = util.value_from_kopt(cmdline_content, "traceparent") # opentelemetry
 
-load_otel_traceparent(kernel_tp)
+traceparent = load_otel_traceparent(kernel_tp)
 
 phone_home = phone_homer(parse.urljoin(tinkerbell.geturl(), "phone-home"))
 fail = failer()
@@ -163,7 +163,7 @@ watch, resp = connect_hegel(facility)
 
 # TODO decide to keep or remove? means we'd ignore a failed deprov
 log.info("wiping disk partitions")
-handlers = handlers.Handler(phone_home, log, tinkerbell, statedir)
+handlers = handlers.Handler(phone_home, log, tinkerbell, statedir, traceparent)
 handlers.wipe(json.loads(resp.JSON))
 
 log.info("running subscribe loop")

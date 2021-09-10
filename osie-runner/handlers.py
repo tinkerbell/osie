@@ -9,13 +9,14 @@ import urllib.parse as parse
 
 class Handler:
     def __init__(
-        self, phone_home, log, tinkerbell, host_state_dir, statedir="/statedir/"
+        self, phone_home, log, tinkerbell, host_state_dir, statedir="/statedir/", traceparent=""
     ):
         self.phone_home = phone_home
         self.log = log
         self.tinkerbell = tinkerbell
         self.host_state_dir = host_state_dir
         self.statedir = os.path.normpath(statedir) + "/"
+        self.traceparent = traceparent
 
     @staticmethod
     def run_osie(
@@ -27,6 +28,7 @@ class Handler:
 
         envs = (f"container_uuid={instance_id}", f"RLOGHOST={rloghost}")
         envs += tuple(itertools.starmap("=".join, zip(env.items())))
+
         # prepends a '-e' before each env
         cmd += tuple(itertools.chain(*zip(("-e",) * len(envs), envs)))
 
@@ -50,7 +52,8 @@ class Handler:
 
         hardware_id = j["id"]
         log.info("wiping disks")
-        ret = self.run_osie(hardware_id, hardware_id, tinkerbell, statedir, "wipe.sh")
+        env={"TRACEPARENT": self.traceparent}
+        ret = self.run_osie(hardware_id, hardware_id, tinkerbell, statedir, "wipe.sh", env=env)
         ret.check_returncode()
 
     def handle_preinstalling(self, j):
@@ -73,7 +76,10 @@ class Handler:
         log = log.bind(hardware_id=hardware_id, instance_id=instance_id)
         start = datetime.now()
 
-        env = {"PACKET_BOOTDEV_MAC": os.getenv("PACKET_BOOTDEV_MAC", "")}
+        env = {
+            "PACKET_BOOTDEV_MAC": os.getenv("PACKET_BOOTDEV_MAC", ""),
+            "TRACEPARENT": self.traceparent,
+        }
         log.info("running docker")
         self.run_osie(
             hardware_id,
@@ -158,7 +164,10 @@ class Handler:
             write_statefile(self.statedir + "userdata", userdata)
             args += ("-u", "/statedir/userdata")
 
-        env = {"PACKET_BOOTDEV_MAC": os.getenv("PACKET_BOOTDEV_MAC", "")}
+        env = {
+            "PACKET_BOOTDEV_MAC": os.getenv("PACKET_BOOTDEV_MAC", ""),
+            "TRACEPARENT": self.traceparent,
+        }
         instance_id = metadata["id"]
         log = log.bind(hardware_id=hardware_id, instance_id=instance_id)
         start = datetime.now()
