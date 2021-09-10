@@ -45,6 +45,18 @@ class Handler:
 
         return subprocess.run(cmd)
 
+    def inject_otel_envvars(self, env):
+        """
+        Because run_osie is a static method the best place to inject these is
+        right before it is called by adding envvars to the env passed in. This
+        helper does that. This only supports what's needed for unauthenticated
+        and cleartext OTLP for now.
+        """
+        env['TRACEPARENT'] = self.traceparent
+        env['OTEL_EXPORTER_OTLP_ENDPOINT'] = os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT', "")
+        env['OTEL_EXPORTER_OTLP_INSECURE'] = os.getenv('OTEL_EXPORTER_OTLP_INSECURE', "")
+        return env
+
     def wipe(self, j):
         log = self.log
         statedir = self.host_state_dir
@@ -52,7 +64,7 @@ class Handler:
 
         hardware_id = j["id"]
         log.info("wiping disks")
-        env={"TRACEPARENT": self.traceparent}
+        env=self.inject_otel_envvars({})
         ret = self.run_osie(hardware_id, hardware_id, tinkerbell, statedir, "wipe.sh", env=env)
         ret.check_returncode()
 
@@ -76,10 +88,8 @@ class Handler:
         log = log.bind(hardware_id=hardware_id, instance_id=instance_id)
         start = datetime.now()
 
-        env = {
-            "PACKET_BOOTDEV_MAC": os.getenv("PACKET_BOOTDEV_MAC", ""),
-            "TRACEPARENT": self.traceparent,
-        }
+        env = {"PACKET_BOOTDEV_MAC": os.getenv("PACKET_BOOTDEV_MAC", "")}
+        self.inject_otel_envvars(env)
         log.info("running docker")
         self.run_osie(
             hardware_id,
@@ -164,10 +174,8 @@ class Handler:
             write_statefile(self.statedir + "userdata", userdata)
             args += ("-u", "/statedir/userdata")
 
-        env = {
-            "PACKET_BOOTDEV_MAC": os.getenv("PACKET_BOOTDEV_MAC", ""),
-            "TRACEPARENT": self.traceparent,
-        }
+        env = {"PACKET_BOOTDEV_MAC": os.getenv("PACKET_BOOTDEV_MAC", "")}
+        self.inject_otel_envvars(env)
         instance_id = metadata["id"]
         log = log.bind(hardware_id=hardware_id, instance_id=instance_id)
         start = datetime.now()
