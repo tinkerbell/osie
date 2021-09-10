@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 
 # otel-cli for opentelemetry tracing
-COPY --from=ghcr.io/equinix-labs/otel-cli:v0.0.16 /otel-cli /usr/local/bin/otel-cli
+COPY --from=ghcr.io/equinix-labs/otel-cli:v0.0.17 /otel-cli /usr/local/bin/otel-cli
 
 # apt sources fix
 COPY sources.list.aarch64 /tmp/osie/
