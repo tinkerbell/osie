@@ -14,8 +14,9 @@ function init() {
 
 	# otel-cli will hang out in the background and watch for $$ to exit at which
 	# point it will send the span
-	local otelcarrier=$(mktemp)
-	local sockdir=$(mktemp -d)
+	local otelcarrier, sockdir
+	otelcarrier=$(mktemp)
+	sockdir=$(mktemp -d)
 	otel-cli span background \
 		--name "$0" \
 		--service "osie" \
@@ -26,6 +27,7 @@ function init() {
 	# wait for otel-cli to start up and write $otelcarrier
 	otel-cli span background --wait --sockdir "$sockdir" --timeout 10
 	if [ -s "$otelcarrier" ]; then
+		# shellcheck disable=SC1090
 		source "$otelcarrier" # load the new traceparent
 	fi
 
@@ -157,7 +159,8 @@ function detect_bios_vendor() {
 function detect_bios_version() {
 	local vendor=$1
 	local version=unknown
-	local started=$(date --rfc-3339=ns)
+	local started
+	started=$(date --rfc-3339=ns)
 
 	if [[ ${vendor} == "Dell" ]]; then
 		version=$(/opt/dell/srvadmin/bin/idracadm7 get BIOS.SysInformation 2>&1 | awk -F "=" '/^#SystemBiosVersion/ {print $2}')
@@ -231,7 +234,8 @@ function lookup_bios_config_enforcement() {
 # saves the current bios config to a file named current_bios.txt
 function retrieve_current_bios_config() {
 	local vendor=$1
-	local started=$(date --rfc-3339=ns)
+	local started
+	started=$(date --rfc-3339=ns)
 
 	if [[ ${vendor} == "Dell" ]]; then
 		set_autofail_stage "running Dell's racadm to save current BIOS settings"
