@@ -23,7 +23,7 @@ function init() {
 		--sockdir "$sockdir" \
 		--tp-export \
 		--tp-carrier "$otelcarrier" \
-		--timeout 1800 &
+		--timeout 30m &
 	# wait for otel-cli to start up and write $otelcarrier
 	otel-cli span background --wait --sockdir "$sockdir" --timeout 10
 	if [ -s "$otelcarrier" ]; then
