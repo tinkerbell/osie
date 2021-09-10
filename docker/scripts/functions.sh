@@ -99,7 +99,7 @@ function tink() {
 		--data "${post_data}" \
 		--fail \
 		--header "Content-Type: application/json" \
-		--header "traceparent: $TRACEPARENT" \
+		--header "traceparent: ${TRACEPARENT:-}" \
 		--request "${method}" \
 		--retry 3 \
 		"${tink_host}/${endpoint}"
@@ -183,12 +183,12 @@ function download_bios_configs() {
 	curl \
 		--fail \
 		--retry 3 \
-		--header "traceparent: $TRACEPARENT" \
+		--header "traceparent: ${TRACEPARENT:-}" \
 		https://bios-configs.platformequinix.net/bios-configs-latest.tar.gz --output bios-configs-latest.tar.gz
 	curl \
 		--fail \
 		--retry 3 \
-		--header "traceparent: $TRACEPARENT" \
+		--header "traceparent: ${TRACEPARENT:-}" \
 		https://bios-configs.platformequinix.net/bios-configs-latest.tar.gz.sha256 --output bios-configs-latest.tar.gz.sha256
 
 	echo "Verifying BIOS configurations tarball"
@@ -485,7 +485,7 @@ function bios_inventory() {
 		local hollow_token
 		if ! hollow_token=$(curl --request POST \
 			--url "${hollow_auth_url}" \
-			--header "traceparent: $TRACEPARENT" \
+			--header "traceparent: ${TRACEPARENT:-}" \
 			--user "${HOLLOW_CLIENT_ID}:${HOLLOW_CLIENT_REQUEST_SECRET}" \
 			--data "grant_type=client_credentials&audience=${hollow_auth_audience}&scope=${hollow_auth_scope}" \
 			--fail | jq --raw-output .access_token); then
@@ -502,7 +502,7 @@ function bios_inventory() {
 			--url "${hollow_url}" \
 			--header "Authorization: Bearer $hollow_token" \
 			--header "Content-Type: application/json" \
-			--header "traceparent: $TRACEPARENT" \
+			--header "traceparent: ${TRACEPARENT:-}" \
 			--data @${hollow_json_fn} \
 			--fail); then
 			echo "Warning: write to Hollow failed: ${hollow_response}"
