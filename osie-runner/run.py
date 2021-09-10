@@ -56,8 +56,18 @@ def load_otel_traceparent(kernel_tp):
         traceparent = kernel_tp
 
     if traceparent is not None:
+        # got a tp from kernel or env, create a context with it as the current span
         ctx = propagate.extract({"traceparent": [traceparent]})
         context.attach(ctx)
+    else:
+        # no traceparent was available, start a span of our own and return it as tp
+        # so downstream code can always assume there's a tp and not check it
+        with tracer.start_as_current_span("run.py", kind=trace.SpanKind.SERVER):
+            carrier = {}
+            propagate.inject(carrier)
+            traceparent = carrier['traceparent']
+
+    return traceparent
 
 
 def phone_homer(url):
