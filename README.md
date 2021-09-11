@@ -7,7 +7,7 @@ OSIE is the Operating System Installation Environment.
 It consists of an Alpine Linux based netboot image which fetches a prebuilt Ubuntu 16.04 container that does the actual installation.
 All of the above is built from this repository using `GNU Make`.
 
-This repository is [Experimental](https://github.com/packethost/standards/blob/master/experimental-statement.md) meaning that it's based on untested ideas or techniques and not yet established or finalized or involves a radically new and innovative style!
+This repository is [Experimental](https://github.com/packethost/standards/blob/main/experimental-statement.md) meaning that it's based on untested ideas or techniques and not yet established or finalized or involves a radically new and innovative style!
 This means that support is best effort (at best!) and we strongly encourage you to NOT use this in production.
 
 ## Cloning OSIE
@@ -92,3 +92,7 @@ If you need to install packages from a non-standard alpine repo, the URL will ne
 ```sh
 ALPINE_REPO="http://dl-cdn.alpinelinux.org/alpine/v3.7/main,http://dl-cdn.alpinelinux.org/alpine/v3.7/community,http://dl-cdn.alpinelinux.org/alpine/edge/testing"
 ```
+
+## Website
+
+For complete documentation, please visit the Tinkerbell project hosted at [tinkerbell.org](https://tinkerbell.org).
