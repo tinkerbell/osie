@@ -229,10 +229,15 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 
 	# Grub config
 	grub="$BASEURL/grub/${OS//_(arm|image)//}/$class/grub.template"
+	grub_default="$BASEURL/grub/${OS//_(arm|image)//}/$class/grub.template.default"
 
 	# Check for HW specific grub template otherwise use default template
 	if ! wget --spider "${grub}"; then
 		grub="$BASEURL/grub/${OS//_(arm|image)//}/default/grub.template"
+	fi
+
+	if ! wget --spider "${grub_default}"; then
+		grub_default="$BASEURL/grub/${OS//_(arm|image)//}/default/grub.template.default"
 	fi
 
 	echo -e "${WHITE}Image: $image${NC}"
@@ -326,7 +331,7 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 	echo -e "${GREEN}#### Installing GRUB2${NC}"
 
 	wget "$grub" -O /tmp/grub.template
-	wget "${grub}.default" -O /tmp/grub.default
+	wget "${grub_default}" -O /tmp/grub.default
 
 	./grub-installer.sh -v -p "$class" -t "$target" -C "$cprout" -D /tmp/grub.default -T /tmp/grub.template
 
