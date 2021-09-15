@@ -71,7 +71,7 @@ echo "OS: $DOS  ARCH: $arch VER: $DVER"
 
 chroot_install=false
 
-if [[ $DOS == "RedHatEnterpriseServer" ]] && [[ $arch == "aarch64" ]]; then
+if [[ $arch == "aarch64" ]]; then
 	chroot_install=true
 fi
 
@@ -91,9 +91,9 @@ is_uefi=false
 }
 
 if which grub2-install; then
-	grub2-install --recheck "$disk"
+	grub2-install --recheck "$disk --bootloader-id=ubuntu"
 elif which grub-install; then
-	grub-install --recheck "$disk"
+	grub-install --recheck "$disk --bootloader-id=ubuntu"
 else
 	echo 'grub-install or grub2-install are not installed on target os'
 	exit 1
