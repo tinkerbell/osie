@@ -133,17 +133,17 @@ install_grub_osie() {
 		chroot "$target" /bin/bash -xe <<EOF
 grub-install "$disk" --recheck --bootloader-id=ubuntu --efi-directory="$target/boot/efi"
 grubefi=$(find "$target/boot/efi" -name 'grub*.efi' -print -quit)
-install -Dm755 "$grubefi" "$target/boot/efi/EFI/BOOT/BOOTX64.EFI"
+install -Dm755 "\$grubefi" "$target/boot/efi/EFI/BOOT/BOOTX64.EFI"
 
-if [[ -z $grubefi ]]; then
+if [[ -z \$grubefi ]]; then
 	echo "error: couldn't find a suitable grub EFI file"
 	exit 1
 fi
 
 if [[ $arch == aarch64 ]]; then
-	echo "Renaming $grubefi to default BOOT binary"
-	install -Dm755 "$grubefi" "$target/boot/efi/EFI/BOOT/BOOTAA64.EFI"
-	install -Dm755 "$grubefi" "$target/boot/efi/EFI/GRUB2/GRUBAA64.EFI"
+	echo "Renaming \$grubefi to default BOOT binary"
+	install -Dm755 "\$grubefi" "$target/boot/efi/EFI/BOOT/BOOTAA64.EFI"
+	install -Dm755 "\$grubefi" "$target/boot/efi/EFI/GRUB2/GRUBAA64.EFI"
 else
 	# grub-install doesn't error if efibootmgr can't actually set the boot entries/order
 	efibootmgr | tee /dev/stderr | grep -iq grub
