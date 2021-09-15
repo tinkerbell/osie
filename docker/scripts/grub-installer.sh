@@ -131,7 +131,7 @@ install_grub_osie() {
 		mount --bind /proc "$target/proc"
 		mount --bind /sys "$target/sys"
 		chroot "$target" /bin/bash -xe <<EOF
-grub-install "$disk" --recheck --bootloader-id=ubuntu --efi-directory="$target/boot/efi"
+grub-install "$disk" --recheck --bootloader-id=ubuntu"
 grubefi=$(find "$target/boot/efi" -name 'grub*.efi' -print -quit)
 install -Dm755 "\$grubefi" "$target/boot/efi/EFI/BOOT/BOOTX64.EFI"
 
