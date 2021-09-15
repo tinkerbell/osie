@@ -126,6 +126,7 @@ install_grub_osie() {
 	else
 		[[ $arch == aarch64 ]] && mount -o remount,ro /sys/firmware/efi/efivars
 
+
 		grub-install --recheck --bootloader-id=ubuntu --root-directory="$target" --efi-directory="$target/boot/efi"
 		grubefi=$(find "$target/boot/efi" -name 'grub*.efi' -print -quit)
 		install -Dm755 "$grubefi" "$target/boot/efi/EFI/BOOT/BOOTX64.EFI"
