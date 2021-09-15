@@ -125,6 +125,12 @@ install_grub_osie() {
 		grub-install --recheck --root-directory="$target" "$disk"
 	else
 		# [[ $arch == aarch64 ]] && mount -o remount,ro /sys/firmware/efi/efivars
+		echo "Attempting to install Grub on $disk - UBUNTU TEST HERE"
+		mount --bind /dev "$target/dev"
+		mount --bind /tmp "$target/tmp"
+		mount --bind /proc "$target/proc"
+		mount --bind /sys "$target/sys"
+		chroot "$target" /bin/bash -xe <<EOF
 
 		grub-install "$disk" --recheck --bootloader-id=ubuntu --efi-directory="$target/boot/efi"
 		grubefi=$(find "$target/boot/efi" -name 'grub*.efi' -print -quit)
