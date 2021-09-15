@@ -83,6 +83,12 @@ install_grub_chroot() {
 	mount --bind /sys "$target/sys"
 	chroot "$target" /bin/bash -xe <<EOF
 is_uefi=false
+[[ -d /sys/firmware/efi ]] && {
+	is_uefi=true
+	mountpoint -q /sys/firmware/efi/efivars || {
+		mount -t efivarfs efivarfs /sys/firmware/efi/efivars
+	}
+}
 
 if which grub2-install; then
 	grub2-install --recheck "$disk --bootloader-id=ubuntu"
@@ -92,14 +98,8 @@ else
 	echo 'grub-install or grub2-install are not installed on target os'
 	exit 1
 fi
-\$is_uefi && {
-	[ -f /etc/os-release ] && {
-		(
-			source /etc/os-release
-			efibootmgr | tee /dev/stderr | grep -iq "\$ID"
-		)
-	}
-	umount /sys/firmware/efi/efivars
+
+umount /sys/firmware/efi/efivars
 }
 EOF
 	umount "$target/dev" "$target/tmp" "$target/proc" "$target/sys"
