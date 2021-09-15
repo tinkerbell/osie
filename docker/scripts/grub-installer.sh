@@ -100,7 +100,7 @@ else
 fi
 
 umount /sys/firmware/efi/efivars
-}
+
 EOF
 	umount "$target/dev" "$target/tmp" "$target/proc" "$target/sys"
 
