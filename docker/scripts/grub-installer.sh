@@ -93,6 +93,7 @@ is_uefi=false
 if which grub2-install; then
 	grub2-install --recheck "$disk" --bootloader-id=ubuntu --efi-directory="/boot/efi"
 elif which grub-install; then
+    update-grub
 	grub-install --recheck "$disk" --bootloader-id=ubuntu --efi-directory="/boot/efi"
 else
 	echo 'grub-install or grub2-install are not installed on target os'
