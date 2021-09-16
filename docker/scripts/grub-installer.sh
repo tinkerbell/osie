@@ -70,9 +70,14 @@ echo "#### Detected OS on mounted target $target"
 echo "OS: $DOS  ARCH: $arch VER: $DVER"
 
 chroot_install=false
+chroot_install_ubuntu=false
 
 if [[ $DOS == "RedHatEnterpriseServer" ]] && [[ $arch == "aarch64" ]]; then
 	chroot_install=true
+fi
+
+if [[ $DOS == "Ubuntu" ]] && [[ $arch == "aarch64" ]]; then
+	chroot_install_ubuntu=true
 fi
 
 install_grub_chroot() {
@@ -119,6 +124,36 @@ EOF
 	fi
 }
 
+install_grub_chroot_ubuntu() {
+	echo "Attempting to install Grub on $disk"
+	mount --bind /dev "$target/dev"
+	mount --bind /tmp "$target/tmp"
+	mount --bind /proc "$target/proc"
+	mount --bind /sys "$target/sys"
+	chroot "$target" /bin/bash -xe <<EOF
+[[ -d /sys/firmware/efi ]] && {
+	mountpoint -q /sys/firmware/efi/efivars || {
+		mount -t efivarfs efivarfs /sys/firmware/efi/efivars
+	}
+}
+
+update-grub
+
+if which grub2-install; then
+	grub2-install --recheck "$disk"
+elif which grub-install; then
+	grub-install --recheck "$disk"
+else
+	echo 'grub-install or grub2-install are not installed on target os'
+	exit 1
+fi
+
+	umount /sys/firmware/efi/efivars
+}
+EOF
+	umount "$target/dev" "$target/tmp" "$target/proc" "$target/sys"
+}
+
 install_grub_osie() {
 	echo "Running grub-install on $disk"
 	if ! $uefi; then
@@ -152,6 +187,8 @@ bootdevs=$(jq -r '.bootdevs[]' "$cprout")
 for disk in $bootdevs; do
 	if $chroot_install; then
 		install_grub_chroot
+	elif $chroot_install_ubuntu; then
+		install_grub_chroot_ubuntu
 	else
 		install_grub_osie
 	fi
