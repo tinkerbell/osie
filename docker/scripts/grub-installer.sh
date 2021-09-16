@@ -102,7 +102,7 @@ else
 	echo 'grub-install or grub2-install are not installed on target os'
 	exit 1
 fi
-\$is_uefi && \$DOS == "RedHatEnterpriseServer" && {
+\$is_uefi && [[ \$DOS == "RedHatEnterpriseServer" ]] && {
 	[ -f /etc/os-release ] && {
 		(
 			source /etc/os-release
