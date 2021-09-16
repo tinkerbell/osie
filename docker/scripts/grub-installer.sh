@@ -71,8 +71,10 @@ echo "OS: $DOS  ARCH: $arch VER: $DVER"
 
 chroot_install=false
 
-if [[ $DOS == "RedHatEnterpriseServer" ]] && [[ $arch == "aarch64" ]]; then
-	chroot_install=true
+if [[ $arch == "aarch64" ]]; then
+	if [[ $DOS == "RedHatEnterpriseServer" ]] || [[ $DOS == "Ubuntu" ]]; then
+		chroot_install=true
+	fi
 fi
 
 install_grub_chroot() {
@@ -91,14 +93,16 @@ is_uefi=false
 }
 
 if which grub2-install; then
+    update-grub
 	grub2-install --recheck "$disk"
 elif which grub-install; then
+    update-grub
 	grub-install --recheck "$disk"
 else
 	echo 'grub-install or grub2-install are not installed on target os'
 	exit 1
 fi
-\$is_uefi && {
+\$is_uefi && \$DOS == "RedHatEnterpriseServer" && {
 	[ -f /etc/os-release ] && {
 		(
 			source /etc/os-release
