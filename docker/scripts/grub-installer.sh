@@ -102,15 +102,9 @@ else
 	echo 'grub-install or grub2-install are not installed on target os'
 	exit 1
 fi
-\$is_uefi && [[ \$DOS == "RedHatEnterpriseServer" ]] && {
-	[ -f /etc/os-release ] && {
-		(
-			source /etc/os-release
-			efibootmgr | tee /dev/stderr | grep -iq "\$ID"
-		)
-	}
-	umount /sys/firmware/efi/efivars
-}
+
+umount /sys/firmware/efi/efivars
+
 EOF
 	umount "$target/dev" "$target/tmp" "$target/proc" "$target/sys"
 
