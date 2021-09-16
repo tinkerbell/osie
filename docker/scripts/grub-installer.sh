@@ -137,11 +137,12 @@ install_grub_chroot_ubuntu() {
 	}
 }
 
-update-grub
 
 if which grub2-install; then
+	update-grub
 	grub2-install --recheck "$disk"
 elif which grub-install; then
+	update-grub
 	grub-install --recheck "$disk"
 else
 	echo 'grub-install or grub2-install are not installed on target os'
@@ -149,7 +150,6 @@ else
 fi
 
 	umount /sys/firmware/efi/efivars
-}
 EOF
 	umount "$target/dev" "$target/tmp" "$target/proc" "$target/sys"
 }
