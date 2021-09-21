@@ -9,7 +9,7 @@ All of the above is built from this repository using `GNU Make`.
 
 ## Deprecation
 
-In September 2021, OSIE was deprecated in preference to the [Hook](https://github.com/tinkerbell/hook) project. 
+In September 2021, OSIE was deprecated in preference to the [Hook](https://github.com/tinkerbell/hook) project.
 
 We are accepting bug fixes until December 2021, at which point this repository will be archived. For more information, see the [OSIE deprecation proposal](https://github.com/tinkerbell/proposals/blob/main/proposals/0025/README.md).
 
@@ -17,16 +17,18 @@ We are accepting bug fixes until December 2021, at which point this repository w
 
 OSIE uses git-lfs for large files that are part of the build process. If you clone this repo without git-lfs installed and set up, your builds will fail.
 
-Install git-lfs per instructions at https://git-lfs.github.com/ and make sure to run `git lfs install` afterwards to set it up in your `~/.gitconfig`.
+Install git-lfs per instructions at <https://git-lfs.github.com/> and make sure to run `git lfs install` afterwards to set it up in your `~/.gitconfig`.
 
 ## Building OSIE
 
 ### Ubuntu Based Container
+
 The OSIE Ubuntu based container is built with `docker` for both `aarch64` and `x86_64`.
 Some packages are rebuilt with different settings (git, using openssl) or updated upstream sources are built/installed.
 These can be built individually with `make build/osie-aarch64.tar.gz` or `make build build/osie-x86_64.tar.gz`.
 
 ### Alpine Based Netboot Image
+
 The OSIE Alpine boot files are built in an Alpine Docker container.
 All the packages are built at container build time, including the kernel.
 The built/installed packages are later used at run time to generate `initramfs` and `modloop` files.
@@ -74,7 +76,7 @@ The quickest way to start running OSIE locally is:
 
 `make OSES=ubuntu_20_04 V=1 T=1 test-x86_64`
 
-# Adding Alpine Packages To initramfs
+## Adding Alpine Packages To initramfs
 
 The Alpine x86_64 initramfs image used is fully self-reliant.
 We embed the .apk files, and repo metadata into the initramfs for all packages used as part of `/init`.
