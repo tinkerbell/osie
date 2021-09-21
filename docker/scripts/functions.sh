@@ -169,7 +169,7 @@ function detect_bios_version() {
 		version=$(/opt/supermicro/sum/sum -c GetDmiInfo | grep --after-context 2 "^\[BIOS Information\]" | awk -F '"' '/^Version/ {print $2}')
 	fi
 
-	otel-cli span --name "${FUNCNAME[0]}" --attrs "vendor=$vendor" --start "$started"
+	otel-cli span --name "${FUNCNAME[0]}" --start "$started" --attrs "vendor=${vendor},version=${version}"
 
 	echo "${version}"
 }
