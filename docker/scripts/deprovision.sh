@@ -268,7 +268,9 @@ baremetal_2a2 | baremetal_2a4 | baremetal_hua)
 *)
 	set_autofail_stage "running packet-hardware inventory"
 	packet-hardware inventory --verbose --tinkerbell "${tinkerbell}/hardware-components"
+
 	# Catalog various BIOS feature states (not yet supported on aarch64)
+	set_autofail_stage "running bios_inventory"
 	if [[ $arch == "x86_64" ]]; then
 		bios_inventory "${HARDWARE_ID}" "${class}" "${facility}"
 	fi
