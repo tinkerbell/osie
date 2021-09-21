@@ -85,23 +85,6 @@ if [[ $arch == "x86_64" ]] && [[ $reserved != "true" ]]; then
 	validate_bios_config "${class}" "${bios_vendor}"
 fi
 
-# Storage detection
-set_autofail_stage "drive count and storage size detection"
-echo "Number of drives found: ${#disks[*]}"
-if ! assert_num_disks "$class" "${#disks[@]}"; then
-	echo "critical: unexpected number of block devices! Missing drives?"
-	: problem "$tinkerbell" '{"problem":"missing_drive"}'
-	: read -rsp $'Press escape to continue...\n' -d $'\e'
-	: exit 1
-fi
-
-if ! assert_storage_size "$class" "${disks[@]}"; then
-	echo "critical: unexpected amount of available storage space! missing drives?"
-	: problem "$tinkerbell" '{"problem":"missing_drive"}'
-	: read -rsp $'Press escape to continue...\n' -d $'\e'
-	: exit 1
-fi
-
 assert_block_or_loop_devs "${disks[@]}"
 assert_same_type_devs "${disks[@]}"
 
@@ -149,8 +132,14 @@ if [[ $preserve_data == false ]]; then
 	nvme_drives=($(find /dev -regex ".*/nvme[0-9]+" | sort -h))
 	echo "Found ${#nvme_drives[@]} nvme drives"
 	nvme list
-	if [[ $class == "x.large.arm" ]]; then
-		echo "Skipping NVMe namespace management for $class hardware"
+
+	# Check for Ampere CPU manufacturer and echo not found is required because script fails if ampere not found.
+	proc_mft=$(dmidecode --string processor-manufacturer | head -n 1 | grep "Ampere") || echo "processor manufacturer not found"
+	# Check for system version and echo not found is required because script fails if system version not found.
+	system_version=$(dmidecode --string system-version) || echo "system version not found"
+	# Delete nvme namespace fails on Ampere(EVT2) servers, So skipping namespace management on these servers.
+	if [[ -n $proc_mft ]] && [[ $system_version == "EVT2" || $system_version == "0100" || $system_version == "DVT" ]]; then
+		echo "Skipping NVMe namespace management for $system_version system version"
 	elif ((${#nvme_drives[@]} > 0)); then
 		for drive in "${nvme_drives[@]}"; do
 			nvme id-ctrl "$drive"
@@ -279,7 +268,9 @@ baremetal_2a2 | baremetal_2a4 | baremetal_hua)
 *)
 	set_autofail_stage "running packet-hardware inventory"
 	packet-hardware inventory --verbose --tinkerbell "${tinkerbell}/hardware-components"
+
 	# Catalog various BIOS feature states (not yet supported on aarch64)
+	set_autofail_stage "running bios_inventory"
 	if [[ $arch == "x86_64" ]]; then
 		bios_inventory "${HARDWARE_ID}" "${class}" "${facility}"
 	fi
