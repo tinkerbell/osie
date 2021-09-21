@@ -116,7 +116,7 @@ esac
 
 ensure_time
 
-hardware_id=$(curl -sSL --connect-timeout 60 https://metadata.packet.net/metadata | jq -r .hardware_id)
+hardware_id=$(curl -sSL --connect-timeout 60 -H "traceparent: ${TRACEPARENT:-}" https://metadata.packet.net/metadata | jq -r .hardware_id)
 statedir=${TMPDIR:-/tmp}/osie-statedir-$hardware_id
 metadata=$statedir/metadata
 userdata=$statedir/userdata
@@ -124,7 +124,7 @@ mkdir -p "$statedir"
 
 reason='unable to fetch metadata'
 echo "metadata:"
-curl -sSL --connect-timeout 60 https://metadata.packet.net/metadata |
+curl -sSL --connect-timeout 60 -H "traceparent: ${TRACEPARENT:-}" https://metadata.packet.net/metadata |
 	jq -S . |
 	tee "$metadata" |
 	jq .
@@ -145,7 +145,7 @@ jq -S . "$metadata"
 
 reason='unable to fetch userdata'
 echo "userdata:"
-curl -sSL --connect-timeout 60 https://metadata.packet.net/userdata | tee "$userdata"
+curl -sSL --connect-timeout 60 -H "traceparent: ${TRACEPARENT:-}" https://metadata.packet.net/userdata | tee "$userdata"
 
 # Get values from metadata
 facility=$(jq -r .facility "$metadata")
@@ -235,6 +235,7 @@ $timeout_cmd docker run --privileged -ti \
 	-e "HOLLOW_CLIENT_ID=${hollow_client_id:-}" \
 	-e "HOLLOW_CLIENT_REQUEST_SECRET=${hollow_client_request_secret:-}" \
 	-e "ECLYPSIUM_TOKEN=${eclypsium_token:-}" \
+	-e "TRACEPARENT=${TRACEPARENT:-}" \
 	-v /dev:/dev \
 	-v /dev/console:/dev/console \
 	-v /lib/firmware:/lib/firmware:ro \

@@ -11,6 +11,7 @@ registry_password=$(sed -nr 's|.*\bregistry_password=(\S+).*|\1|p' /proc/cmdline
 syslog_host=$(sed -nr 's|.*\bsyslog_host=(\S+).*|\1|p' /proc/cmdline)
 worker_id=$(sed -nr 's|.*\bworker_id=(\S+).*|\1|p' /proc/cmdline)
 instance_id=$(sed -nr 's|.*\binstance_id=(\S+).*|\1|p' /proc/cmdline)
+TRACEPARENT=$(sed -nr 's|.*\btraceparent=(\S+).*|\1|p' /proc/cmdline)
 CAPTURE_ACTION_LOGS=true
 
 tink_worker_image="${docker_registry}/tinkerbell/tink-worker:sha-5e1f0fd8"
@@ -93,6 +94,7 @@ docker run --privileged -t --name "tink-worker" \
 	-e "REGISTRY_USERNAME=$registry_username" \
 	-e "REGISTRY_PASSWORD=$registry_password" \
 	-e "CAPTURE_ACTION_LOGS=${CAPTURE_ACTION_LOGS}" \
+	-e "TRACEPARENT=${TRACEPARENT:-}" \
 	-v /worker:/worker \
 	-v /var/run/docker.sock:/var/run/docker.sock \
 	-t \
