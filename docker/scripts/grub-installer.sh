@@ -104,6 +104,9 @@ fi
 	[ -f /etc/os-release ] && {
 		(
 			source /etc/os-release
+			if [ "\$ID" == "ubuntu" ]; then
+				return 0
+			fi
 			efibootmgr | tee /dev/stderr | grep -iq "\$ID"
 		)
 	}
