@@ -124,7 +124,7 @@ install_grub_osie() {
 	if ! $uefi; then
 		grub-install --recheck --root-directory="$target" "$disk"
 	else
-		[[ $arch == aarch64 ]] && mount -o remount,ro /sys/firmware/efi/efivars
+		# [[ $arch == aarch64 ]] && mount -o remount,ro /sys/firmware/efi/efivars
 
 		grub-install --recheck --bootloader-id=GRUB --root-directory="$target" --efi-directory="$target/boot/efi"
 		grubefi=$(find "$target/boot/efi" -name 'grub*.efi' -print -quit)
