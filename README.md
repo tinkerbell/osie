@@ -1,7 +1,7 @@
 # OSIE
 
 [![Build Status](https://drone.packet.net/api/badges/tinkerbell/osie/status.svg)](https://drone.packet.net/tinkerbell/osie)
-[![deprecated](http://badges.github.io/stability-badges/dist/deprecated.svg)](http://github.com/badges/stability-badges)
+![deprecated](https://img.shields.io/badge/Stability-Deprecated-red.svg)
 
 OSIE is the Operating System Installation Environment.
 It consists of an Alpine Linux based netboot image which fetches a prebuilt Ubuntu 16.04 container that does the actual installation.
