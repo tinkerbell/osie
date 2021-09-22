@@ -6,6 +6,11 @@ set -o errexit -o nounset -o pipefail -o xtrace
 [[ $(uname -m) == aarch64 ]] && echo "aarch64 isn't _really_ tested/supported yet" && exit 1
 
 build_initramfs() {
+	# Asrockrack kernel module
+	cat >/etc/mkinitfs/features.d/asrockrack.modules <<-EOF
+		extra/asrdev.ko
+	EOF
+
 	# Eclypsium driver and supporting modules (IPMI)
 	cat >/etc/mkinitfs/features.d/eclypsium.modules <<-EOF
 		extra/eclypsiumdriver.ko
