@@ -70,10 +70,13 @@ echo "#### Detected OS on mounted target $target"
 echo "OS: $DOS  ARCH: $arch VER: $DVER"
 
 chroot_install=false
-
+chroot_bootloader=
 if [[ $arch == "aarch64" ]]; then
-	if [[ $DOS == "RedHatEnterpriseServer" ]] || [[ $DOS == "Ubuntu" ]]; then
+	if [[ $DOS == "RedHatEnterpriseServer" ]]; then
 		chroot_install=true
+	elif [[ $DOS == "Ubuntu" ]]; then
+		chroot_install=true
+		chroot_bootloader=" --bootloader-id=ubuntu"
 	fi
 fi
 
@@ -93,9 +96,9 @@ is_uefi=false
 }
 
 if which grub2-install; then
-	grub2-install --recheck "$disk"
+	grub2-install --recheck "$disk" "$chroot_bootloader"
 elif which grub-install; then
-	grub-install --recheck "$disk"
+	grub-install --recheck "$disk" "$chroot_bootloader"
 else
 	echo 'grub-install or grub2-install are not installed on target os'
 	exit 1
@@ -104,7 +107,7 @@ fi
 	[ -f /etc/os-release ] && {
 		(
 			source /etc/os-release
-			efibootmgr | tee /dev/stderr | grep -iqE "\$ID|grub"
+			efibootmgr | tee /dev/stderr | grep -iq "\$ID"
 		)
 	}
 	umount /sys/firmware/efi/efivars
