@@ -71,8 +71,10 @@ echo "OS: $DOS  ARCH: $arch VER: $DVER"
 
 chroot_install=false
 
-if [[ $DOS == "RedHatEnterpriseServer" ]] && [[ $arch == "aarch64" ]]; then
-	chroot_install=true
+if [[ $arch == "aarch64" ]]; then
+	if [[ $DOS == "RedHatEnterpriseServer" ]] || [[ $DOS == "Ubuntu" ]]; then
+		chroot_install=true
+	fi
 fi
 
 install_grub_chroot() {
@@ -124,10 +126,9 @@ install_grub_osie() {
 	if ! $uefi; then
 		grub-install --recheck --root-directory="$target" "$disk"
 	else
-		# [[ $arch == aarch64 ]] && mount -o remount,ro /sys/firmware/efi/efivars
+		[[ $arch == aarch64 ]] && mount -o remount,ro /sys/firmware/efi/efivars
 
-		grub-install --recheck "$disk" --bootloader-id=GRUB --efi-directory="$target/boot/efi"
-		# grub-install --recheck --bootloader-id=GRUB --root-directory="$target" --efi-directory="$target/boot/efi"
+		grub-install --recheck --bootloader-id=GRUB --root-directory="$target" --efi-directory="$target/boot/efi"
 		grubefi=$(find "$target/boot/efi" -name 'grub*.efi' -print -quit)
 		install -Dm755 "$grubefi" "$target/boot/efi/EFI/BOOT/BOOTX64.EFI"
 
