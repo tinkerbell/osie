@@ -1,4 +1,4 @@
-FROM alpine:3.12
+FROM alpine:3.14
 
 ENTRYPOINT [ "/build.sh" ]
 VOLUME /assets
@@ -37,9 +37,9 @@ RUN true && \
 USER builder
 WORKDIR /home/builder
 
-ENV COMMIT 69b95a3d1dd1627416f45bcbfb93c6f2d5f0d68b
+ENV COMMIT 922bf2dee7d4ca2e87e8f64b12312359e197c933
 ENV FLAVOR lts
-ENV KERNEL 5.4.52
+ENV KERNEL 5.10.61 
 # make sure PKGREL is +1 what is in APKGBUILD
 ENV PKGREL 1
 
