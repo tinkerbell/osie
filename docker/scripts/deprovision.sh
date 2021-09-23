@@ -77,12 +77,6 @@ if [[ $arch == "x86_64" ]] && [[ $reserved != "true" ]]; then
 	bios_vendor=$(detect_bios_vendor)
 	bios_version=$(detect_bios_version "${bios_vendor}")
 	echo "BIOS detected: ${bios_vendor} ${bios_version}"
-
-	set_autofail_stage "downloading BIOS configs"
-	download_bios_configs
-
-	set_autofail_stage "validating BIOS config"
-	validate_bios_config "${class}" "${bios_vendor}"
 fi
 
 assert_block_or_loop_devs "${disks[@]}"
