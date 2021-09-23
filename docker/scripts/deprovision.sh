@@ -131,8 +131,8 @@ if [[ $preserve_data == false ]]; then
 	proc_mft=$(dmidecode --string processor-manufacturer | head -n 1 | grep "Ampere") || echo "processor manufacturer not found"
 	# Check for system version and echo not found is required because script fails if system version not found.
 	system_version=$(dmidecode --string system-version) || echo "system version not found"
-	# Delete nvme namespace fails on Ampere(EVT2) servers, So skipping namespace management on these servers.
-	if [[ -n $proc_mft ]] && [[ $system_version == "EVT2" || $system_version == "0100" || $system_version == "DVT" ]]; then
+	# Deleting nvme namespaces fails on Ampere(EVT2) servers, so skip namespace management on these servers.
+	if [[ -n $proc_mft ]] && [[ $system_version == "DVT" || $system_version == "EVT2" || $system_version == "100" || $system_version == "0100" ]]; then
 		echo "Skipping NVMe namespace management for $system_version system version"
 	elif ((${#nvme_drives[@]} > 0)); then
 		for drive in "${nvme_drives[@]}"; do
