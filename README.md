@@ -12,8 +12,8 @@ All of the above is built from this repository using `GNU Make`.
 OSIE has been deprecated in preference to the [Hook](https://github.com/tinkerbell/hook) project. Here is the deprecation schedule:
 
 * September 28th, 2021: Announcement published
-* November 28th, 2021: Tree closes for feature changes
-* December 28th, 2021: Repository is archived (read-only)
+* November 30th, 2021: Tree closes for feature changes
+* December 30th, 2021: Repository is archived (read-only)
 
 For more details, see the [OSIE deprecation proposal](https://github.com/tinkerbell/proposals/blob/main/proposals/0025/README.md).
 
