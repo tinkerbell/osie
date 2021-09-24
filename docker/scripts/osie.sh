@@ -89,6 +89,10 @@ phone_home "${tinkerbell}" '{"type":"provisioning.104"}'
 
 echo -e "${GREEN}### OSIE Version ${OSIE_VERSION} (${OSIE_BRANCH})${NC}"
 
+# Force a provision failure so we drop down to osie installer and can poke at the kernel:
+set_autofail_stage "IGNORE: ScottGarman is testing something :)"
+bogus
+
 ## Pre-prov check
 echo -e "${GREEN}#### Starting pre-provisioning checks...${NC}"
 
