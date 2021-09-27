@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # this is the init script version
-VERSION=v3.4.5
+VERSION=3.5.0
 SINGLEMODE=no
 sysroot=/sysroot
 splashfile=/.splash.ctrl
@@ -10,7 +10,7 @@ repofile=/tmp/repositories
 # some helpers
 ebegin() {
 	last_emsg="$*"
-	echo "$last_emsg: ok." >/dev/kmsg
+	echo "$last_emsg..." >/dev/kmsg
 	[ "$KOPT_quiet" = yes ] && return 0
 	echo -n " * $last_emsg: "
 }
@@ -44,7 +44,7 @@ unpack_apkovl() {
 	fi
 
 	# we need openssl. let apk handle deps
-	apk add --no-progress --quiet --initdb --repositories-file $repofile openssl || return 1
+	apk add --quiet --initdb --repositories-file $repofile openssl || return 1
 
 	if ! openssl list -1 -cipher-commands | grep "^$suffix$" >/dev/null; then
 		errstr="Cipher $suffix is not supported"
@@ -56,7 +56,7 @@ unpack_apkovl() {
 	while [ $count -lt 3 ]; do
 		openssl enc -d -$suffix -in "$ovl" | tar --numeric-owner \
 			-C "$dest" -zxv >$ovlfiles 2>/dev/null && return 0
-		count=$((count + 1))
+		count=$(($count + 1))
 	done
 	ovlfiles=
 	return 1
@@ -130,7 +130,7 @@ setup_inittab_console() {
 ip_choose_if() {
 	if [ -n "$KOPT_BOOTIF" ]; then
 		mac=$(printf "%s\n" "$KOPT_BOOTIF" | sed 's/^01-//;s/-/:/g')
-		dev=$(grep -il $mac /sys/class/net/*/address | head -n 1)
+		dev=$(grep -l $mac /sys/class/net/*/address | head -n 1)
 		dev=${dev%/*}
 		[ -n "$dev" ] && echo "${dev##*/}" && return
 	fi
@@ -195,16 +195,8 @@ configure_ip() {
 			return 1
 		fi
 		ebegin "Obtaining IP via DHCP ($device)"
-		for i in $(seq 5); do
-			ip link set dev $device down
-			sleep 5
-			ip link set dev $device up
-			sleep 5
-			udhcpc -i $device -f -q -n &&
-				echo "Sleeping for network up..." &&
-				sleep 5 &&
-				break
-		done
+		ifconfig "$device" 0.0.0.0
+		udhcpc -i "$device" -f -q
 		eend $?
 	else
 		# manual configuration
@@ -251,7 +243,7 @@ relocate_mount() {
 # find the dirs under ALPINE_MNT that are boot repositories
 find_boot_repositories() {
 	if [ -n "$ALPINE_REPO" ]; then
-		echo "$ALPINE_REPO" | tr ',' '\n' | sort -u
+		echo "$ALPINE_REPO"
 	else
 		find /media/* -name .boot_repository -type f -maxdepth 3 |
 			sed 's:/.boot_repository$::'
@@ -296,7 +288,7 @@ is_url() {
 # Do some tasks to make sure mounting the ZFS pool is A-OK
 prepare_zfs_root() {
 	local _root_vol=${KOPT_root#ZFS=}
-	local _root_pool=${_rool_vol%%/*}
+	local _root_pool=${_root_vol%%/*}
 
 	# Force import if this has been imported on a different system previously.
 	# Import normally otherwise
@@ -328,9 +320,7 @@ export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 # error message.
 [ -c /dev/null ] || mknod -m 666 /dev/null c 1 3
 
-mount -t proc -o noexec,nosuid,nodev proc /proc
 mount -t sysfs -o noexec,nosuid,nodev sysfs /sys
-mount -t cgroup -o noexec,nosuid,nodev cgroup /sys/fs/cgroup
 mount -t devtmpfs -o exec,nosuid,mode=0755,size=2M devtmpfs /dev 2>/dev/null ||
 	mount -t tmpfs -o exec,nosuid,mode=0755,size=2M tmpfs /dev
 
@@ -339,6 +329,7 @@ mount -t devtmpfs -o exec,nosuid,mode=0755,size=2M devtmpfs /dev 2>/dev/null ||
 # prevents an error if the device node has already been seeded.
 [ -c /dev/kmsg ] || mknod -m 660 /dev/kmsg c 1 11
 
+mount -t proc -o noexec,nosuid,nodev proc /proc
 # pty device nodes (later system will need it)
 [ -c /dev/ptmx ] || mknod -m 666 /dev/ptmx c 5 2
 [ -d /dev/pts ] || mkdir -m 755 /dev/pts
@@ -357,7 +348,6 @@ myopts="alpine_dev autodetect autoraid chart cryptroot cryptdm cryptheader crypt
 	pkgs quiet root_size root usbdelay ip alpine_repo apkovl alpine_start splash
 	blacklist overlaytmpfs rootfstype rootflags nbd resume s390x_net dasd ssh_key
 	BOOTIF zfcp"
-myopts="$myopts facility packet_action packet_base_url packet_bootdev_mac packet_state"
 
 for opt; do
 	case "$opt" in
@@ -381,35 +371,11 @@ for opt; do
 	done
 done
 
-if [ x"$KOPT_BOOTIF" == x ] && [ x"$KOPT_packet_bootdev_mac" != x ]; then
-	KOPT_BOOTIF=$KOPT_packet_bootdev_mac
-fi
-
 echo "Alpine Init $VERSION" >/dev/kmsg
 [ "$KOPT_quiet" = yes ] || echo "Alpine Init $VERSION"
 
 # enable debugging if requested
 [ -n "$KOPT_debug_init" ] && set -x
-
-ebegin "Verifying required kernel cmdline arguments"
-[ -z $KOPT_facility ] && eend 1 "missing required argument: facility"
-[ -z $KOPT_packet_action ] && eend 1 "missing required argument: packet_action"
-case $KOPT_packet_action in
-discover) packet_action=discover ;;
-install) packet_action=osie-installer ;;
-rescue) packet_action=rescue-helper ;;
-workflow) packet_action=workflow-helper ;;
-*) eend 1 "unknown packet_action: $KOPT_packet_action" ;;
-esac
-
-KOPT_pkgs="curl,docker,jq,mdadm,openssh,kexec-tools,tcpdump"
-case "$KOPT_packet_state" in
-'') ;;
-deprovisioning) KOPT_modules="$KOPT_modules,eclypsiumdriver,ipmi_devintf" ;;
-preinstalling) packet_action=runner ;;
-*) echo "ignoring packet_state: $KOPT_packet_state" ;;
-esac
-eend
 
 # set default values
 : ${KOPT_init:=/sbin/init}
@@ -436,7 +402,6 @@ fi
 #   alpine_repo=http://...   -- network repository
 ALPINE_REPO=${KOPT_alpine_repo}
 [ "$ALPINE_REPO" = "auto" ] && ALPINE_REPO=
-ALPINE_REPO="${ALPINE_REPO:+$ALPINE_REPO,}http://dl-cdn.alpinelinux.org/alpine/v3.12/main,http://dl-cdn.alpinelinux.org/alpine/v3.12/community,/etc/apk/repos/testing"
 
 # hide kernel messages
 [ "$KOPT_quiet" = yes ] && dmesg -n 1
@@ -594,7 +559,7 @@ fi
 # locate boot media and mount it
 ebegin "Mounting boot media"
 nlplug-findfs $cryptopts -p /sbin/mdev ${KOPT_debug_init:+-d} \
-	${KOPT_usbdelay:+-t $((KOPT_usbdelay * 1000))} \
+	${KOPT_usbdelay:+-t $(($KOPT_usbdelay * 1000))} \
 	$repoopts -a /tmp/apkovls
 eend $?
 
@@ -629,8 +594,8 @@ if [ -z "$KOPT_apkovl" ]; then
 elif is_url "$KOPT_apkovl"; then
 	# Fetch apkovl via network
 	MACHINE_UUID=$(cat /sys/class/dmi/id/product_uuid 2>/dev/null)
-	url="${KOPT_apkovl/\{MAC\}/$MAC_ADDRESS}"
-	url="${url/\{UUID\}/$MACHINE_UUID}"
+	url="${KOPT_apkovl/{MAC\}/$MAC_ADDRESS}"
+	url="${url/{UUID\}/$MACHINE_UUID}"
 	ovl=/tmp/${url##*/}
 	wget -O "$ovl" "$url" || ovl=
 else
@@ -646,7 +611,7 @@ fi
 if [ -f "$ovl" ]; then
 	ebegin "Loading user settings from $ovl"
 	# create apk db and needed /dev/null and /tmp first
-	apk add --no-progress --root $sysroot --initdb --quiet
+	apk add --root $sysroot --initdb --quiet
 
 	unpack_apkovl "$ovl" $sysroot
 	eend $? $errstr || ovlfiles=
@@ -674,8 +639,6 @@ if [ -f "$sysroot/etc/.default_boot_services" -o ! -f "$ovl" ]; then
 	rc_add savecache shutdown
 
 	rc_add firstboot default
-
-	rc_add $packet_action default
 
 	rm -f "$sysroot/etc/.default_boot_services"
 fi
@@ -733,12 +696,6 @@ pkgs="$pkgs alpine-base"
 mkdir -p $sysroot/etc/apk/keys/
 cp -a /etc/apk/keys $sysroot/etc/apk
 
-# copy the cached packages
-cp -a /etc/apk/cache $sysroot/etc/apk
-
-# copy our custom repos
-cp -a /etc/apk/repos $sysroot/etc/apk
-
 # generate apk repositories file. needs to be done after relocation
 find_boot_repositories >$repofile
 
@@ -782,7 +739,12 @@ if [ -f /var/cache/misc/*modloop*.SIGN.RSA.*.pub ]; then
 	pkgs="$pkgs openssl"
 fi
 
-apkflags="--initramfs-diskless-boot --no-network"
+apkflags="--initramfs-diskless-boot --progress"
+if [ -z "$MAC_ADDRESS" ]; then
+	apkflags="$apkflags --no-network"
+else
+	apkflags="$apkflags --update-cache"
+fi
 
 if [ "$KOPT_quiet" = yes ]; then
 	apkflags="$apkflags --quiet"
@@ -797,9 +759,9 @@ mount -o bind /sys $sysroot/sys
 mount -o bind /proc $sysroot/proc
 mount -o bind /dev $sysroot/dev
 if [ -n "$ovlfiles" ]; then
-	apk add --no-progress --root $sysroot $repo_opt $apkflags $pkgs <$ovlfiles
+	apk add --root $sysroot $repo_opt $apkflags $pkgs <$ovlfiles
 else
-	apk add --no-progress --root $sysroot $repo_opt $apkflags $pkgs
+	apk add --root $sysroot $repo_opt $apkflags $pkgs
 fi
 umount $sysroot/sys $sysroot/proc $sysroot/dev
 eend $?
@@ -838,14 +800,6 @@ setup_inittab_console
 
 ! [ -f "$sysroot"/etc/resolv.conf ] && [ -f /etc/resolv.conf ] &&
 	cp /etc/resolv.conf "$sysroot"/etc
-
-# Setup OSIE helper
-ebegin "Fetching Packet $packet_action files"
-base="${KOPT_packet_base_url:-http://install.$KOPT_facility.packet.net/misc/osie/current}" &&
-	wget "$base/$packet_action-rc" -O "$sysroot/etc/init.d/${packet_action}" &&
-	wget "$base/$packet_action.sh" -O "$sysroot/sbin/${packet_action}" &&
-	chmod +x "$sysroot/etc/init.d/${packet_action}" "$sysroot/sbin/${packet_action}"
-eend $?
 
 # setup bootchart for switch_root
 chart_init=""
