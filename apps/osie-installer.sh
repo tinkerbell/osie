@@ -99,6 +99,9 @@ EOF
 
 arch=$(uname -m)
 
+# If use_syslog is true, configure docker to log via syslog
+use_syslog=true
+
 # Pull in kopts
 facility=$(sed -nr 's|.*\bfacility=(\S+).*|\1|p' /proc/cmdline)
 packet_base_url=$(sed -nr 's|.*\bpacket_base_url=(\S+).*|\1|p' /proc/cmdline)
@@ -169,6 +172,18 @@ cat <<-EOF | grep -v '^\s*$'
 	     tinkerbell: $tinkerbell
 	${packet_base_url:+packet_base_url: $packet_base_url}
 EOF
+
+if [ $use_syslog = true ]; then
+	# configure docker daemon
+	cat >/etc/docker/daemon.json <<-EOM
+		{
+		  "log-driver": "syslog",
+		  "log-opts": {
+		    "syslog-address": "udp://${syslog_host}:514"
+		  }
+		}
+	EOM
+fi
 
 service docker start
 i=0
