@@ -77,25 +77,25 @@ RUN cd aports/main/linux-$FLAVOR && \
     sudo apk add --no-scripts --no-cache --update --upgrade --cache-dir /tmp/non-persisted-apk-cache-dir \
         /home/builder/packages/main/x86_64/linux-$FLAVOR*.apk
 
-ARG ECLYPSIUM_DRIVER_VERSION=2.0.0
-ARG ECLYPSIUM_DRIVER_SHA512=b9cfebc3b0abd834d73f025f925d896bea8d9dac2a3c3605980a94a35cd188db159ca165e5884863f5bd4a94d39861ecdf998cf8e99ea89d6f093a7bc64b5347
-ARG ECLYPSIUM_DRIVER_FILENAME=eclypsiumdriver-alpine-${ECLYPSIUM_DRIVER_VERSION}.tgz
-
-COPY ${ECLYPSIUM_DRIVER_FILENAME} /home/builder/
-
-# Install the eclypsium driver
-RUN echo "${ECLYPSIUM_DRIVER_SHA512}  ${ECLYPSIUM_DRIVER_FILENAME}" | sha512sum -c && \
-    tar -zxvf ${ECLYPSIUM_DRIVER_FILENAME} && \
-    cd aports/non-free/eclypsiumdriver && \
-    sed -i APKBUILD \
-        -e "/^_kver=/    s/=.*/=$KERNEL/" \
-        -e "/^_kpkgrel=/ s/=.*/=$PKGREL/" \
-        && \
-    abuild checksum && \
-    MAKEFLAGS=-j$(nproc) abuild -r && \
-    abuild clean && \
-    sudo apk add --no-scripts --no-cache --update --upgrade --cache-dir /tmp/non-persisted-apk-cache-dir \
-        /home/builder/packages/non-free/x86_64/eclypsium*.apk
+# ARG ECLYPSIUM_DRIVER_VERSION=2.0.0
+# ARG ECLYPSIUM_DRIVER_SHA512=b9cfebc3b0abd834d73f025f925d896bea8d9dac2a3c3605980a94a35cd188db159ca165e5884863f5bd4a94d39861ecdf998cf8e99ea89d6f093a7bc64b5347
+# ARG ECLYPSIUM_DRIVER_FILENAME=eclypsiumdriver-alpine-${ECLYPSIUM_DRIVER_VERSION}.tgz
+#
+# COPY ${ECLYPSIUM_DRIVER_FILENAME} /home/builder/
+#
+# # Install the eclypsium driver
+# RUN echo "${ECLYPSIUM_DRIVER_SHA512}  ${ECLYPSIUM_DRIVER_FILENAME}" | sha512sum -c && \
+#     tar -zxvf ${ECLYPSIUM_DRIVER_FILENAME} && \
+#     cd aports/non-free/eclypsiumdriver && \
+#     sed -i APKBUILD \
+#         -e "/^_kver=/    s/=.*/=$KERNEL/" \
+#         -e "/^_kpkgrel=/ s/=.*/=$PKGREL/" \
+#         && \
+#     abuild checksum && \
+#     MAKEFLAGS=-j$(nproc) abuild -r && \
+#     abuild clean && \
+#     sudo apk add --no-scripts --no-cache --update --upgrade --cache-dir /tmp/non-persisted-apk-cache-dir \
+#         /home/builder/packages/non-free/x86_64/eclypsium*.apk
 
 # Build and install the ASRR BIOS utility and kernel module
 ARG ASRR_BIOS_DRIVER_VERSION=1.0

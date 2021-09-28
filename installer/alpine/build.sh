@@ -11,11 +11,11 @@ build_initramfs() {
 		extra/asrdev.ko
 	EOF
 
-	# Eclypsium driver and supporting modules (IPMI)
-	cat >/etc/mkinitfs/features.d/eclypsium.modules <<-EOF
-		extra/eclypsiumdriver.ko
-		kernel/drivers/char/ipmi/*.ko
-	EOF
+	# # Eclypsium driver and supporting modules (IPMI)
+	# cat >/etc/mkinitfs/features.d/eclypsium.modules <<-EOF
+	# 	extra/eclypsiumdriver.ko
+	# 	kernel/drivers/char/ipmi/*.ko
+	# EOF
 
 	cat >/etc/mkinitfs/features.d/network.modules <<-EOF
 		kernel/drivers/net/ethernet
@@ -35,7 +35,8 @@ build_initramfs() {
 
 	# Make initramfs with features we think are spiffy
 	# shellcheck disable=SC2016
-	echo 'features="asrockrack base eclypsium ext2 ext3 ext4 keymap network packetrepo squashfs virtio"' >/etc/mkinitfs/mkinitfs.conf
+	#echo 'features="asrockrack base eclypsium ext2 ext3 ext4 keymap network packetrepo squashfs virtio"' >/etc/mkinitfs/mkinitfs.conf
+	echo 'features="asrockrack base ext2 ext3 ext4 keymap network packetrepo squashfs virtio"' >/etc/mkinitfs/mkinitfs.conf
 	kver=$(basename /lib/modules/*)
 	mkinitfs -l "$kver"
 	mkinitfs -o /assets/initramfs "$kver"
