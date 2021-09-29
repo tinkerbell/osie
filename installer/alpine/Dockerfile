@@ -11,6 +11,7 @@ RUN true && \
         curl \
         docker \
         jq \
+        linux-firmware \
         mdadm \
         mkinitfs \
         musl-utils \
@@ -47,14 +48,6 @@ RUN abuild-keygen -a -i -n && \
     # Fetch alpine package tree \
     curl -fL https://github.com/alpinelinux/aports/archive/$COMMIT.tar.gz | tar -zxf - && \
     mv aports-$COMMIT aports
-
-# Install pinned linux-firmware package
-RUN cd aports/main/linux-firmware && \
-    abuild checksum && \
-    MAKEFLAGS=-j$(nproc) abuild -r && \
-    abuild clean && \
-    sudo apk add --no-scripts --no-cache --update --upgrade --cache-dir /tmp/non-persisted-apk-cache-dir \
-        /home/builder/packages/main/x86_64/linux-firmware*.apk
 
 # Install customized linux-$FLAVOR package \
 RUN cd aports/main/linux-$FLAVOR && \
