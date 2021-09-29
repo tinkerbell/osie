@@ -1,29 +1,38 @@
 # OSIE
 
 [![Build Status](https://drone.packet.net/api/badges/tinkerbell/osie/status.svg)](https://drone.packet.net/tinkerbell/osie)
-![](https://img.shields.io/badge/Stability-Experimental-red.svg)
+![deprecated](https://img.shields.io/badge/Stability-Deprecated-red.svg)
 
 OSIE is the Operating System Installation Environment.
 It consists of an Alpine Linux based netboot image which fetches a prebuilt Ubuntu 16.04 container that does the actual installation.
 All of the above is built from this repository using `GNU Make`.
 
-This repository is [Experimental](https://github.com/packethost/standards/blob/main/experimental-statement.md) meaning that it's based on untested ideas or techniques and not yet established or finalized or involves a radically new and innovative style!
-This means that support is best effort (at best!) and we strongly encourage you to NOT use this in production.
+## Deprecation
+
+OSIE has been deprecated in preference to the [Hook](https://github.com/tinkerbell/hook) project. Here is the deprecation schedule:
+
+* September 28th, 2021: Announcement published
+* November 30th, 2021: Tree closes for feature changes
+* December 30th, 2021: Repository is archived (read-only)
+
+For more details, see the [OSIE deprecation proposal](https://github.com/tinkerbell/proposals/blob/main/proposals/0025/README.md).
 
 ## Cloning OSIE
 
 OSIE uses git-lfs for large files that are part of the build process. If you clone this repo without git-lfs installed and set up, your builds will fail.
 
-Install git-lfs per instructions at https://git-lfs.github.com/ and make sure to run `git lfs install` afterwards to set it up in your `~/.gitconfig`.
+Install git-lfs per instructions at <https://git-lfs.github.com/> and make sure to run `git lfs install` afterwards to set it up in your `~/.gitconfig`.
 
 ## Building OSIE
 
 ### Ubuntu Based Container
+
 The OSIE Ubuntu based container is built with `docker` for both `aarch64` and `x86_64`.
 Some packages are rebuilt with different settings (git, using openssl) or updated upstream sources are built/installed.
 These can be built individually with `make build/osie-aarch64.tar.gz` or `make build build/osie-x86_64.tar.gz`.
 
 ### Alpine Based Netboot Image
+
 The OSIE Alpine boot files are built in an Alpine Docker container.
 All the packages are built at container build time, including the kernel.
 The built/installed packages are later used at run time to generate `initramfs` and `modloop` files.
@@ -71,7 +80,7 @@ The quickest way to start running OSIE locally is:
 
 `make OSES=ubuntu_20_04 V=1 T=1 test-x86_64`
 
-# Adding Alpine Packages To initramfs
+## Adding Alpine Packages To initramfs
 
 The Alpine x86_64 initramfs image used is fully self-reliant.
 We embed the .apk files, and repo metadata into the initramfs for all packages used as part of `/init`.

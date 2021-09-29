@@ -174,6 +174,7 @@ function detect_bios_version() {
 	echo "${version}"
 }
 
+<<<<<<< HEAD
 # Downloads our latest BIOS configurations
 function download_bios_configs() {
 	# downloads are pulled through our image cache
@@ -433,6 +434,8 @@ function validate_bios_config() {
 	fi
 }
 
+=======
+>>>>>>> master
 # usage: bios_inventory $hwuuid $plan $facility
 function bios_inventory() {
 	local hwuuid=$1
