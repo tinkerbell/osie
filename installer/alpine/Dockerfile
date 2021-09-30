@@ -69,8 +69,8 @@ RUN cd aports/main/linux-$FLAVOR && \
     sudo apk add --no-scripts --no-cache --update --upgrade --cache-dir /tmp/non-persisted-apk-cache-dir \
         /home/builder/packages/main/x86_64/linux-$FLAVOR*.apk
 
-ARG ECLYPSIUM_DRIVER_VERSION=2.0.0
-ARG ECLYPSIUM_DRIVER_SHA512=b9cfebc3b0abd834d73f025f925d896bea8d9dac2a3c3605980a94a35cd188db159ca165e5884863f5bd4a94d39861ecdf998cf8e99ea89d6f093a7bc64b5347
+ARG ECLYPSIUM_DRIVER_VERSION=2.5.2
+ARG ECLYPSIUM_DRIVER_SHA512=574620d7077663c5034eb2a3670732cb445067292ec146070715700cd9b319979e302adee885468856f87a6b457f0c7aef47352e19fe7348fa6be74966a4dcbe
 ARG ECLYPSIUM_DRIVER_FILENAME=eclypsiumdriver-alpine-${ECLYPSIUM_DRIVER_VERSION}.tgz
 
 COPY ${ECLYPSIUM_DRIVER_FILENAME} /home/builder/
