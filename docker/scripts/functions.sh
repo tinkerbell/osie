@@ -597,6 +597,26 @@ function marvell_reset() {
 		echo "Marvell-MVCLI - Deleting VD id:$vd"
 		echo y | mvcli delete -f -o vd -i "$vd"
 	done
+
+	# Ensure all physical drives are seen by linux
+	# by matching the serials for the physical drives provided by mvcli
+	# with the block device wwid file
+	pd_serials="$(mvcli info -o pd | awk '/Serial:/ { print $NF }')"
+
+	udevadm settle
+
+	pd_missing=true
+	while $pd_missing; do
+		sleep 1
+		pd_missing=false
+		echo "Marvell-Reset: Checking for drives..."
+		for serial in $pd_serials; do
+			if ! grep -q "$serial" /sys/class/block/*/device/wwid 2>/dev/null; then
+				echo "Marvell-Reset: Serial missing: $serial"
+				pd_missing=true
+			fi
+		done
+	done
 }
 
 # perc_reset uses perccli to reset the raid card to JBODs
