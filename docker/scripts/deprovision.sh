@@ -71,6 +71,12 @@ function autofail() {
 }
 trap autofail EXIT
 
+set_autofail_stage "checking for disk drives"
+if [[ ${#disks[@]} -eq 0 ]]; then
+	echo "Error: No disk drives detected"
+	exit 1
+fi
+
 # Check BIOS config and update if drift is detected
 if [[ $arch == "x86_64" ]] && [[ $reserved != "true" ]]; then
 	set_autofail_stage "detecting BIOS information"
