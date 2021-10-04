@@ -174,6 +174,8 @@ cat <<-EOF | grep -v '^\s*$'
 EOF
 
 if [ $use_syslog = true ]; then
+	mkdir -p /etc/docker
+
 	# configure docker daemon
 	cat >/etc/docker/daemon.json <<-EOM
 		{
