@@ -260,22 +260,17 @@ if [[ -d /sys/firmware/efi ]]; then
 	done
 fi
 
-# Call firmware script to update components and firmware
-case "$class" in
-baremetal_2a2 | baremetal_2a4 | baremetal_hua)
-	echo "skipping hardware update for oddball aarch64s"
-	;;
-*)
-	set_autofail_stage "running packet-hardware inventory"
-	packet-hardware inventory --verbose --tinkerbell "${tinkerbell}/hardware-components"
+# Run packet-hardware inventory to update API components and firmware details
+set_autofail_stage "running packet-hardware inventory"
+if ! packet-hardware inventory --verbose --tinkerbell "${tinkerbell}/hardware-components"; then
+	echo "Warning: packet-hardware inventory failed for server ${id} (${class})"
+fi
 
-	# Catalog various BIOS feature states (not yet supported on aarch64)
-	set_autofail_stage "running bios_inventory"
-	if [[ $arch == "x86_64" ]]; then
-		bios_inventory "${HARDWARE_ID}" "${class}" "${facility}"
-	fi
-	;;
-esac
+# Catalog various BIOS feature states (not yet supported on aarch64)
+set_autofail_stage "running bios_inventory"
+if [[ $arch == "x86_64" ]]; then
+	bios_inventory "${HARDWARE_ID}" "${class}" "${facility}"
+fi
 
 # Run eclypsium
 if [[ -n ${ECLYPSIUM_TOKEN:-} ]]; then
