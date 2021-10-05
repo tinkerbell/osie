@@ -163,8 +163,8 @@ RUN if [ "$(uname -m)" = 'x86_64' ]; then \
 COPY lfs/mlxup-* /tmp/osie/
 RUN install -m755 -D /tmp/osie/mlxup-$(uname -m) /opt/mellanox/mlxup && rm -rf /tmp/osie/
 
-ARG ECLYPSIUM_AGENT_VERSION=2.0.0
-ARG ECLYPSIUM_AGENT_SHA256=4bb5cfe3c6c3988b99c36e864f35abd8296120d197864a26f10a4c1868c9e31a
+ARG ECLYPSIUM_AGENT_VERSION=2.5.0
+ARG ECLYPSIUM_AGENT_SHA256=662e383946d499481bee591dadb3b8ca3ee8d5c9084a35f109cffc2c1dcb633b
 ARG ECLYPSIUM_AGENT_FILENAME=eclypsiumapp-${ECLYPSIUM_AGENT_VERSION}.deb
 
 COPY lfs/${ECLYPSIUM_AGENT_FILENAME} /tmp/
