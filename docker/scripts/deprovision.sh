@@ -71,18 +71,18 @@ function autofail() {
 }
 trap autofail EXIT
 
+set_autofail_stage "checking for disk drives"
+if [[ ${#disks[@]} -eq 0 ]]; then
+	echo "Error: No disk drives detected"
+	exit 1
+fi
+
 # Check BIOS config and update if drift is detected
 if [[ $arch == "x86_64" ]] && [[ $reserved != "true" ]]; then
 	set_autofail_stage "detecting BIOS information"
 	bios_vendor=$(detect_bios_vendor)
 	bios_version=$(detect_bios_version "${bios_vendor}")
 	echo "BIOS detected: ${bios_vendor} ${bios_version}"
-
-	set_autofail_stage "downloading BIOS configs"
-	download_bios_configs
-
-	set_autofail_stage "validating BIOS config"
-	validate_bios_config "${class}" "${bios_vendor}"
 fi
 
 assert_block_or_loop_devs "${disks[@]}"
@@ -137,8 +137,8 @@ if [[ $preserve_data == false ]]; then
 	proc_mft=$(dmidecode --string processor-manufacturer | head -n 1 | grep "Ampere") || echo "processor manufacturer not found"
 	# Check for system version and echo not found is required because script fails if system version not found.
 	system_version=$(dmidecode --string system-version) || echo "system version not found"
-	# Delete nvme namespace fails on Ampere(EVT2) servers, So skipping namespace management on these servers.
-	if [[ -n $proc_mft ]] && [[ $system_version == "EVT2" || $system_version == "0100" || $system_version == "DVT" ]]; then
+	# Deleting nvme namespaces fails on Ampere(EVT2) servers, so skip namespace management on these servers.
+	if [[ -n $proc_mft ]] && [[ $system_version == "DVT" || $system_version == "EVT2" || $system_version == "100" || $system_version == "0100" ]]; then
 		echo "Skipping NVMe namespace management for $system_version system version"
 	elif ((${#nvme_drives[@]} > 0)); then
 		for drive in "${nvme_drives[@]}"; do
@@ -260,22 +260,17 @@ if [[ -d /sys/firmware/efi ]]; then
 	done
 fi
 
-# Call firmware script to update components and firmware
-case "$class" in
-baremetal_2a2 | baremetal_2a4 | baremetal_hua)
-	echo "skipping hardware update for oddball aarch64s"
-	;;
-*)
-	set_autofail_stage "running packet-hardware inventory"
-	packet-hardware inventory --verbose --tinkerbell "${tinkerbell}/hardware-components"
+# Run packet-hardware inventory to update API components and firmware details
+set_autofail_stage "running packet-hardware inventory"
+if ! packet-hardware inventory --verbose --tinkerbell "${tinkerbell}/hardware-components"; then
+	echo "Warning: packet-hardware inventory failed for server ${id} (${class})"
+fi
 
-	# Catalog various BIOS feature states (not yet supported on aarch64)
-	set_autofail_stage "running bios_inventory"
-	if [[ $arch == "x86_64" ]]; then
-		bios_inventory "${HARDWARE_ID}" "${class}" "${facility}"
-	fi
-	;;
-esac
+# Catalog various BIOS feature states (not yet supported on aarch64)
+set_autofail_stage "running bios_inventory"
+if [[ $arch == "x86_64" ]]; then
+	bios_inventory "${HARDWARE_ID}" "${class}" "${facility}"
+fi
 
 # Run eclypsium
 if [[ -n ${ECLYPSIUM_TOKEN:-} ]]; then
