@@ -95,6 +95,8 @@ pipeline:
       - set -v +x
       - mc config host add s3 'https://s3.amazonaws.com' "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" --api s3v4
       - set +v -x
+      - echo "$AWS_ACCESS_KEY_ID" | sha256sum
+      - echo "$AWS_SECRET_ACCESS_KEY" | sha256sum
       - make deploy
     when:
       event:
@@ -110,6 +112,8 @@ pipeline:
       - set -v +x
       - mc config host add s3 'https://s3.amazonaws.com' "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" --api s3v4
       - set +v -x
+      - echo "$AWS_ACCESS_KEY_ID" | sha256sum
+      - echo "$AWS_SECRET_ACCESS_KEY" | sha256sum
       - make deploy
     when:
       event:
