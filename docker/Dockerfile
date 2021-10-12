@@ -174,6 +174,17 @@ RUN if [ "$(uname -m)" = 'x86_64' ]; then \
         rm -f "${ECLYPSIUM_AGENT_FILENAME}"; \
     fi ;
 
+ARG ASRR_BIOS_APP_VERSION=1.0.3
+ARG ASRR_BIOS_APP_SHA512=5dbb458dd105d872f61f0256ec1a57c5de922328a23cd42e636b35c5bbda7e1e1d957b271de76b49345c35a55a97845842de106aea61f930ac440ad6e21f344a
+ARG ASRR_BIOS_APP_FILENAME="BIOSControl_v${ASRR_BIOS_APP_VERSION}.zip"
+
+COPY lfs/${ASRR_BIOS_APP_FILENAME} /tmp/osie/
+RUN cd /tmp/osie && \
+    echo "${ASRR_BIOS_APP_SHA512} ${ASRR_BIOS_APP_FILENAME}" | sha512sum -c && \
+    unzip ${ASRR_BIOS_APP_FILENAME} && \
+    install -D -m 755 BIOSControl /usr/sbin/BIOSControl && \
+    rm -rf /tmp/osie/BIOSControl /tmp/osie/driver /tmp/osie/ReadMe.txt
+
 # freebsd ufs fs fuse
 COPY lfs/osie-fuse-* /tmp/osie/
 RUN mv /tmp/osie/osie-fuse*$(uname -m).deb /tmp/ && rm -rf /tmp/osie/

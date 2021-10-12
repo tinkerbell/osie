@@ -387,7 +387,7 @@ esac
 KOPT_pkgs="curl,docker,jq,mdadm,openssh,kexec-tools,tcpdump"
 case "$KOPT_packet_state" in
 '') ;;
-deprovisioning) KOPT_modules="$KOPT_modules,eclypsiumdriver,ipmi_devintf" ;;
+deprovisioning) KOPT_modules="$KOPT_modules,asrdev,eclypsiumdriver,ipmi_devintf" ;;
 preinstalling) packet_action=runner ;;
 *) echo "ignoring packet_state: $KOPT_packet_state" ;;
 esac
