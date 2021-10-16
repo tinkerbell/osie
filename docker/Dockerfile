@@ -77,7 +77,7 @@ RUN cd /tmp/osie && \
     rm -rf /tmp/osie/
 
 ARG PACKET_HARDWARE_COMMIT=ddbafcbc74ef3db0677d56733442cd9f6f76a317
-ARG PACKET_NETWORKING_COMMIT=06061801efaf34caa8d8b1ae5973c15e5a23659d
+ARG PACKET_NETWORKING_COMMIT=2ac8cbd684195ade26b514a9870c71fd3902ad6e
 
 RUN curl https://bootstrap.pypa.io/pip/3.5/get-pip.py | python3 && \
     pip3 install git+https://github.com/packethost/packet-hardware.git@${PACKET_HARDWARE_COMMIT} && \
