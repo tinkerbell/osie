@@ -6,6 +6,11 @@ set -o errexit -o nounset -o pipefail -o xtrace
 [[ $(uname -m) == aarch64 ]] && echo "aarch64 isn't _really_ tested/supported yet" && exit 1
 
 build_initramfs() {
+	# Asrockrack kernel module
+	cat >/etc/mkinitfs/features.d/asrockrack.modules <<-EOF
+		extra/asrdev.ko
+	EOF
+
 	# Eclypsium driver and supporting modules (IPMI)
 	cat >/etc/mkinitfs/features.d/eclypsium.modules <<-EOF
 		extra/eclypsiumdriver.ko
@@ -30,7 +35,7 @@ build_initramfs() {
 
 	# Make initramfs with features we think are spiffy
 	# shellcheck disable=SC2016
-	echo 'features="base ext2 ext3 ext4 keymap network packetrepo squashfs virtio eclypsium"' >/etc/mkinitfs/mkinitfs.conf
+	echo 'features="asrockrack base eclypsium ext2 ext3 ext4 keymap network packetrepo squashfs virtio"' >/etc/mkinitfs/mkinitfs.conf
 	kver=$(basename /lib/modules/*)
 	mkinitfs -l "$kver"
 	mkinitfs -o /assets/initramfs "$kver"

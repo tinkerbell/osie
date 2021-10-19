@@ -77,7 +77,7 @@ RUN cd /tmp/osie && \
     rm -rf /tmp/osie/
 
 ARG PACKET_HARDWARE_COMMIT=ddbafcbc74ef3db0677d56733442cd9f6f76a317
-ARG PACKET_NETWORKING_COMMIT=06061801efaf34caa8d8b1ae5973c15e5a23659d
+ARG PACKET_NETWORKING_COMMIT=2ac8cbd684195ade26b514a9870c71fd3902ad6e
 
 RUN curl https://bootstrap.pypa.io/pip/3.5/get-pip.py | python3 && \
     pip3 install git+https://github.com/packethost/packet-hardware.git@${PACKET_HARDWARE_COMMIT} && \
@@ -173,6 +173,17 @@ RUN if [ "$(uname -m)" = 'x86_64' ]; then \
         dpkg --configure eclypsiumapp && \
         rm -f "${ECLYPSIUM_AGENT_FILENAME}"; \
     fi ;
+
+ARG ASRR_BIOS_APP_VERSION=1.0.3
+ARG ASRR_BIOS_APP_SHA512=5dbb458dd105d872f61f0256ec1a57c5de922328a23cd42e636b35c5bbda7e1e1d957b271de76b49345c35a55a97845842de106aea61f930ac440ad6e21f344a
+ARG ASRR_BIOS_APP_FILENAME="BIOSControl_v${ASRR_BIOS_APP_VERSION}.zip"
+
+COPY lfs/${ASRR_BIOS_APP_FILENAME} /tmp/osie/
+RUN cd /tmp/osie && \
+    echo "${ASRR_BIOS_APP_SHA512} ${ASRR_BIOS_APP_FILENAME}" | sha512sum -c && \
+    unzip ${ASRR_BIOS_APP_FILENAME} && \
+    install -D -m 755 BIOSControl /usr/sbin/BIOSControl && \
+    rm -rf /tmp/osie/BIOSControl /tmp/osie/driver /tmp/osie/ReadMe.txt
 
 # freebsd ufs fs fuse
 COPY lfs/osie-fuse-* /tmp/osie/
