@@ -29,6 +29,7 @@ RUN true && \
         coreutils \
         linux-headers \
         sudo \
+        unzip \
         && \
     adduser -G abuild -g "Alpine Package Builder" -s /bin/ash -D builder && \
     echo "builder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
@@ -88,6 +89,23 @@ RUN echo "${ECLYPSIUM_DRIVER_SHA512}  ${ECLYPSIUM_DRIVER_FILENAME}" | sha512sum 
     abuild clean && \
     sudo apk add --no-scripts --no-cache --update --upgrade --cache-dir /tmp/non-persisted-apk-cache-dir \
         /home/builder/packages/non-free/x86_64/eclypsium*.apk
+
+# Build and install the ASRR BIOS utility and kernel module
+ARG ASRR_BIOS_DRIVER_VERSION=1.0
+ARG ASRR_BIOS_DRIVER_SHA512=5dbb458dd105d872f61f0256ec1a57c5de922328a23cd42e636b35c5bbda7e1e1d957b271de76b49345c35a55a97845842de106aea61f930ac440ad6e21f344a
+ARG ASRR_BIOS_DRIVER_FILENAME="BIOSControl_v1.0.3.zip"
+
+COPY ${ASRR_BIOS_DRIVER_FILENAME} /home/builder/
+RUN echo "${ASRR_BIOS_DRIVER_SHA512} ${ASRR_BIOS_DRIVER_FILENAME}" | sha512sum -c && \
+    unzip ${ASRR_BIOS_DRIVER_FILENAME} && \
+    # def for 5.x kernel build
+    echo '#define LINUX_VERSION_500 0' > driver/ver.h && \
+    # build module
+    make -C /lib/modules/${KERNEL}-${PKGREL}-${FLAVOR}/build M=/home/builder/driver && \
+    # install module
+    sudo install -D -m 600 driver/asrdev.ko /lib/modules/${KERNEL}-${PKGREL}-${FLAVOR}/extra/ && \
+    # clean up
+    rm -rf /home/builder/BIOSControl /home/builder/driver /home/builder/ReadMe.txt
 
 # Remove built and installed packages, these never get installed at runtime
 RUN rm -rf /home/builder/packages/*

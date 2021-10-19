@@ -1,3 +1,4 @@
 docker/lfs/* filter=lfs diff=lfs merge=lfs -text
 installer/alpine/assets-*/* filter=lfs diff=lfs merge=lfs -text
 installer/alpine/eclypsiumdriver-alpine-* filter=lfs diff=lfs merge=lfs -text
+installer/alpine/BIOSControl_v1.0.3.zip filter=lfs diff=lfs merge=lfs -text

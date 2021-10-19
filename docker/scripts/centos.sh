@@ -50,14 +50,6 @@ DVER=$2
 echo "#### Detected OS on mounted target $TARGET"
 echo "OS: $DOS  ARCH: $arch VER: $DVER"
 
-# Match detected OS to known OS config
-if [[ $DOS == "CentOS" ]] || [[ $DOS == "RedHatEnterpriseServer" ]] || [[ $DOS == "RedHatEnterprise" ]] || [[ $DOS == "openSUSEproject" ]]; then
-	echo "Configuring Redhat based distro extras"
-else
-	echo "Error: Detected OS $DOS not matched"
-	exit 1
-fi
-
 if [[ -f "$TARGET/etc/sysconfig/selinux" ]] && [[ $DOS != "RedHatEnterpriseServer" ]]; then
 	echo "Disabling SELinux"
 	sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' "$TARGET/etc/sysconfig/selinux"

@@ -137,7 +137,7 @@ function configure_image_cache_dns() {
 	getent hosts github-cloud.githubusercontent.com | awk '{print $1}'
 }
 
-# returns a string of the BIOS vendor: "dell", "supermicro", or "unknown"
+# returns a string of the BIOS vendor: "Dell", "Supermicro", "ASRockRack", or "unknown"
 function detect_bios_vendor() {
 	local vendor=unknown
 
@@ -148,6 +148,11 @@ function detect_bios_vendor() {
 		# Check for Supermicro
 		if /opt/supermicro/sum/sum -c GetDmiInfo >/dev/null; then
 			vendor="Supermicro"
+		else
+			# Check for ASRockRack
+			if dmidecode --string baseboard-manufacturer | grep --ignore-case ASRockRack >/dev/null; then
+				vendor="ASRockRack"
+			fi
 		fi
 	fi
 
@@ -168,6 +173,9 @@ function detect_bios_version() {
 	if [[ ${vendor} == "Supermicro" ]]; then
 		version=$(/opt/supermicro/sum/sum -c GetDmiInfo | grep --after-context 2 "^\[BIOS Information\]" | awk -F '"' '/^Version/ {print $2}')
 	fi
+	if [[ ${vendor} == "ASRockRack" ]]; then
+		version=$(dmidecode --string bios-version)
+	fi
 
 	otel-cli span --name "${FUNCNAME[0]}" --start "$started" --attrs "vendor=${vendor},version=${version}"
 
@@ -186,7 +194,7 @@ function bios_inventory() {
 	local bios_json_fn="/tmp/bios.json"
 	local hollow_json_fn="/tmp/hollow.json"
 	local hollow_namespace="net.platformequinix.bios"
-	if UTIL_RACADM7=/opt/dell/srvadmin/bin/idracadm7 UTIL_SUM=/opt/supermicro/sum/sum packet-hardware inventorybios --verbose -u localhost --dry --cache-file "${bios_json_fn}"; then
+	if UTIL_RACADM7=/opt/dell/srvadmin/bin/idracadm7 UTIL_SUM=/opt/supermicro/sum/sum UTIL_ASRR_BIOSCONTROL=/usr/sbin/BIOSControl packet-hardware inventorybios --verbose -u localhost --dry --cache-file "${bios_json_fn}"; then
 		local inventorybios_json
 		inventorybios_json="$(cat "${bios_json_fn}")"
 		echo "inventorybios JSON is: [${inventorybios_json}]"
