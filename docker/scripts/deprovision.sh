@@ -262,6 +262,11 @@ fi
 
 # Run packet-hardware inventory to update API components and firmware details
 set_autofail_stage "running packet-hardware inventory"
+
+if ! modprobe ipmi_si ipmi_devintf; then
+	echo "Unable to modprobe si_ipmi or ipmi_devintf"
+fi
+
 if ! packet-hardware inventory --verbose --tinkerbell "${tinkerbell}/hardware-components"; then
 	echo "Warning: packet-hardware inventory failed for server ${id} (${class})"
 fi
