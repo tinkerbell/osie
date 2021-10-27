@@ -145,6 +145,8 @@ build/osie-$v/%.tar.gz: build/%.tar.gz
 build/osie-$v/initramfs-{{platform}}: build/osie-$v-rootfs-{{platform}} installer/alpine/init-{{arch}}
 	$(E) "CPIO     $@"
 	install -m755 installer/alpine/init-{{arch}} build/osie-$v-rootfs-{{platform}}/init
+	echo 'blacklist ipmi_si' >> build/osie-$v-rootfs-{{platform}}/etc/modprobe.d/boot-opt-blacklist.conf
+	echo 'blacklist ipmi_devintf' >> build/osie-$v-rootfs-{{platform}}/etc/modprobe.d/boot-opt-blacklist.conf
 	(cd build/osie-$v-rootfs-{{platform}} && find -print0 | bsdcpio --null --quiet -oH newc | pigz -9) >$@.osied
 	install -D -m644 $@.osied $@
 	touch $@
