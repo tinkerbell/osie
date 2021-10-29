@@ -13,9 +13,15 @@ if [ -z "$discover_url" ]; then
 	discover_url="http://$tinkerbell/discover-os"
 fi
 
+# syntax: rcurl --flags
+rcurl() {
+	# TODO(tstromberg): Add --retry-connrefused once we can upgrade to curl 7.52
+	curl --retry 7 "$@"
+}
+
 reason='unknown'
 fail() {
-	curl -H 'Content-Type: application/json' \
+	rcurl -H 'Content-Type: application/json' \
 		-d '{"type":"failure", "reason":"'"$reason"'"}' \
 		"$phone_home_url"
 }
@@ -42,7 +48,7 @@ EOF
 
 mkdir -p /root/.ssh
 
-curl -X POST -vs "$phone_home_url" 2>&1 | logger -t phone_home
+rcurl -X POST -vs "$phone_home_url" 2>&1 | logger -t phone_home
 
 mdadm --assemble --scan || :
 
@@ -56,7 +62,7 @@ done
 
 reason='unable to load discover container image'
 if ! docker images "quay.io/packet/discover-metal" | grep discover >/dev/null; then
-	curl "${packet_base_url:-http://install.$facility.packet.net/misc/osie/current}/discover-metal-$arch.tar.gz" |
+	rcurl "${packet_base_url:-http://install.$facility.packet.net/misc/osie/current}/discover-metal-$arch.tar.gz" |
 		docker load |
 		tee
 fi

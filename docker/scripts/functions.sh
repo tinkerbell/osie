@@ -71,17 +71,22 @@ function fail() {
 	puttink "${tink_host}" phone-home '{"type":"failure", "reason":"'"$1"'"}'
 }
 
+# syntax: rcurl --flags
+rcurl() {
+	# TODO(tstromberg): Add --retry-connrefused once we can upgrade to curl 7.52
+	curl --retry 7 "$@"
+}
+
 # syntax: tink POST 1.2.3.4 phone-home '{"this": "data"}'
 function tink() {
 	local method=$1 tink_host=$2 endpoint=$3 post_data=$4
 
-	curl \
-		-vvvvv \
+	rcurl \
+		-v \
 		--data "${post_data}" \
 		--fail \
 		--header "Content-Type: application/json" \
 		--request "${method}" \
-		--retry 3 \
 		"${tink_host}/${endpoint}"
 }
 
@@ -208,7 +213,7 @@ function bios_inventory() {
 		# Use eclypsium-proxy to reach the auth server from the deprov network
 		echo "Requesting a hollow token from ${hollow_auth_url}"
 		local hollow_token
-		if ! hollow_token=$(curl --request POST \
+		if ! hollow_token=$(rcurl --request POST \
 			--url "${hollow_auth_url}" \
 			--user "${HOLLOW_CLIENT_ID}:${HOLLOW_CLIENT_REQUEST_SECRET}" \
 			--data "grant_type=client_credentials&audience=${hollow_auth_audience}&scope=${hollow_auth_scope}" \
@@ -222,7 +227,7 @@ function bios_inventory() {
 		# Write the bios data to Hollow
 		echo "Writing BIOS feature inventory data to ${hollow_url}"
 		local hollow_response
-		if ! hollow_response=$(curl --request POST \
+		if ! hollow_response=$(rcurl --request POST \
 			--url "${hollow_url}" \
 			--header "Authorization: Bearer $hollow_token" \
 			--header "Content-Type: application/json" \
@@ -427,7 +432,7 @@ function should_stream() {
 	local dest=$2
 
 	available=$(BLOCKSIZE=1 df --output=avail "$dest" | grep -v Avail)
-	img_size=$(curl -s -I "$image" | tr -d '\r' | awk 'tolower($0) ~ /content-length/ { print $2 }')
+	img_size=$(rcurl --silent --head "$image" | tr -d '\r' | awk 'tolower($0) ~ /content-length/ { print $2 }')
 	max_size=$((available - (1024 * 1024 * 1024))) # be safe and allow 1G of leeway
 
 	# img_size == 0 is if server can't stat the file, for example some

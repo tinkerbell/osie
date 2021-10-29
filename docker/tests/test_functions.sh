@@ -102,7 +102,7 @@ test_ensure_reachable() {
 test_filter_bad_devs() {
 	local devs
 	devs=$(
-		curl -sf https://raw.githubusercontent.com/torvalds/linux/master/Documentation/admin-guide/devices.txt |
+		curl --retry 7 -sf https://raw.githubusercontent.com/torvalds/linux/master/Documentation/admin-guide/devices.txt |
 			grep -E 'block\s*(Loopback devices|SCSI disk)' |
 			awk '{print $1}'
 		echo -e '251\n253\n259' # virtio disks seen in tests

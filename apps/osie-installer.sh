@@ -11,6 +11,12 @@ cleanup() {
 	fi
 }
 
+# syntax: rcurl --flags
+rcurl() {
+	# TODO(tstromberg): Add --retry-connrefused once we can upgrade to curl 7.52
+	curl --retry 7 "$@"
+}
+
 reason='unknown'
 fail() {
 	code=$?
@@ -34,7 +40,7 @@ fail() {
 		fi
 	fi
 
-	curl \
+	rcurl \
 		-H 'Content-Type: application/json' \
 		-d @- \
 		"$phone_home_url" <<-EOF
@@ -55,7 +61,7 @@ ensure_time() {
 	local d hwdate mddate month
 	local months='jan feb mar apr may jun jul aug sep oct nov dec'
 	# *must* be http, not https
-	d=$(curl -sI "http://tinkerbell.$facility.packet.net" | sed -n '/^Date:/ s|Date: ||p')
+	d=$(rcurl -sI "http://tinkerbell.$facility.packet.net" | sed -n '/^Date:/ s|Date: ||p')
 	# shellcheck disable=SC2018 disable=SC2019
 	month=$(echo "$d" | awk '{print $3}' | tr 'A-Z' 'a-z')
 	local i=1
@@ -116,7 +122,7 @@ esac
 
 ensure_time
 
-hardware_id=$(curl -sSL --connect-timeout 60 https://metadata.packet.net/metadata | jq -r .hardware_id)
+hardware_id=$(rcurl -sSL --connect-timeout 60 https://metadata.packet.net/metadata | jq -r .hardware_id)
 statedir=${TMPDIR:-/tmp}/osie-statedir-$hardware_id
 metadata=$statedir/metadata
 userdata=$statedir/userdata
@@ -124,7 +130,7 @@ mkdir -p "$statedir"
 
 reason='unable to fetch metadata'
 echo "metadata:"
-curl -sSL --connect-timeout 60 https://metadata.packet.net/metadata |
+rcurl -sSL --connect-timeout 60 https://metadata.packet.net/metadata |
 	jq -S . |
 	tee "$metadata" |
 	jq .
@@ -145,7 +151,7 @@ jq -S . "$metadata"
 
 reason='unable to fetch userdata'
 echo "userdata:"
-curl -sSL --connect-timeout 60 https://metadata.packet.net/userdata | tee "$userdata"
+rcurl -sSL --connect-timeout 60 https://metadata.packet.net/userdata | tee "$userdata"
 
 # Get values from metadata
 facility=$(jq -r .facility "$metadata")
@@ -182,7 +188,7 @@ docker info
 
 reason='unable to fetch/load osie image'
 if ! docker images "osie:$arch" | grep osie >/dev/null; then
-	curl "${packet_base_url:-http://install.$facility.packet.net/misc/osie/current}/osie-$arch.tar.gz" |
+	rcurl "${packet_base_url:-http://install.$facility.packet.net/misc/osie/current}/osie-$arch.tar.gz" |
 		docker load
 fi
 
