@@ -147,7 +147,7 @@ if [[ -z ${cpr_url} ]]; then
 else
 	echo "NOTICE: Custom CPR url found!"
 	echo "Overriding default CPR location with custom cpr_url"
-	if ! curl "$cpr_url" | jq . >$cprconfig; then
+	if ! rcurl "$cpr_url" | jq . >$cprconfig; then
 		phone_home "${tinkerbell}" '{"instance_id":"'"$(jq -r .id "$metadata")"'"}'
 		echo "$0: CPR URL unavailable: $cpr_url" >&2
 		exit 1
@@ -202,10 +202,10 @@ if ! [[ -f /statedir/disks-partioned-image-extracted ]]; then
 		git -C $assetdir checkout FETCH_HEAD
 	elif [[ $image_uri =~ ^https:// ]]; then
 		echo -e "${GREEN}#### Adding custom uri: ${image_uri}${NC}"
-		curl --retry 3 "${image_uri}/image.tar.gz" --output "$assetdir/image.tar.gz"
-		curl --retry 3 "${image_uri}/initrd.tar.gz" --output "$assetdir/initrd.tar.gz"
-		curl --retry 3 "${image_uri}/kernel.tar.gz" --output "$assetdir/kernel.tar.gz"
-		curl --retry 3 "${image_uri}/modules.tar.gz" --output "$assetdir/modules.tar.gz"
+		rcurl "${image_uri}/image.tar.gz" --output "$assetdir/image.tar.gz"
+		rcurl "${image_uri}/initrd.tar.gz" --output "$assetdir/initrd.tar.gz"
+		rcurl "${image_uri}/kernel.tar.gz" --output "$assetdir/kernel.tar.gz"
+		rcurl "${image_uri}/modules.tar.gz" --output "$assetdir/modules.tar.gz"
 	else
 		echo -e "${RED}#### Image URI is not https: ${image_uri}${NC}"
 		exit 1
@@ -529,7 +529,7 @@ logger -s -t phone_home "Making a call to tell the packet API is online."
 # doesn't hurt to log as much as we can in case it fails.
 n=1
 until [ \$n -ge 6 ] || [ "\${PIPESTATUS[0]}" -eq 0 ]; do
-	curl -X PUT -H "Content-Type: application/json" -vs -d '{"instance_id": "$(jq -r .id "$metadata")"}' "$tinkerbell/phone-home" 2>&1 | logger -s -t phone_home
+	curl --retry 7 -X PUT -H "Content-Type: application/json" -vs -d '{"instance_id": "$(jq -r .id "$metadata")"}' "$tinkerbell/phone-home" 2>&1 | logger -s -t phone_home
 
 	if [ "\${PIPESTATUS[0]}" -eq 0 ]; then
 		logger -s -t phone_home "This device has been announced to the packet API."

@@ -148,7 +148,7 @@ set_autofail_stage "writing rootfs to disk"
 tmpfile=/tmp/image.tar.gz
 if should_stream "$image" ${tmpfile%/*}; then
 	echo -e "${GREEN}#### Retrieving and extracting image archive to first disk in one shot${NC}"
-	curl -sL "$image" | pv -bnti 5 | tar -zxOf- | dd bs=512k of="$install_disk"
+	rcurl -sL "$image" | pv -bnti 5 | tar -zxOf- | dd bs=512k of="$install_disk"
 else
 	echo -e "${GREEN}#### Retrieving image archive${NC}"
 	wget --quiet "$image" -O $tmpfile

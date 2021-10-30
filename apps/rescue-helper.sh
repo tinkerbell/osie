@@ -23,10 +23,10 @@ See docs at http://wiki.alpinelinux.org
 EOF
 
 mkdir -p /root/.ssh
-curl -sSLf https://metadata.packet.net/2009-04-04/meta-data/public-keys >/root/.ssh/authorized_keys
+curl -sSLf --retry 7 https://metadata.packet.net/2009-04-04/meta-data/public-keys >/root/.ssh/authorized_keys
 
 tinkerbell=$(sed -nr 's|.*\btinkerbell=(\S+).*|\1|p' /proc/cmdline)
 
-curl -X POST -vs "$tinkerbell/phone-home" 2>&1 | logger -t phone_home
+curl --retry 7 -X POST -vs "$tinkerbell/phone-home" 2>&1 | logger -t phone_home
 
 mdadm --assemble --scan || :

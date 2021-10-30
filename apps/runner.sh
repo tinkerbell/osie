@@ -2,9 +2,15 @@
 
 # shellcheck shell=dash
 
+# syntax: rcurl --flags
+rcurl() {
+	# TODO(tstromberg): Add --retry-connrefused once we can upgrade to curl 7.52
+	curl --retry 7 "$@"
+}
+
 reason='unknown'
 fail() {
-	curl -H 'Content-Type: application/json' \
+	rcurl -H 'Content-Type: application/json' \
 		-d '{"type":"failure", "reason":"'"$reason"'"}' \
 		"$phone_home_url"
 }
@@ -22,7 +28,7 @@ ensure_time() {
 	local d hwdate mddate month
 	local months='jan feb mar apr may jun jul aug sep oct nov dec'
 	# *must* be http, not https
-	d=$(curl -sI "http://tinkerbell.$facility.packet.net" | sed -n '/^Date:/ s|Date: ||p')
+	d=$(rcurl -sI "http://tinkerbell.$facility.packet.net" | sed -n '/^Date:/ s|Date: ||p')
 	# shellcheck disable=SC2018 disable=SC2019
 	month=$(echo "$d" | awk '{print $3}' | tr 'A-Z' 'a-z')
 	local i=1
@@ -69,13 +75,13 @@ syslog_host=$(sed -nr 's|.*\bsyslog_host=(\S+).*|\1|p' /proc/cmdline)
 
 ensure_time
 
-hardware_id=$(curl -sSL --connect-timeout 60 https://metadata.packet.net/metadata | jq -r .hardware_id)
+hardware_id=$(rcurl -sSL --connect-timeout 60 https://metadata.packet.net/metadata | jq -r .hardware_id)
 statedir=${TMPDIR:-/tmp}/osie-statedir-$hardware_id
 metadata=$statedir/metadata
 mkdir -p "$statedir"
 
 echo "metadata:"
-curl -sSL --connect-timeout 60 https://metadata.packet.net/metadata |
+rcurl -sSL --connect-timeout 60 https://metadata.packet.net/metadata |
 	jq -S . |
 	tee "$metadata" |
 	jq .
@@ -101,14 +107,14 @@ docker info
 
 reason='unable to fetch/load osie-runner image'
 if ! docker images "osie-runner:$arch" | grep osie >/dev/null; then
-	curl "${packet_base_url:-http://install.$facility.packet.net/misc/osie/current}/osie-runner-$arch.tar.gz" |
+	rcurl "${packet_base_url:-http://install.$facility.packet.net/misc/osie/current}/osie-runner-$arch.tar.gz" |
 		docker load |
 		tee
 fi
 
 reason='unable to fetch/load osie image'
 if ! docker images "osie:$arch" | grep osie >/dev/null; then
-	curl "${packet_base_url:-http://install.$facility.packet.net/misc/osie/current}/osie-$arch.tar.gz" |
+	rcurl "${packet_base_url:-http://install.$facility.packet.net/misc/osie/current}/osie-$arch.tar.gz" |
 		docker load |
 		tee
 fi

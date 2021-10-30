@@ -105,7 +105,7 @@ if [[ -z ${cpr_url} ]]; then
 else
 	echo "NOTICE: Custom CPR url found!"
 	echo "Overriding default CPR location with custom cpr_url"
-	if ! curl "$cpr_url" | jq . >$cprconfig; then
+	if ! rcurl "$cpr_url" | jq . >$cprconfig; then
 		phone_home "${tinkerbell}" '{"instance_id":"'"$(jq -r .id "$metadata")"'"}'
 		echo "$0: CPR URL unavailable: $cpr_url" >&2
 		exit 1
@@ -492,6 +492,7 @@ function puttink() {
 	local post_data=$3
 
 	curl \
+		--retry 7 \
 		-f \
 		-vvvvv \
 		-X PUT \

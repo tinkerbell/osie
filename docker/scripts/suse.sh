@@ -107,7 +107,7 @@ logger -s -t phone_home "Making a call to tell the packet API is online."
 # doesn't hurt to log as much as we can in case it fails.
 n=1
 until [ \$n -ge 6 ] || [ "\${PIPESTATUS[0]}" -eq 0 ]; do
-	curl -X PUT -H "Content-Type: application/json" -vs -d '{"instance_id": "$(jq -r .id "$metadata")"}' "$tinkerbell/phone-home" 2>&1 | logger -s -t phone_home
+	curl --retry 7 -X PUT -H "Content-Type: application/json" -vs -d '{"instance_id": "$(jq -r .id "$metadata")"}' "$tinkerbell/phone-home" 2>&1 | logger -s -t phone_home
 	if [ \${PIPESTATUS[0]} -eq 0 ]; then
 		logger -s -t phone_home "This device has been announced to the packet API."
 		break
@@ -146,7 +146,7 @@ if [[ $DOS == "SUSELINUX" ]] || [[ $DOS == "SUSE" ]]; then
 	smtserver=suse-smt.sjc1.packet.net
 	ensure_reachable "$smtserver"
 
-	smt_setup=$(curl http://$smtserver/repo/tools/clientSetup4SMT.sh)
+	smt_setup=$(rcurl http://$smtserver/repo/tools/clientSetup4SMT.sh)
 	echo "$smtserver" >"$TARGET/var/cache/smt-server"
 	if [ -n "$smt_setup" ]; then
 		echo "Retrieived SMTSetup from SMT server..."
@@ -158,7 +158,7 @@ if [[ $DOS == "SUSELINUX" ]] || [[ $DOS == "SUSE" ]]; then
 
 	# Get remote SMT CA from SMT server
 	#TODO: make this use facility once we have more than one!
-	smt_crt=$(curl http://$smtserver/certs/smt.crt.sha)
+	smt_crt=$(rcurl http://$smtserver/certs/smt.crt.sha)
 	if [ -n "$smt_crt" ]; then
 		echo "Retrieived remote SMT certificate SHA1 from SMT server..."
 		echo "$smt_crt" >"$TARGET/var/cache/smt-remote.crt.sha"
@@ -216,6 +216,7 @@ if [[ $DOS == "SUSELINUX" ]] || [[ $DOS == "SUSE" ]]; then
 			local post_data=$3
 
 			curl \
+				--retry 7 \
 				-f \
 				-vvvvv \
 				-X PUT \
